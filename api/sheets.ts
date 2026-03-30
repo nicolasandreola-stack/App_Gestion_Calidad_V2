@@ -1,6 +1,6 @@
 import { google } from "googleapis";
 import { GoogleAuth } from "google-auth-library";
-import { GlobalCloudData, Task, RoutineItem, BackupData } from "../types";
+import { GlobalCloudData, Task, RoutineItem, BackupData } from "../types.js";
 
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
 const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID || "1yRf1a_wtB0ZM9Q5o0HO0ARQVd5bHBCoGjEiZdfuxlfs";

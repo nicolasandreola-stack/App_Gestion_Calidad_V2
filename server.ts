@@ -3,7 +3,7 @@ import { createServer as createViteServer } from "vite";
 import { google } from "googleapis";
 import { GoogleAuth } from "google-auth-library";
 import dotenv from "dotenv";
-import { fetchFromSheets, pushToSheets } from "./api/sheets";
+import { fetchFromSheets, pushToSheets } from "./api/sheets.js";
 
 dotenv.config();
 
