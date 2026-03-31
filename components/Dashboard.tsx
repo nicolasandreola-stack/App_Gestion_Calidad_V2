@@ -321,13 +321,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
   const handleAcknowledgeAssignment = async () => {
     if (!newAssignmentModal) return;
     const ackIds = new Set(newAssignmentModal.tasks.map(t => t.id));
-    setTasks(prev => {
-      const updated = prev.map(t => ackIds.has(t.id) ? { ...t, acknowledged: true } : t);
-      currentStateRef.current.tks = updated;
-      return updated;
-    });
+
+    // Calcular el array actualizado SINCRÓNICAMENTE antes del setState
+    const updatedTasks = currentStateRef.current.tks.map(t =>
+      ackIds.has(t.id) ? { ...t, acknowledged: true } : t
+    );
+
+    // Actualizar ref y estado
+    currentStateRef.current.tks = updatedTasks;
+    setTasks(updatedTasks);
     setNewAssignmentModal(null);
-    // Push silenciosamente para que el admin vea el estado actualizado
+
+    // Push con el estado ya correcto en el ref
     try {
       await performFetchMergePush(currentStateRef.current);
     } catch (e) {
