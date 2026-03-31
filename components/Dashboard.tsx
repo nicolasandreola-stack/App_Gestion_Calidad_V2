@@ -769,7 +769,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
       {showCompletedRegistry && (
         <CompletedTasksModal
           tasks={completedTasks}
-          deletedTasks={deletedTasks}
+          deletedTasks={deletedTasks.filter(d => !completedTasks.some(c => c.id === d.id))}
           onRestore={handleRestoreTask}
           onClose={() => setShowCompletedRegistry(false)}
         />
