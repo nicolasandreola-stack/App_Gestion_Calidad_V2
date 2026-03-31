@@ -154,6 +154,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
                 if (newTasks.length > 0) {
                     // Show centered persistent modal instead of auto-disappearing toast
                     setNewAssignmentModal({ count: newTasks.length, tasks: newTasks });
+                    playNotificationSound();
                     
                     // Inject new tasks into active array
                     setTasks(prev => {
@@ -288,6 +289,32 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
+  };
+
+  // Notification Sound — dos tonos ascendentes via Web Audio API
+  const playNotificationSound = () => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const playTone = (freq: number, startTime: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(0.4, startTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+      const now = ctx.currentTime;
+      playTone(660, now, 0.18);         // primer tono
+      playTone(880, now + 0.2, 0.22);   // segundo tono, más agudo
+    } catch (e) {
+      // Silenciar si el navegador bloquea el audio
+      console.warn('Audio notification blocked:', e);
+    }
   };
 
   // Acknowledge new assignment: mark tasks, push to cloud
