@@ -38,6 +38,9 @@ export interface Task {
   
   // Subtasks
   subtasks?: { id: string; text: string; completed: boolean }[];
+
+  // Confirmación de recepción (cuando el usuario cierra el aviso de nueva asignación)
+  acknowledged?: boolean;
 }
 
 export interface RoutineItem {

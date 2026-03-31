@@ -95,6 +95,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
   const [lastTaskIds, setLastTaskIds] = useState<Set<number>>(new Set());
+  const [newAssignmentModal, setNewAssignmentModal] = useState<{ count: number; tasks: Task[] } | null>(null);
 
   // Ref to hold latest state for the interval (to avoid stale closures)
   const currentStateRef = useRef<BackupData>({ rtM: [], rtS: {}, tks: [], h: [], cTks: [], ach: [], rtH: {} });
@@ -151,8 +152,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
                 const newTasks = cloudTasks.filter(t => t.del === 'Admin' && !currentIds.has(t.id));
                 
                 if (newTasks.length > 0) {
-                    // Trigger visual notification with a bell to activate custom styling
-                    showToast(`🔔 ¡NUEVA ASIGNACIÓN! Tienes ${newTasks.length} tarea(s) nueva(s) de Administración.`);
+                    // Show centered persistent modal instead of auto-disappearing toast
+                    setNewAssignmentModal({ count: newTasks.length, tasks: newTasks });
                     
                     // Inject new tasks into active array
                     setTasks(prev => {
@@ -287,6 +288,24 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
+  };
+
+  // Acknowledge new assignment: mark tasks, push to cloud
+  const handleAcknowledgeAssignment = async () => {
+    if (!newAssignmentModal) return;
+    const ackIds = new Set(newAssignmentModal.tasks.map(t => t.id));
+    setTasks(prev => {
+      const updated = prev.map(t => ackIds.has(t.id) ? { ...t, acknowledged: true } : t);
+      currentStateRef.current.tks = updated;
+      return updated;
+    });
+    setNewAssignmentModal(null);
+    // Push silenciosamente para que el admin vea el estado actualizado
+    try {
+      await performFetchMergePush(currentStateRef.current);
+    } catch (e) {
+      console.error('Ack push failed', e);
+    }
   };
 
   // --- Routine Logic ---
@@ -850,12 +869,56 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
         </div>
       )}
 
-      {/* Toast Notification */}
+      {/* Toast Notification (general) */}
       <div
-        className={`fixed bottom-8 left-1/2 -translate-x-1/2 ${toast?.includes('🔔') ? 'bg-green-600 text-white font-bold px-5 py-3 text-sm animate-bounce shadow-[0_0_20px_rgba(22,163,74,0.6)]' : 'bg-[#323232] text-white px-4 py-2 text-xs'} rounded shadow-lg transition-all duration-500 z-[100] ${toast ? 'opacity-100' : 'opacity-0 pointer-events-none scale-95'}`}
+        className={`fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#323232] text-white px-4 py-2 text-xs rounded shadow-lg transition-all duration-500 z-[100] ${toast ? 'opacity-100' : 'opacity-0 pointer-events-none scale-95'}`}
       >
         {toast}
       </div>
+
+      {/* NEW ASSIGNMENT MODAL — Centered, persistent, requires manual close */}
+      {newAssignmentModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border-2 border-green-400 animate-in zoom-in-95 slide-in-from-bottom-4 duration-400">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-5 flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="text-4xl animate-bounce">🔔</div>
+                <div>
+                  <div className="text-[11px] font-black text-green-100 uppercase tracking-[0.2em] mb-0.5">Nueva Asignación</div>
+                  <h2 className="text-xl font-bold text-white leading-tight">¡Tenés {newAssignmentModal.count} tarea{newAssignmentModal.count > 1 ? 's' : ''} nueva{newAssignmentModal.count > 1 ? 's' : ''}!</h2>
+                </div>
+              </div>
+            </div>
+
+            {/* Task list */}
+            <div className="px-6 py-4 max-h-64 overflow-y-auto">
+              <p className="text-xs text-gray-500 mb-3 font-medium uppercase tracking-wide">El administrador te delegó:</p>
+              <div className="space-y-2">
+                {newAssignmentModal.tasks.map(t => (
+                  <div key={t.id} className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 flex items-start gap-3">
+                    <span className="text-green-500 mt-0.5 shrink-0">▶</span>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800 leading-snug">{t.text}</p>
+                      {t.date && <p className="text-[11px] text-gray-400 mt-0.5">📅 Vence: {t.date}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={handleAcknowledgeAssignment}
+                className="bg-green-500 hover:bg-green-600 active:scale-95 text-white font-bold px-8 py-3 rounded-xl text-sm transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+              >
+                ✅ Entendido, ya lo veo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="fixed bottom-2 right-4 text-[10px] text-gray-500 font-mono pointer-events-none select-none z-[40] text-right leading-tight">
         <div>APP Gestor de tareas (creada por Nicolas Andreola)</div>

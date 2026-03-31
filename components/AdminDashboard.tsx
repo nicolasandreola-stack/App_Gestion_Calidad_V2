@@ -915,7 +915,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <span className="text-[9px] text-gray-400 font-mono mt-0.5 shrink-0">{new Date(t.id).toLocaleDateString()}</span>
+                                                    <div className="flex flex-col items-end gap-1 shrink-0">
+                                                        <span className="text-[9px] text-gray-400 font-mono">{new Date(t.id).toLocaleDateString()}</span>
+                                                        {/* Acknowledgment badge — only for active tasks */}
+                                                        {t.status === 'active' && (
+                                                            t.acknowledged
+                                                                ? <span className="text-[9px] bg-green-50 text-green-600 border border-green-200 px-1.5 py-0.5 rounded-full font-bold" title="El usuario confirmó recepción">✅ Recibido</span>
+                                                                : <span className="text-[9px] bg-amber-50 text-amber-600 border border-amber-200 px-1.5 py-0.5 rounded-full font-bold" title="Esperando confirmación del usuario">⏳ Pendiente</span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <p className={`text-[12px] font-medium mb-1.5 leading-snug ${t.status === 'completed' || t.status === 'deleted' ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
                                                     {t.text}
