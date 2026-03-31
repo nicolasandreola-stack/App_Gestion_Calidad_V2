@@ -1,5 +1,5 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
+
 import { google } from "googleapis";
 import { GoogleAuth } from "google-auth-library";
 import dotenv from "dotenv";
@@ -138,28 +138,7 @@ const TARGET_FOLDER_ID = '1iniK-YPZ8BYac8YeK_Uu5_EWxcC0UPH6'; // Hardcoded folde
     }
   });
 
-// Vite middleware for development (Only run if executed directly, not via Vercel)
-if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
-  async function startViteAndListen() {
-    const PORT = 3000;
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
-  }
-  startViteAndListen();
-} else if (!process.env.VERCEL) {
-  // Production static file serving for local testing
-  const PORT = parseInt(process.env.PORT || "3000", 10);
-  app.use(express.static("dist"));
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-}
+
 
 // Export the app for Vercel Serverless Function
 export default app;
