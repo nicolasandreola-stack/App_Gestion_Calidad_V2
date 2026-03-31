@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, X, Bot, FileText, Loader2, Lock, AlertTriangle, CheckCircle2, XCircle, ExternalLink, Clock, Copy, Check, Key, Paperclip, File as FileIcon, Trash2, Settings, Save, RefreshCw, Cpu, Minus, Maximize2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
-// API KEY Pública (Fallback para Gemini)
-const API_KEY = 'AIzaSyAqs5blL5g-h92GGtCE92nlIuuvFDntQT0'; 
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || ''; 
 
 interface Message {
   role: 'user' | 'model';
