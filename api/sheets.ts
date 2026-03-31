@@ -12,8 +12,26 @@ async function getAuthClient() {
     
     // Si estamos en Vercel, usamos la variable de entorno segura
     if (process.env.GOOGLE_CREDENTIALS) {
+        let creds;
+        try {
+            creds = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+        } catch (e) {
+            // Intentar limpiar si Vercel lo envolvió mal
+            let cleaned = process.env.GOOGLE_CREDENTIALS;
+            if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+                cleaned = cleaned.slice(1, -1);
+            }
+            cleaned = cleaned.replace(/\\n/g, '\n');
+            creds = JSON.parse(cleaned);
+        }
+        
+        // google-auth-library necesita saltos de línea reales en la llave privada
+        if (creds.private_key && typeof creds.private_key === 'string') {
+            creds.private_key = creds.private_key.replace(/\\n/g, '\n');
+        }
+
         authClient = new GoogleAuth({
-            credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
+            credentials: creds,
             scopes: SCOPES,
         });
     } else {
