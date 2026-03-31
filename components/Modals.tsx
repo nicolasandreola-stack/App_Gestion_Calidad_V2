@@ -199,43 +199,65 @@ export const NoteActionModal: React.FC<NoteActionModalProps> = ({ title, descrip
 /* --- Completed Tasks Modal (Registry) --- */
 interface CompletedTasksModalProps {
   tasks: Task[];
+  deletedTasks?: Task[];
   onRestore: (task: Task) => void;
   onClose: () => void;
 }
 
-export const CompletedTasksModal: React.FC<CompletedTasksModalProps> = ({ tasks, onRestore, onClose }) => {
+export const CompletedTasksModal: React.FC<CompletedTasksModalProps> = ({ tasks, deletedTasks = [], onRestore, onClose }) => {
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState<Category | 'all'>('all');
+  const [activeTab, setActiveTab] = useState<'completed' | 'deleted'>('completed');
 
-  const filtered = tasks.filter(t => {
+  const sourceList = activeTab === 'completed' ? tasks : deletedTasks;
+
+  const filtered = sourceList.filter(t => {
       const s = search.toLowerCase();
-      // Buscar en titulo, categoria, notas internas y notas de cierre
       const matchesSearch = 
         t.text.toLowerCase().includes(s) || 
         t.cat.toLowerCase().includes(s) || 
         (t.note && t.note.toLowerCase().includes(s)) ||
         (t.closingNote && t.closingNote.toLowerCase().includes(s));
-      
       const matchesCategory = catFilter === 'all' || t.cat === catFilter;
-      
       return matchesSearch && matchesCategory;
   });
 
   return (
     <ModalShell
-      title="Registro de Tareas Completadas"
+      title="Archivo de Tareas"
       onClose={onClose}
       footer={
         <button onClick={onClose} className="bg-transparent border border-borderLight text-textSecondary px-3 py-1.5 rounded text-sm hover:bg-gray-50">Cerrar</button>
       }
     >
       <div className="flex flex-col gap-3 h-full">
+        {/* Tab switcher */}
+        <div className="flex bg-gray-100 p-1 rounded-lg gap-1">
+          <button
+            onClick={() => setActiveTab('completed')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-bold transition-all ${
+              activeTab === 'completed' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Archive size={12} /> Completadas ({tasks.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('deleted')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-bold transition-all ${
+              activeTab === 'deleted' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            🗑️ Eliminadas ({deletedTasks.length})
+          </button>
+        </div>
+
+        {/* Filters */}
         <div className="flex gap-2">
             <div className="relative flex-1">
                 <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input 
                     type="text" 
-                    placeholder="Buscar en historial..." 
+                    placeholder={`Buscar en ${activeTab === 'completed' ? 'completadas' : 'eliminadas'}...`}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     className="w-full pl-8 pr-2 py-1.5 border border-borderLight rounded text-xs bg-gray-50 outline-none focus:border-accentBlue"
@@ -255,35 +277,47 @@ export const CompletedTasksModal: React.FC<CompletedTasksModalProps> = ({ tasks,
             </select>
         </div>
 
+        {/* List */}
         {filtered.length === 0 ? (
           <div className="text-center py-8 text-gray-400 text-xs">
              <Archive size={32} className="mx-auto mb-2 opacity-50"/>
-             No hay tareas completadas registradas con este criterio.
+             {activeTab === 'completed' ? 'No hay tareas completadas con este criterio.' : 'No hay tareas eliminadas con este criterio.'}
           </div>
         ) : (
           <div className="flex flex-col gap-2">
              {filtered.map(task => (
-                <div key={task.id} className="border border-borderLight rounded-lg p-3 bg-gray-50 flex flex-col gap-2">
+                <div key={task.id} className={`border rounded-lg p-3 flex flex-col gap-2 ${
+                  activeTab === 'deleted' ? 'bg-red-50/30 border-red-100' : 'bg-gray-50 border-borderLight'
+                }`}>
                    <div className="flex justify-between items-start">
                       <div>
                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-800">Cerrada</span>
+                            {activeTab === 'completed'
+                              ? <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-800">Cerrada</span>
+                              : <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700">🗑️ Eliminada</span>
+                            }
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-700">{task.cat}</span>
                             {task.completedAt && <span className="text-[10px] text-gray-400">{task.completedAt}</span>}
+                            {activeTab === 'deleted' && <span className="text-[10px] text-gray-400">{new Date(task.id).toLocaleDateString()}</span>}
                          </div>
-                         <div className="text-sm font-medium text-textPrimary line-through opacity-70">{task.text}</div>
+                         <div className={`text-sm font-medium text-textPrimary line-through opacity-70`}>{task.text}</div>
                       </div>
                       <button 
                         onClick={() => onRestore(task)}
-                        className="text-accentBlue hover:bg-blue-50 p-1.5 rounded transition-colors"
-                        title="Restaurar / Reabrir"
+                        className={`p-1.5 rounded transition-colors text-xs font-bold flex items-center gap-1 ${
+                          activeTab === 'deleted'
+                            ? 'text-red-600 hover:bg-red-50 border border-red-200'
+                            : 'text-accentBlue hover:bg-blue-50'
+                        }`}
+                        title={activeTab === 'deleted' ? 'Restaurar tarea eliminada' : 'Restaurar / Reabrir'}
                       >
-                         <RotateCcw size={14} />
+                         <RotateCcw size={13} />
+                         {activeTab === 'deleted' && <span>Restaurar</span>}
                       </button>
                    </div>
                    
-                   {/* Info de cierre */}
-                   {(task.closingNote || task.closingL1) && (
+                   {/* Cierre info (solo completadas) */}
+                   {activeTab === 'completed' && (task.closingNote || task.closingL1) && (
                       <div className="bg-white border border-borderLight rounded p-2 text-xs text-gray-600 mt-1">
                          {task.closingNote && (
                              <div className="italic mb-1">
@@ -308,10 +342,9 @@ export const CompletedTasksModal: React.FC<CompletedTasksModalProps> = ({ tasks,
                       </div>
                    )}
                    
-                   {/* Notas internas originales si existen */}
                    {task.note && (
                        <div className="text-[10px] text-gray-400 italic px-1">
-                           Nota original: "{task.note}"
+                           Nota: "{task.note}"
                        </div>
                    )}
                 </div>
