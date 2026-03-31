@@ -107,7 +107,7 @@ const KPIBoard: React.FC<KPIBoardProps> = ({
   };
 
   return (
-    <div className="flex flex-col xl:flex-row gap-4 px-5 pt-4 shrink-0 relative z-10">
+    <div className="flex flex-col xl:flex-row gap-6 shrink-0 relative z-10 w-full">
       <div className="flex gap-4 flex-1">
         {/* Routine KPI */}
         <div 

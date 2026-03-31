@@ -59,6 +59,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
 
     // Assigned History Filter State
     const [assignedHistoryFilter, setAssignedHistoryFilter] = useState<'all' | 'active' | 'inactive'>('all');
+    const [expandedAssignedIds, setExpandedAssignedIds] = useState<Set<number>>(new Set());
 
     const refreshIntervalRef = useRef<number | null>(null);
 
@@ -688,214 +689,307 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                 />
                             </div>
 
-                            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                            {/* NEW LAYOUT: TOP ZONE (DELEGATION + DONUT + HISTORY) */}
+                            <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_220px_1.1fr] gap-6 mb-6">
+                                
+                                {/* 1. DELEGATION PANEL (WIDE) */}
+                                <div className="bg-white border border-borderLight rounded-xl p-6 shadow-sm flex flex-col transition-all hover:shadow-md">
+                                    <h3 className="font-bold text-textPrimary mb-5 flex items-center gap-2">
+                                        <ArrowRight size={20} className="text-accentBlue" /> Asignar Nueva Tarea
+                                    </h3>
+                                    <div className="space-y-4">
+                                        <textarea
+                                            value={newTaskText}
+                                            onChange={(e) => setNewTaskText(e.target.value)}
+                                            placeholder={`Describe la tarea principal para ${selectedUser}...`}
+                                            className="w-full p-3.5 border border-borderLight rounded-lg text-sm focus:border-accentBlue focus:ring-2 focus:ring-accentBlue/20 outline-none bg-gray-50 text-gray-900 min-h-[80px] transition-all"
+                                        />
 
-                                {/* COL 1: DELEGATION & ROUTINE */}
-                                <div className="flex flex-col gap-6">
-                                    {/* DELEGATION PANEL */}
-                                    <div className="bg-white border border-borderLight rounded-xl p-5 shadow-sm">
-                                        <h3 className="font-bold text-textPrimary mb-4 flex items-center gap-2">
-                                            <ArrowRight size={18} className="text-accentBlue" /> Asignar Tarea
-                                        </h3>
-                                        <div className="space-y-2">
-                                            <textarea
-                                                value={newTaskText}
-                                                onChange={(e) => setNewTaskText(e.target.value)}
-                                                placeholder={`Describe la tarea para ${selectedUser}...`}
-                                                className="w-full p-3 border border-borderLight rounded-lg text-sm focus:border-accentBlue outline-none bg-gray-50 text-gray-900 min-h-[60px] placeholder:text-gray-400"
+                                        <textarea
+                                            value={newTaskNote}
+                                            onChange={(e) => setNewTaskNote(e.target.value)}
+                                            placeholder="Observaciones / Indicaciones adicionales..."
+                                            className="w-full p-3 border border-borderLight rounded-lg text-xs focus:border-accentBlue focus:ring-2 focus:ring-accentBlue/20 outline-none bg-gray-50 text-gray-900 min-h-[60px] resize-none transition-all"
+                                        />
+
+                                        {/* Row 1: Date & Cat */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <input
+                                                type="date"
+                                                value={newTaskDate}
+                                                onChange={e => setNewTaskDate(e.target.value)}
+                                                className="p-2.5 border border-borderLight rounded-lg text-xs bg-white text-gray-900 outline-none focus:border-accentBlue focus:ring-1 focus:ring-accentBlue/20 w-full"
                                             />
+                                            <select
+                                                value={newTaskCategory}
+                                                onChange={e => setNewTaskCategory(e.target.value as Category)}
+                                                className="p-2.5 border border-borderLight rounded-lg text-xs bg-white text-gray-900 outline-none focus:border-accentBlue focus:ring-1 focus:ring-accentBlue/20 w-full"
+                                            >
+                                                <option value="">Categoría (Auto: Otro)</option>
+                                                {Object.keys(CATEGORY_COLORS).map(cat => (
+                                                    <option key={cat} value={cat}>{cat}</option>
+                                                ))}
+                                            </select>
+                                        </div>
 
-                                            <textarea
-                                                value={newTaskNote}
-                                                onChange={(e) => setNewTaskNote(e.target.value)}
-                                                placeholder="Observaciones / Indicaciones adicionales..."
-                                                className="w-full p-3 border border-borderLight rounded-lg text-xs focus:border-accentBlue outline-none bg-gray-50 text-gray-900 min-h-[50px] resize-none placeholder:text-gray-400"
-                                            />
-
-                                            <div className="grid grid-cols-2 gap-2">
+                                        {/* Row 2: Links Split */}
+                                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 bg-gray-50/50 p-2 rounded-lg border border-dashed border-gray-200">
+                                            <div className="grid grid-cols-3 gap-2">
                                                 <input
-                                                    type="date"
-                                                    value={newTaskDate}
-                                                    onChange={e => setNewTaskDate(e.target.value)}
-                                                    className="p-2 border border-borderLight rounded-lg text-xs bg-white text-gray-900 outline-none focus:border-accentBlue w-full"
+                                                    value={newTaskL1} onChange={e => setNewTaskL1(e.target.value)}
+                                                    placeholder="Link 1 (URL)"
+                                                    className="col-span-2 p-2 border border-borderLight rounded-lg text-xs bg-white text-gray-900 outline-none focus:border-accentBlue w-full"
                                                 />
-                                                <select
-                                                    value={newTaskCategory}
-                                                    onChange={e => setNewTaskCategory(e.target.value as Category)}
-                                                    className="p-2 border border-borderLight rounded-lg text-xs bg-white text-gray-900 outline-none focus:border-accentBlue w-full"
-                                                >
-                                                    <option value="">Categoría (Auto: Otro)</option>
-                                                    {Object.keys(CATEGORY_COLORS).map(cat => (
-                                                        <option key={cat} value={cat}>{cat}</option>
-                                                    ))}
-                                                </select>
+                                                <input
+                                                    value={newTaskN1} onChange={e => setNewTaskN1(e.target.value)}
+                                                    placeholder="Nombre"
+                                                    className="col-span-1 p-2 border border-borderLight rounded-lg text-xs bg-white text-gray-900 outline-none focus:border-accentBlue w-full"
+                                                />
                                             </div>
-
-                                            <div className="grid grid-cols-1 gap-2">
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    <input
-                                                        value={newTaskL1} onChange={e => setNewTaskL1(e.target.value)}
-                                                        placeholder="Link 1 (URL)"
-                                                        className="col-span-2 p-2 border border-borderLight rounded-lg text-xs bg-white text-gray-900 outline-none focus:border-accentBlue w-full"
-                                                    />
-                                                    <input
-                                                        value={newTaskN1} onChange={e => setNewTaskN1(e.target.value)}
-                                                        placeholder="Nombre"
-                                                        className="col-span-1 p-2 border border-borderLight rounded-lg text-xs bg-white text-gray-900 outline-none focus:border-accentBlue w-full"
-                                                    />
-                                                </div>
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    <input
-                                                        value={newTaskL2} onChange={e => setNewTaskL2(e.target.value)}
-                                                        placeholder="Link 2 (URL)"
-                                                        className="col-span-2 p-2 border border-borderLight rounded-lg text-xs bg-white text-gray-900 outline-none focus:border-accentBlue w-full"
-                                                    />
-                                                    <input
-                                                        value={newTaskN2} onChange={e => setNewTaskN2(e.target.value)}
-                                                        placeholder="Nombre"
-                                                        className="col-span-1 p-2 border border-borderLight rounded-lg text-xs bg-white text-gray-900 outline-none focus:border-accentBlue w-full"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center justify-between pt-2">
-                                                <label className="flex items-center gap-2 text-sm text-textSecondary cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={newTaskPrio}
-                                                        onChange={e => setNewTaskPrio(e.target.checked)}
-                                                        className="accent-accentYellow"
-                                                    />
-                                                    Marcar como Prioritaria
-                                                </label>
-                                                <button
-                                                    onClick={handleDelegateTask}
-                                                    disabled={!newTaskText.trim() || isAssigning}
-                                                    className="bg-accentBlue text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
-                                                >
-                                                    {isAssigning ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                                                    {isAssigning ? "Asignando..." : "Asignar"}
-                                                </button>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <input
+                                                    value={newTaskL2} onChange={e => setNewTaskL2(e.target.value)}
+                                                    placeholder="Link 2 (URL)"
+                                                    className="col-span-2 p-2 border border-borderLight rounded-lg text-xs bg-white text-gray-900 outline-none focus:border-accentBlue w-full"
+                                                />
+                                                <input
+                                                    value={newTaskN2} onChange={e => setNewTaskN2(e.target.value)}
+                                                    placeholder="Nombre"
+                                                    className="col-span-1 p-2 border border-borderLight rounded-lg text-xs bg-white text-gray-900 outline-none focus:border-accentBlue w-full"
+                                                />
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {/* ASSIGNED HISTORY PANEL */}
-                                    <div className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex-1 flex flex-col min-h-[300px]">
-                                        <div className="flex justify-between items-center mb-4">
-                                            <h3 className="font-bold text-textPrimary flex items-center gap-2 text-sm uppercase">
-                                                <ClipboardList size={16} className="text-purple-500" /> Historial Asignaciones
-                                            </h3>
-                                            <div className="flex bg-gray-100 p-1 rounded-lg">
-                                                <button
-                                                    onClick={() => setAssignedHistoryFilter('all')}
-                                                    className={`px-3 py-1 text-[10px] font-medium rounded-md transition-colors ${assignedHistoryFilter === 'all' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                                                >
-                                                    Todas
-                                                </button>
-                                                <button
-                                                    onClick={() => setAssignedHistoryFilter('active')}
-                                                    className={`px-3 py-1 text-[10px] font-medium rounded-md transition-colors ${assignedHistoryFilter === 'active' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                                                >
-                                                    Activas
-                                                </button>
-                                                <button
-                                                    onClick={() => setAssignedHistoryFilter('inactive')}
-                                                    className={`px-3 py-1 text-[10px] font-medium rounded-md transition-colors ${assignedHistoryFilter === 'inactive' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                                                >
-                                                    Inactivas
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
-                                            {assignedHistory.length === 0 && <p className="text-xs text-gray-400 italic text-center py-4">No hay tareas asignadas por administración.</p>}
-                                            {assignedHistory.map(t => (
-                                                <div key={t.id} className="border border-gray-100 rounded-lg p-2 bg-gray-50 hover:bg-white hover:shadow-sm transition-all">
-                                                    <div className="flex justify-between items-start mb-1">
-                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${t.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                                                t.status === 'standby' ? 'bg-gray-200 text-gray-600' :
-                                                                    t.status === 'deleted' ? 'bg-red-100 text-red-700' :
-                                                                        'bg-blue-100 text-blue-700'
-                                                            }`}>
-                                                            {t.status === 'completed' ? 'CERRADA' : t.status === 'standby' ? 'STANDBY' : t.status === 'deleted' ? 'ELIMINADA' : 'ACTIVA'}
-                                                        </span>
-                                                        <span className="text-[9px] text-gray-400">{new Date(t.id).toLocaleDateString()}</span>
-                                                    </div>
-                                                    <p className={`text-xs font-medium mb-1 ${t.status === 'completed' || t.status === 'deleted' ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
-                                                        {t.text}
-                                                    </p>
-
-                                                    {/* Metadata */}
-                                                    <div className="flex flex-wrap gap-2 mt-1">
-                                                        {t.date && <span className="text-[9px] text-gray-500 bg-white border border-gray-200 px-1 rounded">📅 {t.date}</span>}
-                                                        <span className="text-[9px] text-gray-500 bg-white border border-gray-200 px-1 rounded" style={{ borderColor: CATEGORY_COLORS[t.cat] + '40', color: CATEGORY_COLORS[t.cat] }}>
-                                                            {t.cat}
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Notes */}
-                                                    {t.status === 'completed' && t.closingNote && (
-                                                        <div className="mt-1.5 text-[10px] text-green-700 bg-green-50 p-1 rounded border border-green-100">
-                                                            ✅ {t.closingNote}
-                                                        </div>
-                                                    )}
-                                                    {t.status === 'standby' && t.standbyNote && (
-                                                        <div className="mt-1.5 text-[10px] text-gray-600 bg-gray-100 p-1 rounded border border-gray-200">
-                                                            ⏸ {t.standbyNote}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
+                                        {/* Footer Row */}
+                                        <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-2">
+                                            <label className="flex items-center gap-2 text-sm text-textSecondary cursor-pointer hover:bg-yellow-50 px-3 py-1.5 rounded-lg border border-transparent hover:border-yellow-200 transition-colors">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={newTaskPrio}
+                                                    onChange={e => setNewTaskPrio(e.target.checked)}
+                                                    className="accent-accentYellow w-4 h-4 cursor-pointer"
+                                                />
+                                                <span className={`${newTaskPrio ? 'font-bold text-yellow-700' : ''}`}>Marcar como Crítica</span>
+                                            </label>
+                                            <button
+                                                onClick={handleDelegateTask}
+                                                disabled={!newTaskText.trim() || isAssigning}
+                                                className="bg-accentBlue text-white px-8 py-3 rounded-lg text-sm font-bold hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-50 shadow-md hover:shadow-lg active:scale-95"
+                                            >
+                                                {isAssigning ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+                                                {isAssigning ? "Asignando..." : "Asignar a Usuario"}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* COL 2 & 3: TASK LISTS */}
-                                <div className="xl:col-span-2 bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col h-[600px]">
-                                    <h3 className="font-bold text-textPrimary mb-4 flex items-center gap-2 text-sm uppercase">
-                                        <Calendar size={16} className="text-accentBlue" /> Resumen General
+                                {/* 2. MINI DONUT CHART (MIDDLE) */}
+                                <div className="bg-white border border-borderLight rounded-xl p-4 shadow-sm flex flex-col items-center justify-center relative min-h-[520px]">
+                                    <h3 className="font-bold text-textPrimary text-[10px] uppercase tracking-wide text-center absolute top-5 w-full text-slate-400">
+                                        Estado General
                                     </h3>
+                                    
+                                    {(() => {
+                                        const activeDel = assignedHistory.filter(t => t.status === 'active' || t.status === 'standby').length;
+                                        const compDel = assignedHistory.filter(t => t.status === 'completed').length;
+                                        const delDel = assignedHistory.filter(t => t.status === 'deleted').length;
+                                        const totalDel = activeDel + compDel + delDel;
+                                        
+                                        if (totalDel === 0) {
+                                            return <div className="text-[10px] text-gray-400 italic mt-8">Sin historial</div>;
+                                        }
 
-                                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        const r = 38;
+                                        const c = 2 * Math.PI * r;
+                                        
+                                        const activeDash = (activeDel / totalDel) * c;
+                                        const compDash = (compDel / totalDel) * c;
+                                        const delDash = (delDel / totalDel) * c;
+                                        
+                                        return (
+                                            <div className="flex flex-col items-center w-full mt-4">
+                                                <div className="relative w-28 h-28">
+                                                    <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                                                        {totalDel === 0 && (
+                                                            <circle cx="50" cy="50" r={r} fill="transparent" stroke="#f1f5f9" strokeWidth="12" />
+                                                        )}
+                                                        {activeDel > 0 && (
+                                                            <circle cx="50" cy="50" r={r} fill="transparent" stroke="#bae6fd" strokeWidth="14" 
+                                                                    strokeDasharray={`${activeDash} ${c}`} strokeDashoffset={0} />
+                                                        )}
+                                                        {compDel > 0 && (
+                                                            <circle cx="50" cy="50" r={r} fill="transparent" stroke="#bbf7d0" strokeWidth="14" 
+                                                                    strokeDasharray={`${compDash} ${c}`} strokeDashoffset={-activeDash} />
+                                                        )}
+                                                        {delDel > 0 && (
+                                                            <circle cx="50" cy="50" r={r} fill="transparent" stroke="#fecaca" strokeWidth="14" 
+                                                                    strokeDasharray={`${delDash} ${c}`} strokeDashoffset={-(activeDash + compDash)} />
+                                                        )}
+                                                    </svg>
+                                                    <div className="absolute inset-0 flex items-center justify-center flex-col">
+                                                        <span className="text-2xl font-light text-slate-700">{totalDel}</span>
+                                                        <span className="text-[8px] uppercase text-slate-400 font-bold tracking-wider -mt-1">Total</span>
+                                                    </div>
+                                                </div>
 
-                                        {/* COL A: URGENT / TODAY SPLIT */}
-                                        <div className="flex flex-col gap-4">
-                                            {/* VENCIDAS */}
-                                            <div className="bg-red-50/20 border border-red-100 rounded-lg p-3 flex-1">
-                                                <h4 className="text-xs font-bold text-red-700 uppercase mb-3 flex justify-between items-center">
-                                                    <span className="flex items-center gap-2"><AlertCircle size={14} /> Vencidas</span>
-                                                    <span className="bg-red-100 text-red-800 px-2 rounded-full">{groupedTasks.overdue.length}</span>
-                                                </h4>
-                                                <div className="space-y-2">
-                                                    {groupedTasks.overdue.length === 0 && <p className="text-xs text-gray-400 text-center py-2">Sin tareas vencidas.</p>}
-                                                    {groupedTasks.overdue.map(t => renderTaskWithDetails(t))}
+                                                <div className="w-full mt-8 space-y-3 flex flex-col items-center justify-center">
+                                                    <div className="flex items-center justify-between w-[85%] text-[11px]">
+                                                        <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-sm bg-sky-200"></span><span className="text-slate-600 font-medium tracking-wide">Activas</span></div>
+                                                        <span className="font-bold text-sky-700 bg-sky-50 px-1.5 rounded">{activeDel}</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between w-[85%] text-[11px]">
+                                                        <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-sm bg-green-200"></span><span className="text-slate-600 font-medium tracking-wide">Terminadas</span></div>
+                                                        <span className="font-bold text-green-700 bg-green-50 px-1.5 rounded">{compDel}</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between w-[85%] text-[11px]">
+                                                        <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-sm bg-red-200"></span><span className="text-slate-600 font-medium tracking-wide">Eliminadas</span></div>
+                                                        <span className="font-bold text-red-700 bg-red-50 px-1.5 rounded">{delDel}</span>
+                                                    </div>
                                                 </div>
                                             </div>
+                                        );
+                                    })()}
+                                </div>
 
-                                            {/* HOY */}
-                                            <div className="bg-blue-50/20 border border-blue-100 rounded-lg p-3 flex-1">
-                                                <h4 className="text-xs font-bold text-blue-700 uppercase mb-3 flex justify-between items-center">
-                                                    <span className="flex items-center gap-2"><Calendar size={14} /> Para Hoy</span>
-                                                    <span className="bg-blue-100 text-blue-800 px-2 rounded-full">{groupedTasks.today.length}</span>
-                                                </h4>
-                                                <div className="space-y-2">
-                                                    {groupedTasks.today.length === 0 && <p className="text-xs text-gray-400 text-center py-2">Todo listo por hoy.</p>}
-                                                    {groupedTasks.today.map(t => renderTaskWithDetails(t))}
-                                                </div>
-                                            </div>
+                                {/* 3. ASSIGNED HISTORY PANEL (NARROW) */}
+                                <div className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col h-[520px]">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="font-bold text-textPrimary flex items-center gap-2 text-xs uppercase tracking-wide">
+                                            <ClipboardList size={16} className="text-purple-500" /> Tareas Delegadas
+                                        </h3>
+                                        <div className="flex bg-gray-100 p-1 rounded-lg">
+                                            <button
+                                                onClick={() => setAssignedHistoryFilter('all')}
+                                                className={`px-2 py-1 text-[10px] font-medium rounded transition-colors ${assignedHistoryFilter === 'all' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                            >
+                                                Todas
+                                            </button>
+                                            <button
+                                                onClick={() => setAssignedHistoryFilter('active')}
+                                                className={`px-2 py-1 text-[10px] font-medium rounded transition-colors ${assignedHistoryFilter === 'active' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                            >
+                                                Activas
+                                            </button>
+                                            <button
+                                                onClick={() => setAssignedHistoryFilter('inactive')}
+                                                className={`px-2 py-1 text-[10px] font-medium rounded transition-colors ${assignedHistoryFilter === 'inactive' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                            >
+                                                Cerradas
+                                            </button>
                                         </div>
-
-                                        {/* COL B: BACKLOG / FUTURE */}
-                                        <div className="bg-gray-50/50 border border-gray-200 rounded-lg p-3 h-full overflow-y-auto custom-scrollbar">
-                                            <h4 className="text-xs font-bold text-gray-600 uppercase mb-3 flex justify-between sticky top-0 bg-white/50 backdrop-blur-sm p-1 z-10">
-                                                <span>📥 Backlog & Futuro</span>
-                                                <span className="bg-gray-200 text-gray-800 px-2 rounded-full">{groupedTasks.backlog.length}</span>
-                                            </h4>
-                                            <div className="space-y-2">
-                                                {groupedTasks.backlog.length === 0 && <p className="text-xs text-gray-400 text-center py-4">Bandeja vacía.</p>}
-
-                                                {groupedTasks.backlog.map(t => renderTaskWithDetails(t))}
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1">
+                                        {assignedHistory.length === 0 && <p className="text-[11px] text-gray-400 italic text-center py-6">Sin historial de delegación reciente.</p>}
+                                        {assignedHistory.map(t => {
+                                            const isExpanded = expandedAssignedIds.has(t.id);
+                                            return (
+                                            <div 
+                                                key={t.id} 
+                                                onClick={() => {
+                                                    setExpandedAssignedIds(prev => {
+                                                        const next = new Set(prev);
+                                                        if (next.has(t.id)) next.delete(t.id);
+                                                        else next.add(t.id);
+                                                        return next;
+                                                    });
+                                                }}
+                                                className="border border-gray-100 rounded-lg p-3 bg-gray-50 hover:bg-white hover:shadow-sm hover:border-blue-100 transition-all text-left flex flex-col cursor-pointer group"
+                                            >
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div className="flex items-center gap-1.5 flex-wrap flex-1 mr-2">
+                                                        <span className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${t.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                                                t.status === 'standby' ? 'bg-gray-200 text-gray-600' :
+                                                                    t.status === 'deleted' ? 'bg-red-100 text-red-700' :
+                                                                        'bg-sky-100 text-sky-700'
+                                                            }`}>
+                                                            {t.status === 'completed' ? 'CERRADA' : t.status === 'standby' ? 'STANDBY' : t.status === 'deleted' ? 'ELIMINADA' : 'ACTIVA'}
+                                                        </span>
+                                                        {t.prio && (
+                                                            <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-yellow-100 text-yellow-800 flex items-center gap-1 shadow-sm" title="Alta Prioridad">
+                                                                <AlertTriangle size={10} /> CRÍTICA
+                                                            </span>
+                                                        )}
+                                                        {t.cat && t.cat !== 'Otro' && (
+                                                            <span className="text-[9px] px-1.5 py-0.5 rounded font-bold border bg-white" style={{ borderColor: CATEGORY_COLORS[t.cat] + '40', color: CATEGORY_COLORS[t.cat] }}>
+                                                                {t.cat}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-[9px] text-gray-400 font-mono mt-0.5 shrink-0">{new Date(t.id).toLocaleDateString()}</span>
+                                                </div>
+                                                <p className={`text-[12px] font-medium mb-1.5 leading-snug ${t.status === 'completed' || t.status === 'deleted' ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
+                                                    {t.text}
+                                                </p>
+                                                {/* Meta & Notes Action */}
+                                                <div className="mt-1.5 pt-1.5 border-t border-gray-200/60 w-full">
+                                                    {t.status === 'completed' && t.closingNote && (
+                                                        <div className="text-[10px] text-green-700 italic truncate mb-1.5">✅ Cerró con: {t.closingNote}</div>
+                                                    )}
+                                                    <div className="flex justify-between items-center w-full">
+                                                        <div className="flex gap-2 items-center">
+                                                            {t.date && <span className="text-[9px] text-gray-500 font-medium">📅 Vence: {t.date}</span>}
+                                                        </div>
+                                                        {t.note && t.note.trim() !== '' && (
+                                                            <div className="text-[9px] text-blue-500 flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                                                                <Info size={10} /> {isExpanded ? 'Ocultar' : 'Ver detalle'}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* Expandable info */}
+                                                    {isExpanded && t.note && t.note.trim() !== '' && (
+                                                        <div className="text-[11px] text-gray-700 bg-white border border-gray-100 p-2.5 rounded-lg mt-2.5 shadow-sm whitespace-pre-wrap leading-relaxed animate-in fade-in slide-in-from-top-1">
+                                                            {t.note}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
+                                        );
+                                    })}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* NEW LAYOUT: BOTTOM ZONE (GENERAL SUMMARY COMPACTED) */}
+                            <div className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col mb-4">
+                                <h3 className="font-bold text-textPrimary mb-4 flex items-center gap-2 text-sm uppercase">
+                                    <Users size={16} className="text-gray-400" /> Vista Rápida del Usuario
+                                </h3>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    {/* VENCIDAS (Col 1) */}
+                                    <div className="flex flex-col h-full bg-red-50/10 rounded-lg p-2 border border-transparent hover:border-red-50 transition-colors">
+                                        <h4 className="text-[11px] font-bold text-red-700 uppercase mb-3 flex justify-between items-center border-b border-red-100 pb-2">
+                                            <span className="flex items-center gap-1.5"><AlertCircle size={14} /> Vencidas</span>
+                                            <span className="bg-red-100 text-red-800 px-2 rounded-full shadow-inner">{groupedTasks.overdue.length}</span>
+                                        </h4>
+                                        <div className="space-y-2 max-h-[180px] overflow-y-auto custom-scrollbar pr-1">
+                                            {groupedTasks.overdue.length === 0 && <p className="text-[11px] text-gray-400 italic">Sin tareas vencidas.</p>}
+                                            {groupedTasks.overdue.map(t => renderTaskWithDetails(t))}
+                                        </div>
+                                    </div>
+
+                                    {/* PARA HOY (Col 2) */}
+                                    <div className="flex flex-col h-full bg-blue-50/10 rounded-lg p-2 border border-transparent hover:border-blue-50 transition-colors">
+                                        <h4 className="text-[11px] font-bold text-blue-700 uppercase mb-3 flex justify-between items-center border-b border-blue-100 pb-2">
+                                            <span className="flex items-center gap-1.5"><Calendar size={14} /> Para Hoy</span>
+                                            <span className="bg-blue-100 text-blue-800 px-2 rounded-full shadow-inner">{groupedTasks.today.length}</span>
+                                        </h4>
+                                        <div className="space-y-2 max-h-[180px] overflow-y-auto custom-scrollbar pr-1">
+                                            {groupedTasks.today.length === 0 && <p className="text-[11px] text-gray-400 italic">Todo listo por hoy.</p>}
+                                            {groupedTasks.today.map(t => renderTaskWithDetails(t))}
+                                        </div>
+                                    </div>
+
+                                    {/* BACKLOG (Col 3) */}
+                                    <div className="flex flex-col h-full bg-gray-50/50 rounded-lg p-3 border border-gray-100">
+                                        <h4 className="text-[11px] font-bold text-gray-600 uppercase mb-3 flex justify-between items-center pb-2 border-b border-gray-200">
+                                            <span className="flex items-center gap-1.5">📥 Bandeja Backlog</span>
+                                            <span className="bg-gray-200 text-gray-800 px-2 rounded-full shadow-inner">{groupedTasks.backlog.length}</span>
+                                        </h4>
+                                        <div className="space-y-2 max-h-[180px] overflow-y-auto custom-scrollbar pr-1">
+                                            {groupedTasks.backlog.length === 0 && <p className="text-[11px] text-gray-400 italic">Bandeja vacía.</p>}
+                                            {groupedTasks.backlog.map(t => renderTaskWithDetails(t))}
                                         </div>
                                     </div>
                                 </div>

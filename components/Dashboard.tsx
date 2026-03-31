@@ -93,6 +93,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
   // --- AUTOMATIC SYNC STATE ---
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'saved' | 'error' | 'unsaved'>('idle');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
+  const [lastTaskIds, setLastTaskIds] = useState<Set<number>>(new Set());
 
   // Ref to hold latest state for the interval (to avoid stale closures)
   const currentStateRef = useRef<BackupData>({ rtM: [], rtS: {}, tks: [], h: [], cTks: [], ach: [], rtH: {} });
@@ -123,12 +125,63 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
   // --- AUTO-SAVE INTERVAL (Every 30 seconds if dirty) ---
   useEffect(() => {
     const interval = setInterval(() => {
-      if (hasUnsavedChanges) {
+      if (hasUnsavedChanges && autoSyncEnabled) {
         triggerAutoSave();
       }
     }, 30000); // 30 segundos
     return () => clearInterval(interval);
-  }, [hasUnsavedChanges]);
+  }, [hasUnsavedChanges, autoSyncEnabled]);
+
+  // --- NEW: AUTO-POLL FOR ADMIN TASKS ---
+  useEffect(() => {
+    if (tasks.length > 0 && lastTaskIds.size === 0) {
+      setLastTaskIds(new Set(tasks.map(t => t.id)));
+    }
+  }, [tasks, lastTaskIds]);
+
+  const checkForNewTasks = async () => {
+    try {
+        const res = await fetch('/api/sync/get');
+        if (res.ok) {
+            const result = await res.json() as GlobalCloudData;
+            const myData = result.users?.[user];
+            if (myData && myData.tks) {
+                const cloudTasks = myData.tks;
+                const currentIds = new Set(currentStateRef.current.tks.map(t => t.id));
+                const newTasks = cloudTasks.filter(t => t.del === 'Admin' && !currentIds.has(t.id));
+                
+                if (newTasks.length > 0) {
+                    // Trigger visual notification with a bell to activate custom styling
+                    showToast(`🔔 ¡NUEVA ASIGNACIÓN! Tienes ${newTasks.length} tarea(s) nueva(s) de Administración.`);
+                    
+                    // Inject new tasks into active array
+                    setTasks(prev => {
+                        const updated = [...newTasks, ...prev];
+                        setLastTaskIds(new Set(updated.map(t => t.id)));
+                        currentStateRef.current.tks = updated;
+                        return updated;
+                    });
+                    
+                    // Mark dirty to ensure it persists in the next auto-save to cloud
+                    setHasUnsavedChanges(true);
+                }
+            }
+        }
+    } catch (e) {
+        console.error("Auto-pull error", e);
+    }
+  };
+
+  useEffect(() => {
+      if (autoSyncEnabled) {
+          const interval = setInterval(() => {
+              if (!hasUnsavedChanges && syncStatus !== 'syncing') {
+                 checkForNewTasks();
+              }
+          }, 60000); // 1 minuto
+          return () => clearInterval(interval);
+      }
+  }, [autoSyncEnabled, hasUnsavedChanges, syncStatus]);
 
   // Trigger from Cloud Modal or Interval
   const triggerAutoSave = async () => {
@@ -626,6 +679,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
       <span id="kpi-routine-value" className="hidden">{routinePct}%</span>
 
       <div className="relative z-10">
+        {/* Toggle Panel UI */}
+        <div className="flex justify-end px-5 pt-3 pb-1 max-w-[1600px] mx-auto w-full">
+            <label className="flex items-center gap-2 cursor-pointer bg-white border border-gray-200 px-3 py-1.5 rounded-full shadow-sm hover:bg-gray-50 transition-colors">
+                <input type="checkbox" className="sr-only" checked={autoSyncEnabled} onChange={(e) => setAutoSyncEnabled(e.target.checked)} />
+                <div className={`w-2.5 h-2.5 rounded-full ${autoSyncEnabled ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.6)]' : 'bg-gray-300'}`}></div>
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{autoSyncEnabled ? 'Auto-Sync Activo' : 'Auto-Sync Pausado'}</span>
+            </label>
+        </div>
         <KPIBoard
           routinePercentage={routinePct}
           tasksDoneToday={tasksDoneToday}
@@ -791,7 +852,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
 
       {/* Toast Notification */}
       <div
-        className={`fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#323232] text-white text-xs px-4 py-2 rounded shadow-lg transition-opacity duration-500 z-[100] ${toast ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed bottom-8 left-1/2 -translate-x-1/2 ${toast?.includes('🔔') ? 'bg-green-600 text-white font-bold px-5 py-3 text-sm animate-bounce shadow-[0_0_20px_rgba(22,163,74,0.6)]' : 'bg-[#323232] text-white px-4 py-2 text-xs'} rounded shadow-lg transition-all duration-500 z-[100] ${toast ? 'opacity-100' : 'opacity-0 pointer-events-none scale-95'}`}
       >
         {toast}
       </div>
