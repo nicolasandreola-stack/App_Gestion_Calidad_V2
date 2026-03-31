@@ -685,7 +685,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
         user={user}
         onExport={handleExport}
         onImport={handleImport}
-        onReport={handleReport}
         onOpenAssistant={() => setShowAssistant(true)}
         onOpenCloud={() => setShowCloudSync(true)}
         onOpenAchievements={() => setShowAchievements(true)}
@@ -693,19 +692,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
         onLogout={onLogout}
         onSwitchToAdmin={onSwitchToAdmin}
         syncStatus={syncStatus}
+        autoSyncEnabled={autoSyncEnabled}
+        onToggleAutoSync={setAutoSyncEnabled}
       />
 
       <span id="kpi-routine-value" className="hidden">{routinePct}%</span>
 
-      <div className="relative z-10">
-        {/* Toggle Panel UI */}
-        <div className="flex justify-end px-5 pt-3 pb-1 max-w-[1600px] mx-auto w-full">
-            <label className="flex items-center gap-2 cursor-pointer bg-white border border-gray-200 px-3 py-1.5 rounded-full shadow-sm hover:bg-gray-50 transition-colors">
-                <input type="checkbox" className="sr-only" checked={autoSyncEnabled} onChange={(e) => setAutoSyncEnabled(e.target.checked)} />
-                <div className={`w-2.5 h-2.5 rounded-full ${autoSyncEnabled ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.6)]' : 'bg-gray-300'}`}></div>
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{autoSyncEnabled ? 'Auto-Sync Activo' : 'Auto-Sync Pausado'}</span>
-            </label>
-        </div>
+      <div className="relative z-10 px-5 pt-3">
         <KPIBoard
           routinePercentage={routinePct}
           tasksDoneToday={tasksDoneToday}

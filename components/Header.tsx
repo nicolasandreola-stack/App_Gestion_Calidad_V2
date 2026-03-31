@@ -1,11 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Folder, BarChart3, Bot, Save, Upload, Megaphone, LogOut, UserCircle, Shield, Cloud, Menu, X, ChevronDown, ChevronUp, FileSpreadsheet, FolderOpen, FileText, Table, ExternalLink, Mail, Loader2, CheckCircle2, AlertCircle, Calendar, Trophy, BarChart2 } from 'lucide-react';
+import { Folder, BarChart3, Bot, Save, Upload, LogOut, UserCircle, Shield, Cloud, Menu, X, ChevronDown, ChevronUp, FileSpreadsheet, FolderOpen, FileText, Table, ExternalLink, Mail, Loader2, CheckCircle2, AlertCircle, Calendar, Trophy, BarChart2 } from 'lucide-react';
 
 interface HeaderProps {
   user?: string;
   onExport: () => void;
   onImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onReport: () => void;
   onOpenAssistant: () => void;
   onLogout?: () => void;
   onSwitchToAdmin?: () => void;
@@ -13,9 +12,11 @@ interface HeaderProps {
   onOpenAchievements?: () => void;
   onOpenStats?: () => void;
   syncStatus?: 'idle' | 'syncing' | 'saved' | 'error' | 'unsaved';
+  autoSyncEnabled?: boolean;
+  onToggleAutoSync?: (enabled: boolean) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, onExport, onImport, onReport, onOpenAssistant, onLogout, onSwitchToAdmin, onOpenCloud, onOpenAchievements, onOpenStats, syncStatus = 'idle' }) => {
+const Header: React.FC<HeaderProps> = ({ user, onExport, onImport, onOpenAssistant, onLogout, onSwitchToAdmin, onOpenCloud, onOpenAchievements, onOpenStats, syncStatus = 'idle', autoSyncEnabled = true, onToggleAutoSync }) => {
   const dateStr = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -188,10 +189,14 @@ const Header: React.FC<HeaderProps> = ({ user, onExport, onImport, onReport, onO
         </button>
         <input ref={fileInputRef} type="file" className="hidden" onChange={onImport} accept=".json" />
 
-        <button onClick={onReport} className="flex items-center gap-2 bg-accentBlue text-white px-4 py-1.5 text-[13px] font-medium rounded-full hover:bg-blue-700 transition-colors shadow-sm shrink-0 whitespace-nowrap">
-          <Megaphone size={14} />
-          <span>Reportar</span>
-        </button>
+        {/* Auto-Sync Toggle — reemplaza el botón Reportar */}
+        <label className="flex items-center gap-2 cursor-pointer bg-white border border-gray-200 px-3 py-1.5 rounded-full shadow-sm hover:bg-gray-50 transition-colors shrink-0">
+          <input type="checkbox" className="sr-only" checked={autoSyncEnabled} onChange={(e) => onToggleAutoSync?.(e.target.checked)} />
+          <div className={`w-2.5 h-2.5 rounded-full transition-colors ${autoSyncEnabled ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.6)]' : 'bg-gray-300'}`}></div>
+          <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">
+            {autoSyncEnabled ? 'Auto-Sync Activo' : 'Auto-Sync Pausado'}
+          </span>
+        </label>
 
         {onLogout && (
            <button onClick={onLogout} title="Cerrar Sesión" className="ml-2 p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors">
@@ -201,11 +206,6 @@ const Header: React.FC<HeaderProps> = ({ user, onExport, onImport, onReport, onO
       </div>
 
       <div className="flex md:hidden items-center gap-3">
-         {onReport && (
-             <button onClick={onReport} className="flex items-center justify-center w-8 h-8 bg-accentBlue text-white rounded-full shadow-sm">
-               <Megaphone size={14} />
-             </button>
-         )}
          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 text-textSecondary hover:bg-gray-100 rounded-md transition-colors">
            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
          </button>
