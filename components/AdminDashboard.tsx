@@ -65,6 +65,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
 
     // Expanded Tasks State (For Summary View)
     const [expandedTaskIds, setExpandedTaskIds] = useState<Set<number>>(new Set());
+    const [notifications, setNotifications] = useState<Record<string, boolean>>({}); // User feedback notifications
+    const lastCommentsRef = useRef<Record<string, string>>({}); // Track last seen user comments to detect new ones
 
     // Assigned History Filter State
     const [assignedHistoryFilter, setAssignedHistoryFilter] = useState<'all' | 'active' | 'inactive'>('all');
@@ -84,6 +86,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
     useEffect(() => {
         if (!selectedUser) return;
         loadUserData(selectedUser);
+        
+        // Limpiar notificación del usuario al seleccionarlo
+        if (notifications[selectedUser]) {
+            setNotifications(prev => {
+                const next = { ...prev };
+                delete next[selectedUser];
+                return next;
+            });
+        }
     }, [selectedUser]);
 
     // AUTO-REFRESH LOGIC
@@ -180,18 +191,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                     globalData.users[selectedUser] = { tks: [], rtM: [], rtS: {}, h: [], cTks: [] };
                 }
 
-                // Reemplazar la lista de tareas con el estado local actualizado
-                globalData.users[selectedUser].tks = updatedTasks;
+                // FUSIONAR: Mantener lo que hay en la nube, pero añadir nuestra nueva tarea
+                const cloudTasks = globalData.users[selectedUser].tks || [];
+                const finalTasks = [...cloudTasks, newTask];
+                
+                globalData.users[selectedUser].tks = finalTasks;
                 globalData.lastUpdate = new Date().toISOString();
 
                 // C. Subir (Push) los datos actualizados
                 await fetch(`/api/sync/push`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(globalData)
                 });
+                
+                // Actualizar localmente con lo que subimos
+                setUserTasks(finalTasks);
+                localStorage.setItem(getUserKey(selectedUser, "tasks"), JSON.stringify(finalTasks));
+
 
                 toast.success(`Tarea asignada a ${selectedUser.toUpperCase()} y sincronizada en Sheets.`);
             } else {
@@ -245,14 +262,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                     globalData.users[selectedUser] = { tks: [], rtM: [], rtS: {}, h: [], cTks: [] };
                 }
                 
-                // Reemplazar con el estado local que ya tiene el nuevo comentario
-                globalData.users[selectedUser].tks = updatedTasks;
+                // FUSIONAR: Buscar la tarea en la nube y actualizar solo su adminComments
+                const cloudTasks = globalData.users[selectedUser].tks || [];
+                const finalTasks = cloudTasks.map(t => 
+                    t.id === commentModalTask.id ? { ...t, adminComments: updatedComments } : t
+                );
+
+                globalData.users[selectedUser].tks = finalTasks;
                 globalData.lastUpdate = new Date().toISOString();
+
                 await fetch(`/api/sync/push`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(globalData)
                 });
+
+                // Actualizar localmente
+                setUserTasks(finalTasks);
+                localStorage.setItem(getUserKey(selectedUser, 'tasks'), JSON.stringify(finalTasks));
                 toast.success('Consulta enviada y guardada en Sheets.');
             }
         } catch (e) {
@@ -293,14 +320,36 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                 const globalData = result as GlobalCloudData;
 
                 if (globalData && globalData.users && !Array.isArray(globalData.users)) {
+                    let hasNewFeedback = false;
+                    const newNotifications = { ...notifications };
+
                     Object.keys(globalData.users).forEach(u => {
                         const d = globalData.users[u];
+                        
+                        // Detectar Feedback Nuevo (userComments ha cambiado)
+                        if (d.tks) {
+                            const allUserComments = d.tks.map(t => t.userComments || "").join("|");
+                            if (lastCommentsRef.current[u] !== undefined && lastCommentsRef.current[u] !== allUserComments) {
+                                if (u !== selectedUser || !commentModalTask) {
+                                    newNotifications[u] = true;
+                                    hasNewFeedback = true;
+                                }
+                            }
+                            lastCommentsRef.current[u] = allUserComments;
+                        }
+
                         if (d.tks) localStorage.setItem(getUserKey(u, "tasks"), JSON.stringify(d.tks));
                         if (d.rtM) localStorage.setItem(getUserKey(u, "rt_master"), JSON.stringify(d.rtM));
                         if (d.rtS) localStorage.setItem(getUserKey(u, "rt_state"), JSON.stringify(d.rtS));
                         if (d.cTks) localStorage.setItem(getUserKey(u, "completed_tasks"), JSON.stringify(d.cTks));
                         if (d.dTks) localStorage.setItem(getUserKey(u, "deleted_tasks"), JSON.stringify(d.dTks));
                     });
+
+                    setNotifications(newNotifications);
+                    if (hasNewFeedback) {
+                        playAdminNotificationSound();
+                        toast.info("¡Nueva respuesta de un usuario recibida!", { icon: "💬" });
+                    }
 
                     if (selectedUser) loadUserData(selectedUser);
                     setLastUpdate(new Date().toLocaleTimeString());
@@ -314,6 +363,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
             setIsSyncing(false);
         }
     };
+
+    // Notification Sound for Admin
+    const playAdminNotificationSound = () => {
+        try {
+            const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const now = ctx.currentTime;
+            const playTone = (freq: number, start: number, dur: number) => {
+                const osc = ctx.createOscillator();
+                const g = ctx.createGain();
+                osc.connect(g); g.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, start);
+                g.gain.setValueAtTime(0, start);
+                g.gain.linearRampToValueAtTime(0.2, start + 0.01);
+                g.gain.exponentialRampToValueAtTime(0.001, start + dur);
+                osc.start(start); osc.stop(start + dur);
+            };
+            playTone(440, now, 0.15); // La
+            playTone(554, now + 0.1, 0.2); // Do#
+        } catch (e) {}
+    };
+
 
     const groupTasks = () => {
         const todayStr = new Date().toLocaleDateString('en-CA');
@@ -545,10 +616,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                             <button
                                 key={u}
                                 onClick={() => setSelectedUser(u)}
-                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${selectedUser === u ? 'bg-blue-50 text-accentBlue font-medium border border-blue-100' : 'text-textPrimary hover:bg-gray-50'}`}
+                                className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors w-full ${selectedUser === u ? 'bg-blue-50 text-accentBlue font-medium border border-blue-100' : 'text-textPrimary hover:bg-gray-50'}`}
                             >
-                                <UserCircle size={18} />
-                                <span className="capitalize truncate">{u}</span>
+                                <div className="flex items-center gap-3 truncate">
+                                    <UserCircle size={18} />
+                                    <span className="capitalize truncate">{u}</span>
+                                </div>
+                                {notifications[u] && (
+                                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span>
+                                )}
                             </button>
                         ))}
                     </div>
@@ -1143,6 +1219,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                                                 >
                                                                     <MessageSquare size={9} />
                                                                     {t.adminComments ? 'Hilo' : 'Consultar'}
+                                                                    {t.userComments && (
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse ml-0.5"></span>
+                                                                    )}
                                                                 </button>
                                                             )}
                                                             {t.note && t.note.trim() !== '' && (
