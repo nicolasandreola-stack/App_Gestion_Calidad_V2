@@ -46,6 +46,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
     // UI States
     const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
     const [showTokenHelp, setShowTokenHelp] = useState(false);
+    const [adminViewTab, setAdminViewTab] = useState<'asignaciones' | 'vista_rapida'>('asignaciones');
 
     // Modal Details State
     const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -689,11 +690,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                 />
                             </div>
 
-                            {/* NEW LAYOUT: TOP ZONE (DELEGATION + DONUT + HISTORY) */}
-                            <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_220px_1.1fr] gap-6 mb-6">
-                                
-                                {/* 1. DELEGATION PANEL (WIDE) */}
-                                <div className="bg-white border border-borderLight rounded-xl p-6 shadow-sm flex flex-col transition-all hover:shadow-md h-[400px]">
+                            {/* TAB MENU */}
+                            <div className="flex border-b border-gray-200 mb-6 gap-6">
+                                <button
+                                    onClick={() => setAdminViewTab('asignaciones')}
+                                    className={`pb-3 -mb-px px-2 text-sm font-bold transition-all border-b-2 ${adminViewTab === 'asignaciones' ? 'text-accentBlue border-accentBlue' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+                                >
+                                    Asignaciones y Delegación
+                                </button>
+                                <button
+                                    onClick={() => setAdminViewTab('vista_rapida')}
+                                    className={`pb-3 -mb-px px-2 text-sm font-bold transition-all border-b-2 ${adminViewTab === 'vista_rapida' ? 'text-accentBlue border-accentBlue' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+                                >
+                                    Vista Rápida del Usuario
+                                </button>
+                            </div>
+
+                            {/* CONDITIONAL RENDER: ASIGNACIONES */}
+                            {adminViewTab === 'asignaciones' && (
+                                <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_220px_1.1fr] gap-6 mb-6">
+                                    
+                                    {/* 1. DELEGATION PANEL (WIDE) */}
+                                    <div className="bg-white border border-borderLight rounded-xl p-6 shadow-sm flex flex-col transition-all hover:shadow-md h-full min-h-[420px]">
                                     <h3 className="font-bold text-textPrimary mb-5 flex items-center gap-2">
                                         <ArrowRight size={20} className="text-accentBlue" /> Asignar Nueva Tarea
                                     </h3>
@@ -784,7 +802,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                 </div>
 
                                 {/* 2. MINI DONUT CHART (MIDDLE) */}
-                                <div className="bg-white border border-borderLight rounded-xl p-4 shadow-sm flex flex-col items-center justify-center relative h-[400px]">
+                                <div className="bg-white border border-borderLight rounded-xl p-4 shadow-sm flex flex-col items-center justify-center relative h-full min-h-[420px]">
                                     <h3 className="font-bold text-textPrimary text-[10px] uppercase tracking-wide text-center absolute top-5 w-full text-slate-400">
                                         Estado General
                                     </h3>
@@ -852,7 +870,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                 </div>
 
                                 {/* 3. ASSIGNED HISTORY PANEL (NARROW) */}
-                                <div className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col h-[400px]">
+                                <div className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col h-full min-h-[420px]">
                                     <div className="flex justify-between items-center mb-4">
                                         <h3 className="font-bold text-textPrimary flex items-center gap-2 text-xs uppercase tracking-wide">
                                             <ClipboardList size={16} className="text-purple-500" /> Tareas Delegadas
@@ -957,9 +975,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                     </div>
                                 </div>
                             </div>
+                            )}
 
-                            {/* NEW LAYOUT: BOTTOM ZONE (GENERAL SUMMARY COMPACTED) */}
-                            <div className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col mb-4">
+                            {/* CONDITIONAL RENDER: VISTA RAPIDA */}
+                            {adminViewTab === 'vista_rapida' && (
+                                <div className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col mb-4">
                                 <h3 className="font-bold text-textPrimary mb-4 flex items-center gap-2 text-sm uppercase">
                                     <Users size={16} className="text-gray-400" /> Vista Rápida del Usuario
                                 </h3>
@@ -971,7 +991,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                             <span className="flex items-center gap-1.5"><AlertCircle size={14} /> Vencidas</span>
                                             <span className="bg-red-100 text-red-800 px-2 rounded-full shadow-inner">{groupedTasks.overdue.length}</span>
                                         </h4>
-                                        <div className="space-y-2 max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
+                                        <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
                                             {groupedTasks.overdue.length === 0 && <p className="text-[11px] text-gray-400 italic">Sin tareas vencidas.</p>}
                                             {groupedTasks.overdue.map(t => renderTaskWithDetails(t))}
                                         </div>
@@ -983,7 +1003,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                             <span className="flex items-center gap-1.5"><Calendar size={14} /> Para Hoy</span>
                                             <span className="bg-blue-100 text-blue-800 px-2 rounded-full shadow-inner">{groupedTasks.today.length}</span>
                                         </h4>
-                                        <div className="space-y-2 max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
+                                        <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
                                             {groupedTasks.today.length === 0 && <p className="text-[11px] text-gray-400 italic">Todo listo por hoy.</p>}
                                             {groupedTasks.today.map(t => renderTaskWithDetails(t))}
                                         </div>
@@ -995,13 +1015,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                             <span className="flex items-center gap-1.5">📥 Bandeja Backlog</span>
                                             <span className="bg-gray-200 text-gray-800 px-2 rounded-full shadow-inner">{groupedTasks.backlog.length}</span>
                                         </h4>
-                                        <div className="space-y-2 max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
+                                        <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
                                             {groupedTasks.backlog.length === 0 && <p className="text-[11px] text-gray-400 italic">Bandeja vacía.</p>}
                                             {groupedTasks.backlog.map(t => renderTaskWithDetails(t))}
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            )}
                         </div>
                     </>
                 ) : (
