@@ -41,6 +41,11 @@ export interface Task {
 
   // Confirmación de recepción (cuando el usuario cierra el aviso de nueva asignación)
   acknowledged?: boolean;
+
+  // Comentarios/Consultas acumulativos (columnas T y U en Sheets)
+  // Formato acumulativo: "[DD/MM/YYYY] Texto del comentario\n[DD/MM/YYYY] Otro comentario"
+  adminComments?: string;  // Consultas del Admin → columna T
+  userComments?: string;   // Respuestas del Usuario → columna U
 }
 
 export interface RoutineItem {

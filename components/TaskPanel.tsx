@@ -20,10 +20,11 @@ interface TaskPanelProps {
   onQuickSchedule?: (id: number, type: 'today' | 'tomorrow') => void;
   onOpenHistory: () => void;
   onOpenCompletedRegistry: () => void;
+  onAdminQuery?: (task: Task) => void;
 }
 
 const TaskPanel: React.FC<TaskPanelProps> = ({ 
-  tasks, onAdd, onEdit, onDelete, onRequestComplete, onRequestStandby, onTogglePriority, onUpdateNote, onUpdateSubtasks, onReorder, onQuickSchedule, onOpenHistory, onOpenCompletedRegistry 
+  tasks, onAdd, onEdit, onDelete, onRequestComplete, onRequestStandby, onTogglePriority, onUpdateNote, onUpdateSubtasks, onReorder, onQuickSchedule, onOpenHistory, onOpenCompletedRegistry, onAdminQuery
 }) => {
   // View Mode: 'list' (Tabs) or 'matrix' (Eisenhower)
   const [viewMode, setViewMode] = useState<'list' | 'matrix'>('list');
@@ -332,6 +333,17 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
             
             {/* Standby Indicator Text */}
             {isStandby && <span className="text-[9px] text-amber-600 font-bold ml-1 bg-amber-50 px-1 rounded border border-amber-100">PAUSA</span>}
+
+            {/* Admin Query Badge */}
+            {task.del?.toLowerCase() === 'admin' && task.adminComments && onAdminQuery && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onAdminQuery(task); }}
+                className="ml-1 flex items-center gap-1 text-[9px] bg-purple-100 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded-full font-bold hover:bg-purple-200 transition-colors shrink-0 animate-pulse"
+                title="El Admin tiene una consulta sobre esta tarea"
+              >
+                💬 Consulta
+              </button>
+            )}
           </div>
 
           {/* Actions */}

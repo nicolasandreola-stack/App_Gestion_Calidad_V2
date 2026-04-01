@@ -56,7 +56,7 @@ export async function fetchFromSheets(): Promise<GlobalCloudData> {
     try {
         const tareasRes = await sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
-            range: "Tareas!A2:S", // Columna S = acknowledged
+            range: "Tareas!A2:U", // Columna U = userComments
         });
         tareasRows = tareasRes.data.values || [];
     } catch (e) {
@@ -65,7 +65,7 @@ export async function fetchFromSheets(): Promise<GlobalCloudData> {
 
     // Parse Tareas
     tareasRows.forEach(row => {
-        const [id, usuario, fechaCarga, nombre, subtarea, notas, cat, comp, fechaProg, prior, estado, delegado, l1, n1, l2, n2, l3, n3, acknowledged] = row;
+        const [id, usuario, fechaCarga, nombre, subtarea, notas, cat, comp, fechaProg, prior, estado, delegado, l1, n1, l2, n2, l3, n3, acknowledged, adminComments, userComments] = row;
         if (!usuario) return;
         const u = usuario.toLowerCase();
         if (!globalData.users[u]) initUser(globalData, u);
@@ -93,7 +93,9 @@ export async function fetchFromSheets(): Promise<GlobalCloudData> {
             completedAt: estado === "Completada" ? (fechaCarga || new Date().toLocaleDateString()) : undefined,
             deleted: estado === "Eliminada",
             subtasks: parsedSubtasks,
-            acknowledged: acknowledged === "TRUE" || acknowledged === "Sí" || acknowledged === "true"
+            acknowledged: acknowledged === "TRUE" || acknowledged === "Sí" || acknowledged === "true",
+            adminComments: adminComments || undefined,
+            userComments: userComments || undefined,
         };
 
         if (estado === "Completada") {
@@ -188,7 +190,9 @@ export async function pushToSheets(globalData: GlobalCloudData) {
                 t.l1 || "", t.n1 || "",
                 t.l2 || "", t.n2 || "",
                 t.l3 || "", t.n3 || "",
-                t.acknowledged ? "Sí" : "No"  // Columna S
+                t.acknowledged ? "Sí" : "No",  // Columna S
+                t.adminComments || "",           // Columna T
+                t.userComments || "",             // Columna U
             ]);
         });
 
@@ -220,14 +224,14 @@ export async function pushToSheets(globalData: GlobalCloudData) {
 
     try {
         // Clear old rows first (starting from row 2)
-        await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Tareas!A2:S" });
+        await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Tareas!A2:U" });
         await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Rutinas!A2:P" });
 
         // Batch upload
         if (tareasRows.length > 0) {
             await sheets.spreadsheets.values.update({
                 spreadsheetId: SPREADSHEET_ID,
-                range: "Tareas!A2:S",
+                range: "Tareas!A2:U",
                 valueInputOption: "RAW",
                 requestBody: { values: tareasRows }
             });

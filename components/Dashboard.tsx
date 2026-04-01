@@ -7,7 +7,7 @@ import { RoutineModal, TaskModal, HistoryModal, RoutineManagerModal, NoteActionM
 import AsistenteChat from './AsistenteChat';
 import CloudSyncModal from './CloudSyncModal';
 import { Task, RoutineItem, RoutineState, HistoryEntry, BackupData, GlobalCloudData, Achievement } from '../types';
-import { Trophy } from 'lucide-react';
+import { Trophy, MessageSquare, Send, Loader2, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 
@@ -95,6 +95,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
   const [lastTaskIds, setLastTaskIds] = useState<Set<number>>(new Set());
   const [newAssignmentModal, setNewAssignmentModal] = useState<{ count: number; tasks: Task[] } | null>(null);
+  const [adminQueryModal, setAdminQueryModal] = useState<Task | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [isSendingReply, setIsSendingReply] = useState(false);
 
   // Ref to hold latest state for the interval (to avoid stale closures)
   const currentStateRef = useRef<BackupData>({ rtM: [], rtS: {}, tks: [], h: [], cTks: [], ach: [], rtH: {} });
@@ -318,6 +321,35 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
     } catch (e) {
       // Silenciar si el navegador bloquea el audio
       console.warn('Audio notification blocked:', e);
+    }
+  };
+
+  // --- Handler: Responder consulta del Admin ---
+  const handleReplyToAdminComment = async () => {
+    if (!adminQueryModal || !replyText.trim()) return;
+    setIsSendingReply(true);
+
+    const dateStr = new Date().toLocaleDateString('es-AR');
+    const newEntry = `[${dateStr}] ${replyText.trim()}`;
+    const existing = adminQueryModal.userComments || '';
+    const updatedReply = existing ? `${existing}\n${newEntry}` : newEntry;
+
+    const updatedTask = { ...adminQueryModal, userComments: updatedReply };
+    const updatedTasks = currentStateRef.current.tks.map(t =>
+      t.id === adminQueryModal.id ? updatedTask : t
+    );
+    currentStateRef.current.tks = updatedTasks;
+    setTasks(updatedTasks);
+    setAdminQueryModal(updatedTask);
+    setReplyText('');
+
+    try {
+      await performFetchMergePush(currentStateRef.current);
+      toast.success('Respuesta guardada y sincronizada.');
+    } catch (e) {
+      toast.error('Respuesta guardada localmente. Error al sincronizar.');
+    } finally {
+      setIsSendingReply(false);
     }
   };
 
@@ -786,6 +818,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
           onQuickSchedule={handleQuickSchedule}
           onOpenHistory={() => setShowHistory(true)}
           onOpenCompletedRegistry={() => setShowCompletedRegistry(true)}
+          onAdminQuery={(task) => { setAdminQueryModal(task); setReplyText(''); }}
         />
       </main>
 
@@ -948,6 +981,75 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
               >
                 ✅ Entendido, ya lo veo
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ADMIN QUERY REPLY MODAL */}
+      {adminQueryModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-purple-100 animate-in zoom-in-95 duration-300">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-5 py-4 flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <MessageSquare size={22} className="text-purple-200" />
+                <div>
+                  <div className="text-[10px] font-black text-purple-200 uppercase tracking-[0.2em] mb-0.5">Consulta del Administrador</div>
+                  <h2 className="text-sm font-bold text-white leading-snug line-clamp-2 max-w-[320px]">{adminQueryModal.text}</h2>
+                </div>
+              </div>
+              <button onClick={() => setAdminQueryModal(null)} className="text-purple-200 hover:text-white transition-colors shrink-0 ml-3">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Historial de consultas y respuestas */}
+            <div className="px-5 py-4 max-h-60 overflow-y-auto custom-scrollbar space-y-3">
+              {adminQueryModal.adminComments && (
+                <div>
+                  <p className="text-[10px] font-bold text-purple-600 uppercase tracking-wide mb-2 flex items-center gap-1">
+                    <MessageSquare size={10} /> Consulta del Admin
+                  </p>
+                  {adminQueryModal.adminComments.split('\n').filter(Boolean).map((line, i) => (
+                    <div key={i} className="bg-purple-50 border border-purple-100 rounded-lg px-3 py-2 mb-1.5 text-[11px] text-purple-900 leading-relaxed">
+                      {line}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {adminQueryModal.userComments && (
+                <div className="mt-2">
+                  <p className="text-[10px] font-bold text-green-600 uppercase tracking-wide mb-2">Tus respuestas anteriores</p>
+                  {adminQueryModal.userComments.split('\n').filter(Boolean).map((line, i) => (
+                    <div key={i} className="bg-green-50 border border-green-100 rounded-lg px-3 py-2 mb-1.5 text-[11px] text-green-900 leading-relaxed">
+                      {line}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Input respuesta */}
+            <div className="px-5 pb-5 border-t border-gray-100 pt-4 bg-gray-50/50">
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Tu respuesta</p>
+              <textarea
+                value={replyText}
+                onChange={e => setReplyText(e.target.value)}
+                placeholder="Ej: Estoy trabajando en ello, listo para el lunes..."
+                className="w-full p-3 border border-borderLight rounded-lg text-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none bg-white text-gray-900 min-h-[72px] resize-none transition-all"
+                onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) handleReplyToAdminComment(); }}
+              />
+              <div className="flex justify-between items-center mt-3">
+                <span className="text-[10px] text-gray-400">Ctrl+Enter para enviar</span>
+                <button
+                  onClick={handleReplyToAdminComment}
+                  disabled={!replyText.trim() || isSendingReply}
+                  className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isSendingReply ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                  {isSendingReply ? 'Enviando...' : 'Responder'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

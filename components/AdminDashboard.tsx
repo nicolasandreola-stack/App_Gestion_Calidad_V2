@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Users, BarChart3, CheckSquare, AlertTriangle, ArrowRight, Plus, UserCircle, LogOut, Trash2, LayoutDashboard, RefreshCw, Clock, Code, Key, ShieldAlert, Globe, Github, Server, FileText, ExternalLink, Sun, Calendar, ChevronDown, ChevronUp, X, Info, Link as LinkIcon, Loader2, Cloud, AlertCircle, PauseCircle, CalendarDays, CheckCircle2, Circle, Archive, ClipboardList } from 'lucide-react';
+import { Search, Users, BarChart3, CheckSquare, AlertTriangle, ArrowRight, Plus, UserCircle, LogOut, Trash2, LayoutDashboard, RefreshCw, Clock, Code, Key, ShieldAlert, Globe, Github, Server, FileText, ExternalLink, Sun, Calendar, ChevronDown, ChevronUp, X, Info, Link as LinkIcon, Loader2, Cloud, AlertCircle, PauseCircle, CalendarDays, CheckCircle2, Circle, Archive, ClipboardList, MessageSquare, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { Task, RoutineItem, RoutineState, Category, Complexity, GlobalCloudData, TIME_BLOCKS, COMPLEXITY_LABELS, CATEGORY_COLORS } from '../types';
 import { KPIDetailsModal, CompletedTasksModal } from './Modals';
@@ -38,6 +38,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
     const [newTaskPrio, setNewTaskPrio] = useState(false);
     const [newTaskDate, setNewTaskDate] = useState("");
     const [newTaskCategory, setNewTaskCategory] = useState<Category | "">("");
+    const [newTaskComplexity, setNewTaskComplexity] = useState<Complexity>('med');
+
+    // Estado para modal de consultas
+    const [commentModalTask, setCommentModalTask] = useState<Task & { status: string } | null>(null);
+    const [commentText, setCommentText] = useState("");
+    const [isSendingComment, setIsSendingComment] = useState(false);
 
     // Cloud Sync
     const [isSyncing, setIsSyncing] = useState(false);
@@ -145,12 +151,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
         const newTask: Task = {
             id: Date.now(),
             text: newTaskText,
-            cat: newTaskCategory || 'Otro', // Default category if empty
-            comp: 'med',
-            date: newTaskDate || undefined, // Optional date
+            cat: newTaskCategory || 'Otro',
+            comp: newTaskComplexity,
+            date: newTaskDate || undefined,
             l1: newTaskL1, n1: newTaskN1,
             l2: newTaskL2, n2: newTaskN2,
-            del: 'Admin', // Marcado como delegado por Admin
+            del: 'Admin',
             prio: newTaskPrio,
             note: newTaskNote || 'Asignado por Administración'
         };
@@ -210,6 +216,55 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
         setNewTaskPrio(false);
         setNewTaskDate("");
         setNewTaskCategory("");
+        setNewTaskComplexity('med');
+    };
+
+    const handleSendComment = async () => {
+        if (!commentModalTask || !commentText.trim() || !selectedUser) return;
+        setIsSendingComment(true);
+
+        const dateStr = new Date().toLocaleDateString('es-AR');
+        const newEntry = `[${dateStr}] ${commentText.trim()}`;
+        const existingComments = commentModalTask.adminComments || '';
+        const updatedComments = existingComments
+            ? `${existingComments}\n${newEntry}`
+            : newEntry;
+
+        // Actualizar la tarea localmente
+        const updatedTask = { ...commentModalTask, adminComments: updatedComments };
+        const updatedTasks = userTasks.map(t => t.id === commentModalTask.id ? updatedTask : t);
+        setUserTasks(updatedTasks);
+        localStorage.setItem(getUserKey(selectedUser, 'tasks'), JSON.stringify(updatedTasks));
+        setCommentModalTask(updatedTask as Task & { status: string });
+        setCommentText('');
+
+        // Sincronizar con Sheets
+        try {
+            const fetchRes = await fetch(`/api/sync/get`);
+            if (fetchRes.ok) {
+                const result = await fetchRes.json();
+                let globalData = result as GlobalCloudData;
+                if (!globalData.users) globalData.users = {};
+                if (!globalData.users[selectedUser]) {
+                    globalData.users[selectedUser] = { tks: [], rtM: [], rtS: {}, h: [], cTks: [] };
+                }
+                globalData.users[selectedUser].tks = (globalData.users[selectedUser].tks || []).map(t =>
+                    t.id === commentModalTask.id ? { ...t, adminComments: updatedComments } : t
+                );
+                globalData.lastUpdate = new Date().toISOString();
+                await fetch(`/api/sync/push`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(globalData)
+                });
+                toast.success('Consulta enviada y guardada en Sheets.');
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error('Consulta guardada localmente. Error al sincronizar con Sheets.');
+        } finally {
+            setIsSendingComment(false);
+        }
     };
 
     const handleDeleteUser = () => {
@@ -587,6 +642,86 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                 </div>
             </aside>
 
+            {/* COMMENT / CONSULTA MODAL */}
+            {commentModalTask && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-purple-100 animate-in zoom-in-95 duration-300">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-5 py-4 flex items-start justify-between">
+                            <div className="flex items-center gap-3">
+                                <MessageSquare size={22} className="text-purple-200" />
+                                <div>
+                                    <div className="text-[10px] font-black text-purple-200 uppercase tracking-[0.2em] mb-0.5">Consulta sobre tarea</div>
+                                    <h2 className="text-sm font-bold text-white leading-snug line-clamp-2 max-w-[320px]">{commentModalTask.text}</h2>
+                                </div>
+                            </div>
+                            <button onClick={() => setCommentModalTask(null)} className="text-purple-200 hover:text-white transition-colors shrink-0 ml-3">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Historial */}
+                        <div className="px-5 py-4 max-h-64 overflow-y-auto custom-scrollbar space-y-3">
+                            {/* Consultas del Admin */}
+                            {commentModalTask.adminComments ? (
+                                <div>
+                                    <p className="text-[10px] font-bold text-purple-600 uppercase tracking-wide mb-2 flex items-center gap-1">
+                                        <MessageSquare size={10} /> Tus consultas
+                                    </p>
+                                    {commentModalTask.adminComments.split('\n').filter(Boolean).map((line, i) => (
+                                        <div key={i} className="bg-purple-50 border border-purple-100 rounded-lg px-3 py-2 mb-1.5 text-[11px] text-purple-900 leading-relaxed">
+                                            {line}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-6 text-gray-400">
+                                    <MessageSquare size={28} className="mx-auto mb-2 text-gray-200" strokeWidth={1.5} />
+                                    <p className="text-[11px]">Sin consultas previas. Sé el primero en preguntar.</p>
+                                </div>
+                            )}
+
+                            {/* Respuestas del Usuario */}
+                            {commentModalTask.userComments && (
+                                <div className="mt-2">
+                                    <p className="text-[10px] font-bold text-green-600 uppercase tracking-wide mb-2 flex items-center gap-1">
+                                        💬 Respuestas de {commentModalTask.del === 'Admin' ? selectedUser : commentModalTask.del}
+                                    </p>
+                                    {commentModalTask.userComments.split('\n').filter(Boolean).map((line, i) => (
+                                        <div key={i} className="bg-green-50 border border-green-100 rounded-lg px-3 py-2 mb-1.5 text-[11px] text-green-900 leading-relaxed">
+                                            {line}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Input nueva consulta */}
+                        <div className="px-5 pb-5 border-t border-gray-100 pt-4 bg-gray-50/50">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Nueva consulta</p>
+                            <textarea
+                                value={commentText}
+                                onChange={e => setCommentText(e.target.value)}
+                                placeholder="Ej: ¿En qué quedó esto? ¿Cómo venimos?"
+                                className="w-full p-3 border border-borderLight rounded-lg text-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none bg-white text-gray-900 min-h-[72px] resize-none transition-all"
+                                onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) handleSendComment(); }}
+                            />
+                            <div className="flex justify-between items-center mt-3">
+                                <span className="text-[10px] text-gray-400">Ctrl+Enter para enviar</span>
+                                <button
+                                    onClick={handleSendComment}
+                                    disabled={!commentText.trim() || isSendingComment}
+                                    className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
+                                >
+                                    {isSendingComment ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                                    {isSendingComment ? 'Enviando...' : 'Enviar consulta'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* TOKEN HELP MODAL */}
             {showTokenHelp && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -725,27 +860,47 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
 
                             {/* CONDITIONAL RENDER: ASIGNACIONES */}
                             {adminViewTab === 'asignaciones' && (
-                                <div key="asignaciones" className="grid grid-cols-1 lg:grid-cols-[1.3fr_220px_1.1fr] gap-6 mb-6 animate-in fade-in slide-in-from-right-4 duration-500 ease-out">
+                                <div key="asignaciones" className="grid grid-cols-1 lg:grid-cols-[1fr_260px_1.1fr] gap-6 mb-6 animate-in fade-in slide-in-from-right-4 duration-500 ease-out">
                                     
-                                    {/* 1. DELEGATION PANEL (WIDE) */}
-                                    <div className="bg-white border border-borderLight rounded-xl p-6 shadow-sm flex flex-col transition-all hover:shadow-md h-[550px]">
-                                    <h3 className="font-bold text-textPrimary mb-5 flex items-center gap-2">
-                                        <ArrowRight size={20} className="text-accentBlue" /> Asignar Nueva Tarea
+                                    {/* 1. DELEGATION PANEL */}
+                                    <div className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col transition-all hover:shadow-md h-[490px]">
+                                    <h3 className="font-bold text-textPrimary mb-4 flex items-center gap-2 text-sm">
+                                        <ArrowRight size={18} className="text-accentBlue" /> Asignar Nueva Tarea
                                     </h3>
-                                    <div className="space-y-4 flex flex-col flex-1">
+                                    <div className="space-y-3 flex flex-col flex-1">
                                         <textarea
                                             value={newTaskText}
                                             onChange={(e) => setNewTaskText(e.target.value)}
                                             placeholder={`Describe la tarea principal para ${selectedUser}...`}
-                                            className="w-full p-3.5 border border-borderLight rounded-lg text-sm focus:border-accentBlue focus:ring-2 focus:ring-accentBlue/20 outline-none bg-gray-50 text-gray-900 min-h-[60px] transition-all"
+                                            className="w-full p-3 border border-borderLight rounded-lg text-sm focus:border-accentBlue focus:ring-2 focus:ring-accentBlue/20 outline-none bg-gray-50 text-gray-900 min-h-[52px] transition-all"
                                         />
 
                                         <textarea
                                             value={newTaskNote}
                                             onChange={(e) => setNewTaskNote(e.target.value)}
                                             placeholder="Observaciones / Indicaciones adicionales..."
-                                            className="w-full p-3 border border-borderLight rounded-lg text-xs focus:border-accentBlue focus:ring-2 focus:ring-accentBlue/20 outline-none bg-gray-50 text-gray-900 min-h-[50px] resize-none transition-all"
+                                            className="w-full p-3 border border-borderLight rounded-lg text-xs focus:border-accentBlue focus:ring-2 focus:ring-accentBlue/20 outline-none bg-gray-50 text-gray-900 min-h-[40px] resize-none transition-all"
                                         />
+
+                                        {/* Complejidad */}
+                                        <div>
+                                            <p className="text-[10px] font-bold text-textSecondary uppercase tracking-wide mb-1.5">Complejidad</p>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {(['low', 'med', 'high'] as Complexity[]).map(c => {
+                                                    const cfg = {
+                                                        low:  { label: 'Rápida',  colors: newTaskComplexity === 'low'  ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50' },
+                                                        med:  { label: 'Media',   colors: newTaskComplexity === 'med'  ? 'bg-orange-400 text-white border-orange-400'  : 'bg-white text-orange-500 border-orange-200 hover:bg-orange-50' },
+                                                        high: { label: 'Compleja',colors: newTaskComplexity === 'high' ? 'bg-rose-500 text-white border-rose-500'       : 'bg-white text-rose-600 border-rose-200 hover:bg-rose-50' },
+                                                    }[c];
+                                                    return (
+                                                        <button key={c} onClick={() => setNewTaskComplexity(c)}
+                                                            className={`py-1.5 text-[11px] font-bold rounded-lg border transition-all ${cfg.colors}`}>
+                                                            {cfg.label}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
 
                                         {/* Row 1: Date & Cat */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -818,8 +973,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                     </div>
                                 </div>
 
-                                {/* 2. MINI DONUT CHART (MIDDLE) */}
-                                <div className="bg-white border border-borderLight rounded-xl p-4 shadow-sm flex flex-col items-center justify-center relative h-[550px]">
+                                {/* 2. DONUT CHART (MIDDLE) */}
+                                <div className="bg-white border border-borderLight rounded-xl p-4 shadow-sm flex flex-col items-center justify-center relative h-[490px]">
                                     <h3 className="font-bold text-textPrimary text-[10px] uppercase tracking-wide text-center absolute top-5 w-full text-slate-400">
                                         Estado General
                                     </h3>
@@ -848,7 +1003,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                         
                                         return (
                                             <div className="flex flex-col items-center w-full mt-4">
-                                                <div className="relative w-28 h-28">
+                                                <div className="relative w-44 h-44">
                                                     <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                                                         {totalDel === 0 && (
                                                             <circle cx="50" cy="50" r={r} fill="transparent" stroke="#f1f5f9" strokeWidth="12" />
@@ -867,8 +1022,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                                         )}
                                                     </svg>
                                                     <div className="absolute inset-0 flex items-center justify-center flex-col">
-                                                        <span className="text-2xl font-light text-slate-700">{totalDel}</span>
-                                                        <span className="text-[8px] uppercase text-slate-400 font-bold tracking-wider -mt-1">Total</span>
+                                                        <span className="text-3xl font-light text-slate-700">{totalDel}</span>
+                                                        <span className="text-[9px] uppercase text-slate-400 font-bold tracking-wider -mt-1">Total</span>
                                                     </div>
                                                 </div>
 
@@ -891,8 +1046,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                     })()}
                                 </div>
 
-                                {/* 3. ASSIGNED HISTORY PANEL (NARROW) */}
-                                <div className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col h-[550px]">
+                                {/* 3. ASSIGNED HISTORY PANEL */}
+                                <div className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col h-[490px]">
                                     <div className="flex justify-between items-center mb-4">
                                         <h3 className="font-bold text-textPrimary flex items-center gap-2 text-xs uppercase tracking-wide">
                                             <ClipboardList size={16} className="text-purple-500" /> Tareas Delegadas
@@ -982,17 +1137,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                                         <div className="flex gap-2 items-center">
                                                             {t.date && <span className="text-[9px] text-gray-500 font-medium">📅 Vence: {t.date}</span>}
                                                         </div>
-                                                        {t.note && t.note.trim() !== '' && (
-                                                            <div className="text-[9px] text-blue-500 flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                                                                <Info size={10} /> {isExpanded ? 'Ocultar' : 'Ver detalle'}
-                                                            </div>
-                                                        )}
+                                                        <div className="flex items-center gap-2">
+                                                            {/* Boton consultar - solo tareas activas/standby */}
+                                                            {(t.status === 'active' || t.status === 'standby') && (
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); setCommentModalTask(t as Task & { status: string }); setCommentText(""); }}
+                                                                    className="flex items-center gap-1 text-[9px] text-purple-600 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-1.5 py-0.5 rounded-full transition-colors font-bold"
+                                                                    title="Enviar consulta sobre esta tarea"
+                                                                >
+                                                                    <MessageSquare size={9} />
+                                                                    {t.adminComments ? 'Hilo' : 'Consultar'}
+                                                                </button>
+                                                            )}
+                                                            {t.note && t.note.trim() !== '' && (
+                                                                <div className="text-[9px] text-blue-500 flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                                                                    <Info size={10} /> {isExpanded ? 'Ocultar' : 'Ver detalle'}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                     
                                                     {/* Expandable info */}
                                                     {isExpanded && t.note && t.note.trim() !== '' && (
                                                         <div className="text-[11px] text-gray-700 bg-white border border-gray-100 p-2.5 rounded-lg mt-2.5 shadow-sm whitespace-pre-wrap leading-relaxed animate-in fade-in slide-in-from-top-1">
                                                             {t.note}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Preview de comentarios del usuario si los hay */}
+                                                    {t.userComments && isExpanded && (
+                                                        <div className="mt-2 bg-green-50 border border-green-100 rounded-lg p-2">
+                                                            <p className="text-[9px] font-bold text-green-700 mb-1 uppercase tracking-wide">💬 Respuestas del usuario</p>
+                                                            <p className="text-[10px] text-green-800 whitespace-pre-wrap leading-relaxed">{t.userComments}</p>
                                                         </div>
                                                     )}
                                                 </div>
