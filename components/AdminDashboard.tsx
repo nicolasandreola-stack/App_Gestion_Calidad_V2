@@ -693,7 +693,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                             <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_220px_1.1fr] gap-6 mb-6">
                                 
                                 {/* 1. DELEGATION PANEL (WIDE) */}
-                                <div className="bg-white border border-borderLight rounded-xl p-6 shadow-sm flex flex-col transition-all hover:shadow-md">
+                                <div className="bg-white border border-borderLight rounded-xl p-6 shadow-sm flex flex-col transition-all hover:shadow-md h-[400px]">
                                     <h3 className="font-bold text-textPrimary mb-5 flex items-center gap-2">
                                         <ArrowRight size={20} className="text-accentBlue" /> Asignar Nueva Tarea
                                     </h3>
@@ -784,7 +784,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                 </div>
 
                                 {/* 2. MINI DONUT CHART (MIDDLE) */}
-                                <div className="bg-white border border-borderLight rounded-xl p-4 shadow-sm flex flex-col items-center justify-center relative min-h-[400px]">
+                                <div className="bg-white border border-borderLight rounded-xl p-4 shadow-sm flex flex-col items-center justify-center relative h-[400px]">
                                     <h3 className="font-bold text-textPrimary text-[10px] uppercase tracking-wide text-center absolute top-5 w-full text-slate-400">
                                         Estado General
                                     </h3>
