@@ -711,11 +711,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                 <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_220px_1.1fr] gap-6 mb-6">
                                     
                                     {/* 1. DELEGATION PANEL (WIDE) */}
-                                    <div className="bg-white border border-borderLight rounded-xl p-6 shadow-sm flex flex-col transition-all hover:shadow-md h-full min-h-[420px]">
+                                    <div className="bg-white border border-borderLight rounded-xl p-6 shadow-sm flex flex-col transition-all hover:shadow-md h-[550px]">
                                     <h3 className="font-bold text-textPrimary mb-5 flex items-center gap-2">
                                         <ArrowRight size={20} className="text-accentBlue" /> Asignar Nueva Tarea
                                     </h3>
-                                    <div className="space-y-4">
+                                    <div className="space-y-4 flex flex-col flex-1">
                                         <textarea
                                             value={newTaskText}
                                             onChange={(e) => setNewTaskText(e.target.value)}
@@ -779,7 +779,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                         </div>
 
                                         {/* Footer Row */}
-                                        <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-2">
+                                        <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
                                             <label className="flex items-center gap-2 text-sm text-textSecondary cursor-pointer hover:bg-yellow-50 px-3 py-1.5 rounded-lg border border-transparent hover:border-yellow-200 transition-colors">
                                                 <input
                                                     type="checkbox"
@@ -802,7 +802,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                 </div>
 
                                 {/* 2. MINI DONUT CHART (MIDDLE) */}
-                                <div className="bg-white border border-borderLight rounded-xl p-4 shadow-sm flex flex-col items-center justify-center relative h-full min-h-[420px]">
+                                <div className="bg-white border border-borderLight rounded-xl p-4 shadow-sm flex flex-col items-center justify-center relative h-[550px]">
                                     <h3 className="font-bold text-textPrimary text-[10px] uppercase tracking-wide text-center absolute top-5 w-full text-slate-400">
                                         Estado General
                                     </h3>
@@ -870,7 +870,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                 </div>
 
                                 {/* 3. ASSIGNED HISTORY PANEL (NARROW) */}
-                                <div className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col h-full min-h-[420px]">
+                                <div className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col h-[550px]">
                                     <div className="flex justify-between items-center mb-4">
                                         <h3 className="font-bold text-textPrimary flex items-center gap-2 text-xs uppercase tracking-wide">
                                             <ClipboardList size={16} className="text-purple-500" /> Tareas Delegadas
