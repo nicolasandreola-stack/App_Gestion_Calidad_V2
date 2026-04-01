@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Folder, BarChart3, Bot, Save, Upload, LogOut, UserCircle, Shield, Cloud, Menu, X, ChevronDown, ChevronUp, FileSpreadsheet, FolderOpen, FileText, Table, ExternalLink, Mail, Loader2, CheckCircle2, AlertCircle, Calendar, Trophy, BarChart2 } from 'lucide-react';
+import { Search, Folder, BarChart3, Bot, Save, Upload, LogOut, UserCircle, Shield, Cloud, Menu, X, ChevronDown, ChevronUp, FileSpreadsheet, FolderOpen, FileText, Table, ExternalLink, Mail, Loader2, CheckCircle2, AlertCircle, Calendar, Trophy, BarChart2 } from 'lucide-react';
 
 interface HeaderProps {
   user?: string;
@@ -14,9 +14,10 @@ interface HeaderProps {
   syncStatus?: 'idle' | 'syncing' | 'saved' | 'error' | 'unsaved';
   autoSyncEnabled?: boolean;
   onToggleAutoSync?: (enabled: boolean) => void;
+  onOpenSearch?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, onExport, onImport, onOpenAssistant, onLogout, onSwitchToAdmin, onOpenCloud, onOpenAchievements, onOpenStats, syncStatus = 'idle', autoSyncEnabled = true, onToggleAutoSync }) => {
+const Header: React.FC<HeaderProps> = ({ user, onExport, onImport, onOpenAssistant, onLogout, onSwitchToAdmin, onOpenCloud, onOpenAchievements, onOpenStats, syncStatus = 'idle', autoSyncEnabled = true, onToggleAutoSync, onOpenSearch }) => {
   const dateStr = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -118,6 +119,10 @@ const Header: React.FC<HeaderProps> = ({ user, onExport, onImport, onOpenAssista
             <span className="text-xs font-bold text-textSecondary uppercase">{user}</span>
           </div>
         )}
+
+        <button onClick={onOpenSearch} className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] bg-slate-800 text-white rounded-full hover:bg-slate-900 transition-all font-medium mr-2" title="Búsqueda Global (Ctrl+K)">
+          <Search size={14} /> <span className="hidden xl:inline text-[10px] text-slate-300 font-mono tracking-widest pl-1 border-l border-slate-600 ml-1">Ctrl K</span>
+        </button>
 
         <a href="https://mail.google.com/mail/u/0/?tab=rm&ogbl#inbox" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-1.5 text-[13px] bg-white text-textPrimary border border-borderLight rounded-full hover:bg-gray-50 hover:border-gray-400 transition-all whitespace-nowrap" title="Ir a Gmail">
           <Mail size={14} className="text-red-500" /> <span>Gmail</span>

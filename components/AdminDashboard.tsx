@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Users, BarChart3, CheckSquare, AlertTriangle, ArrowRight, Plus, UserCircle, LogOut, Trash2, LayoutDashboard, RefreshCw, Clock, Code, Key, ShieldAlert, Globe, Github, Server, FileText, ExternalLink, Sun, Calendar, ChevronDown, ChevronUp, X, Info, Link as LinkIcon, Loader2, Cloud, AlertCircle, PauseCircle, CalendarDays, CheckCircle2, Circle, Archive, ClipboardList } from 'lucide-react';
+import { Search, Users, BarChart3, CheckSquare, AlertTriangle, ArrowRight, Plus, UserCircle, LogOut, Trash2, LayoutDashboard, RefreshCw, Clock, Code, Key, ShieldAlert, Globe, Github, Server, FileText, ExternalLink, Sun, Calendar, ChevronDown, ChevronUp, X, Info, Link as LinkIcon, Loader2, Cloud, AlertCircle, PauseCircle, CalendarDays, CheckCircle2, Circle, Archive, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
 import { Task, RoutineItem, RoutineState, Category, Complexity, GlobalCloudData, TIME_BLOCKS, COMPLEXITY_LABELS, CATEGORY_COLORS } from '../types';
 import { KPIDetailsModal, CompletedTasksModal } from './Modals';
@@ -9,6 +9,7 @@ interface AdminDashboardProps {
     onLogout: () => void;
     onSwitchToPersonal: () => void;
     currentUser: string;
+    onOpenSearch?: () => void;
 }
 
 // VERSION CONTROL (Synced with Personal Dashboard)
@@ -16,7 +17,7 @@ const LAST_UPDATE = new Date().toLocaleString('es-ES', {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
 });
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPersonal, currentUser }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPersonal, currentUser, onOpenSearch }) => {
     const [users, setUsers] = useState<string[]>([]);
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
 
@@ -467,6 +468,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                         <h1 className="font-bold text-textPrimary text-sm">ADMINISTRADOR</h1>
                         <p className="text-[10px] text-textSecondary">Panel de Control</p>
                     </div>
+                </div>
+
+                {/* Global Search Button */}
+                <div className="p-4 border-b border-borderLight shrink-0 bg-[#F8F9FA]">
+                    <button 
+                        onClick={onOpenSearch} 
+                        className="w-full flex items-center justify-between px-3 py-2 text-sm bg-white border border-gray-200 text-gray-500 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all group"
+                        title="Búsqueda Global en SGI"
+                    >
+                        <div className="flex items-center gap-2">
+                            <Search size={16} className="text-gray-400 group-hover:text-blue-500 transition-colors" /> 
+                            <span className="font-medium text-gray-600 group-hover:text-gray-800">Buscar...</span>
+                        </div>
+                        <span className="text-[10px] font-mono font-bold bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200 text-gray-400 group-hover:text-blue-500 transition-colors">Ctrl K</span>
+                    </button>
                 </div>
 
                 {/* User List */}
