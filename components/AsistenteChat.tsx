@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, X, Bot, FileText, Loader2, Lock, AlertTriangle, CheckCircle2, XCircle, ExternalLink, Clock, Copy, Check, Key, Paperclip, File as FileIcon, Trash2, Settings, Save, RefreshCw, Cpu, Minus, Maximize2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import { toast } from 'sonner';
 
+// @ts-ignore
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || ''; 
 
 interface Message {
@@ -127,7 +129,7 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
     setCustomGeminiKey("");
     setInputGeminiKey("");
     localStorage.removeItem("v25_gemini_key");
-    alert("Has vuelto a la clave por defecto del sistema.");
+    toast.info("Has vuelto a la clave por defecto del sistema.");
   };
 
   const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -255,7 +257,7 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
     const effectiveApiKey = customGeminiKey || process.env.API_KEY || API_KEY;
     
     if (!effectiveApiKey) {
-      alert("Falta la API Key de Gemini. Por favor configúrala en el icono de engranaje.");
+      toast.error("Falta la API Key de Gemini. Por favor configúrala en el icono de engranaje.");
       setShowSettings(true);
       return;
     }

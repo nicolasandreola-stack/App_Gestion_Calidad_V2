@@ -133,7 +133,10 @@ const RoutinePanel: React.FC<RoutinePanelProps> = ({
 
       <div className="flex-1 md:overflow-y-auto no-scrollbar min-h-[150px] md:min-h-0">
         {visibleItems.length === 0 && (
-          <div className="p-4 text-center text-textSecondary text-xs">No hay rutinas para hoy.</div>
+          <div className="flex flex-col items-center justify-center py-10 text-gray-400 opacity-60">
+            <ListChecks size={32} className="mb-2 text-slate-300" strokeWidth={1.5} />
+            <p className="text-[11px] font-medium mt-1">Día sin rutinas asignadas</p>
+          </div>
         )}
         
         {visibleItems.map(item => {

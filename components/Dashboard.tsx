@@ -9,6 +9,7 @@ import CloudSyncModal from './CloudSyncModal';
 import { Task, RoutineItem, RoutineState, HistoryEntry, BackupData, GlobalCloudData, Achievement } from '../types';
 import { Trophy } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { toast } from 'sonner';
 
 interface DashboardProps {
   user: string;
@@ -65,8 +66,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
     const saved = localStorage.getItem(getUserKey("routine_history"));
     return saved ? JSON.parse(saved) : {};
   });
-
-  const [toast, setToast] = useState<string | null>(null);
 
   // Modals state
   const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null);
@@ -287,8 +286,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
 
   // Toast Helper
   const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
+    if (msg.includes('❌') || msg.toLowerCase().includes('error')) {
+      toast.error(msg.replace('❌', '').trim());
+    } else if (msg.includes('⚠️')) {
+      toast.warning(msg.replace('⚠️', '').trim());
+    } else {
+      toast.success(msg.replace('✅', '').replace('⏳', '').trim());
+    }
   };
 
   // Notification Sound — dos tonos ascendentes via Web Audio API
@@ -568,7 +572,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
         if (data.rtH) setRoutineHistory(data.rtH);
         showToast("✅ Datos restaurados correctamente");
       } catch (err) {
-        alert("Error: El archivo de respaldo no es válido.");
+        toast.error("Error: El archivo de respaldo no es válido.");
       }
       e.target.value = '';
     };
@@ -849,7 +853,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
         <HistoryModal
           history={history}
           onClose={() => setShowHistory(false)}
-          onDownload={() => alert("Función: Selecciona y copia el texto del historial.")}
+          onDownload={() => toast.info("Selecciona y copia el texto del historial.")}
         />
       )}
 
@@ -895,12 +899,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
         </div>
       )}
 
-      {/* Toast Notification (general) */}
-      <div
-        className={`fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#323232] text-white px-4 py-2 text-xs rounded shadow-lg transition-all duration-500 z-[100] ${toast ? 'opacity-100' : 'opacity-0 pointer-events-none scale-95'}`}
-      >
-        {toast}
-      </div>
+
 
       {/* NEW ASSIGNMENT MODAL — Centered, persistent, requires manual close */}
       {newAssignmentModal && (

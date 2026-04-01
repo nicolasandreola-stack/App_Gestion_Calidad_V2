@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Users, BarChart3, CheckSquare, AlertTriangle, ArrowRight, Plus, UserCircle, LogOut, Trash2, LayoutDashboard, RefreshCw, Clock, Code, Key, ShieldAlert, Globe, Github, Server, FileText, ExternalLink, Sun, Calendar, ChevronDown, ChevronUp, X, Info, Link as LinkIcon, Loader2, Cloud, AlertCircle, PauseCircle, CalendarDays, CheckCircle2, Circle, Archive, ClipboardList } from 'lucide-react';
+import { toast } from 'sonner';
 import { Task, RoutineItem, RoutineState, Category, Complexity, GlobalCloudData, TIME_BLOCKS, COMPLEXITY_LABELS, CATEGORY_COLORS } from '../types';
 import { KPIDetailsModal, CompletedTasksModal } from './Modals';
 import KPIBoard from './KPIBoard';
@@ -126,7 +127,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
         setUserTasks(newTasks);
         localStorage.setItem(getUserKey(selectedUser, "tasks"), JSON.stringify(newTasks));
 
-        alert("Tarea restaurada al tablero del usuario.");
+        toast.success("Tarea restaurada al tablero del usuario.");
     };
 
     const toggleTaskExpansion = (id: number) => {
@@ -189,13 +190,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                     body: JSON.stringify(globalData)
                 });
 
-                alert(`✅ Tarea asignada a ${selectedUser.toUpperCase()} y sincronizada en Sheets.`);
+                toast.success(`Tarea asignada a ${selectedUser.toUpperCase()} y sincronizada en Sheets.`);
             } else {
                 throw new Error("Error fetching latest data from backend");
             }
         } catch (e) {
             console.error(e);
-            alert(`⚠️ Tarea guardada LOCALMENTE. Error al subir a Google Sheets: ${e}`);
+            toast.error("Tarea guardada LOCALMENTE. Error al subir a Google Sheets.");
         } finally {
             setIsAssigning(false);
         }
@@ -251,12 +252,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
 
                     if (selectedUser) loadUserData(selectedUser);
                     setLastUpdate(new Date().toLocaleTimeString());
-                    if (!silent) alert("Sincronización global completada.");
+                    if (!silent) toast.success("Sincronización global completada.");
                 }
             }
         } catch (e) {
             console.error(e);
-            if (!silent) alert("Error de conexión.");
+            if (!silent) toast.error("Error de conexión al sincronizar.");
         } finally {
             setIsSyncing(false);
         }
@@ -814,7 +815,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                         const totalDel = activeDel + compDel + delDel;
                                         
                                         if (totalDel === 0) {
-                                            return <div className="text-[10px] text-gray-400 italic mt-8">Sin historial</div>;
+                                            return (
+                                                <div className="flex flex-col items-center justify-center w-full h-full text-gray-400 opacity-60 absolute inset-0">
+                                                    <Circle size={48} className="mb-2 text-slate-200" strokeWidth={1} />
+                                                    <span className="text-[10px] uppercase font-bold tracking-widest text-slate-300">Vacío</span>
+                                                </div>
+                                            );
                                         }
 
                                         const r = 38;
@@ -897,7 +903,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                         </div>
                                     </div>
                                     <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1">
-                                        {assignedHistory.length === 0 && <p className="text-[11px] text-gray-400 italic text-center py-6">Sin historial de delegación reciente.</p>}
+                                        {assignedHistory.length === 0 && (
+                                            <div className="flex flex-col items-center justify-center py-12 text-gray-400 opacity-60">
+                                                <ClipboardList size={36} className="mb-2 text-slate-300" strokeWidth={1.5} />
+                                                <p className="text-[11px] font-medium mt-1">Sin historial de delegación</p>
+                                            </div>
+                                        )}
                                         {assignedHistory.map(t => {
                                             const isExpanded = expandedAssignedIds.has(t.id);
                                             return (
@@ -992,7 +1003,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                             <span className="bg-red-100 text-red-800 px-2 rounded-full shadow-inner">{groupedTasks.overdue.length}</span>
                                         </h4>
                                         <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
-                                            {groupedTasks.overdue.length === 0 && <p className="text-[11px] text-gray-400 italic">Sin tareas vencidas.</p>}
+                                            {groupedTasks.overdue.length === 0 && (
+                                                <div className="flex flex-col items-center justify-center py-10 text-gray-400 opacity-60">
+                                                    <CheckCircle2 size={32} className="mb-2 text-green-400/70" strokeWidth={1.5} />
+                                                    <p className="text-[11px] font-medium mt-1">Bandeja al día</p>
+                                                </div>
+                                            )}
                                             {groupedTasks.overdue.map(t => renderTaskWithDetails(t))}
                                         </div>
                                     </div>
@@ -1004,7 +1020,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                             <span className="bg-blue-100 text-blue-800 px-2 rounded-full shadow-inner">{groupedTasks.today.length}</span>
                                         </h4>
                                         <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
-                                            {groupedTasks.today.length === 0 && <p className="text-[11px] text-gray-400 italic">Todo listo por hoy.</p>}
+                                            {groupedTasks.today.length === 0 && (
+                                                <div className="flex flex-col items-center justify-center py-10 text-gray-400 opacity-60">
+                                                    <Sun size={32} className="mb-2 text-amber-400/70" strokeWidth={1.5} />
+                                                    <p className="text-[11px] font-medium mt-1">Todo listo por hoy</p>
+                                                </div>
+                                            )}
                                             {groupedTasks.today.map(t => renderTaskWithDetails(t))}
                                         </div>
                                     </div>
@@ -1016,7 +1037,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                             <span className="bg-gray-200 text-gray-800 px-2 rounded-full shadow-inner">{groupedTasks.backlog.length}</span>
                                         </h4>
                                         <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
-                                            {groupedTasks.backlog.length === 0 && <p className="text-[11px] text-gray-400 italic">Bandeja vacía.</p>}
+                                            {groupedTasks.backlog.length === 0 && (
+                                                <div className="flex flex-col items-center justify-center py-10 text-gray-400 opacity-60">
+                                                    <Archive size={32} className="mb-2 text-slate-300" strokeWidth={1.5} />
+                                                    <p className="text-[11px] font-medium mt-1">Bandeja vacía</p>
+                                                </div>
+                                            )}
                                             {groupedTasks.backlog.map(t => renderTaskWithDetails(t))}
                                         </div>
                                     </div>

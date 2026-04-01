@@ -732,9 +732,10 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
             {activeTab === 'backlog' && (
                 <div>
                     {sortedTasks.length === 0 && (
-                        <div className="p-8 text-center text-textSecondary text-sm opacity-50 flex flex-col items-center">
-                            <Inbox size={32} className="mb-2 opacity-50"/>
-                            El backlog está vacío.
+                        <div className="flex flex-col items-center justify-center py-12 text-gray-400 opacity-60">
+                            <Archive size={36} className="mb-3 text-slate-300" strokeWidth={1.5} />
+                            <p className="text-[12px] font-medium">El backlog está vacío</p>
+                            <p className="text-[10px] mt-1">Las tareas sin fecha caen acá.</p>
                         </div>
                     )}
                     {sortedTasks.map(t => renderTaskRow(t, false, 'backlog'))}
@@ -760,7 +761,10 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
                             <span className="font-normal opacity-70">{todayStr}</span>
                         </div>
                         {agendaGroups.today.length === 0 && (
-                            <div className="p-4 text-xs text-gray-400 text-center italic">Nada programado para hoy.</div>
+                            <div className="flex flex-col items-center justify-center py-8 text-gray-400 opacity-60">
+                                <Sun size={32} className="mb-2 text-amber-400/70" strokeWidth={1.5} />
+                                <p className="text-[11px] font-medium mt-1">Todo listo por hoy</p>
+                            </div>
                         )}
                         {agendaGroups.today.map(t => renderTaskRow(t, false, 'today'))}
                     </div>
