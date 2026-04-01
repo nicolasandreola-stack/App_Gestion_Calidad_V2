@@ -709,7 +709,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
 
                             {/* CONDITIONAL RENDER: ASIGNACIONES */}
                             {adminViewTab === 'asignaciones' && (
-                                <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_220px_1.1fr] gap-6 mb-6">
+                                <div key="asignaciones" className="grid grid-cols-1 lg:grid-cols-[1.3fr_220px_1.1fr] gap-6 mb-6 animate-in fade-in slide-in-from-right-4 duration-500 ease-out">
                                     
                                     {/* 1. DELEGATION PANEL (WIDE) */}
                                     <div className="bg-white border border-borderLight rounded-xl p-6 shadow-sm flex flex-col transition-all hover:shadow-md h-[550px]">
@@ -990,7 +990,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
 
                             {/* CONDITIONAL RENDER: VISTA RAPIDA */}
                             {adminViewTab === 'vista_rapida' && (
-                                <div className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col mb-4">
+                                <div key="vista_rapida" className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col mb-4 animate-in fade-in slide-in-from-left-4 duration-500 ease-out">
                                 <h3 className="font-bold text-textPrimary mb-4 flex items-center gap-2 text-sm uppercase">
                                     <Users size={16} className="text-gray-400" /> Vista Rápida del Usuario
                                 </h3>

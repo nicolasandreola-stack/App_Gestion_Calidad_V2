@@ -435,6 +435,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
   const confirmComplete = (note: string, links: { l1: string, n1: string, l2: string, n2: string }) => {
     if (!actionTask) return;
 
+    const isCritical = actionTask.comp === 'high';
+
     // 1. Crear copia para historial y registro con los nuevos links
     const closedTask: Task = {
       ...actionTask,
@@ -457,7 +459,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
     // 5. Cleanup
     setActionTask(null);
     setActionType(null);
-    showToast("Tarea archivada correctamente.");
+    
+    if (isCritical) {
+      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#10b981', '#fbbf24', '#f59e0b'] });
+      toast.success("✨ ¡Excelente! Tarea crítica superada.");
+    } else {
+      toast.success("Tarea archivada correctamente.");
+    }
   };
 
   // Restaurar tarea desde el archivo

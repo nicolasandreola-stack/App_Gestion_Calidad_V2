@@ -730,7 +730,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
         {viewMode === 'list' && (
            <>
             {activeTab === 'backlog' && (
-                <div>
+                <div key="backlog" className="animate-in fade-in duration-500">
                     {sortedTasks.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-12 text-gray-400 opacity-60">
                             <Archive size={36} className="mb-3 text-slate-300" strokeWidth={1.5} />
@@ -743,7 +743,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
             )}
 
             {activeTab === 'agenda' && agendaGroups && (
-                <div className="pb-10">
+                <div key="agenda" className="pb-10 animate-in fade-in duration-500">
                     {/* Overdue */}
                     {agendaGroups.overdue.length > 0 && (
                         <div className="mb-0">
