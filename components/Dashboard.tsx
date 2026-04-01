@@ -96,6 +96,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
   const [lastTaskIds, setLastTaskIds] = useState<Set<number>>(new Set());
   const [newAssignmentModal, setNewAssignmentModal] = useState<{ count: number; tasks: Task[] } | null>(null);
   const [adminQueryModal, setAdminQueryModal] = useState<Task | null>(null);
+  const [newQueryNotifications, setNewQueryNotifications] = useState<Task[] | null>(null);
   const [replyText, setReplyText] = useState("");
   const [isSendingReply, setIsSendingReply] = useState(false);
 
@@ -171,12 +172,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
                 }
 
                 if (tasksWithNewComments.length > 0) {
-                    tasksWithNewComments.forEach(t => {
-                        toast.info(`Nueva consulta del Admin: "${t.text.substring(0, 30)}..."`, {
-                            duration: 5000,
-                            icon: '💬'
-                        });
-                    });
+                    setNewQueryNotifications(tasksWithNewComments);
                     if (newTasks.length === 0) playNotificationSound();
                     hasChanges = true;
                 }
@@ -1021,6 +1017,54 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {/* NEW QUERY NOTIFICATION MODAL — Mandatory notification for admin comments */}
+      {newQueryNotifications && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[210] flex items-center justify-center p-4 animate-in fade-in duration-300">
+           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border-2 border-purple-400 animate-in zoom-in-95 duration-500">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-purple-600 to-indigo-700 px-6 py-5 flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="text-4xl animate-pulse">💬</div>
+                  <div>
+                    <div className="text-[11px] font-black text-purple-100 uppercase tracking-[0.2em] mb-0.5">Nueva Consulta Admin</div>
+                    <h2 className="text-xl font-bold text-white leading-tight">¡{user.toUpperCase()}, tenés consultas!</h2>
+                  </div>
+                </div>
+              </div>
+
+              {/* Task list with comments */}
+              <div className="px-6 py-4 max-h-64 overflow-y-auto custom-scrollbar">
+                <p className="text-xs text-gray-500 mb-4 font-medium uppercase tracking-wide">El administrador escribió en:</p>
+                <div className="flex flex-col gap-3">
+                  {newQueryNotifications.map(t => (
+                    <div key={t.id} className="p-3 rounded-xl bg-purple-50 border border-purple-100 flex flex-col gap-2">
+                       <span className="text-[13px] font-bold text-purple-900 leading-tight">
+                        {t.text}
+                       </span>
+                       <div className="bg-white/60 p-2 rounded-lg text-[11px] text-purple-700 italic border-l-2 border-purple-300">
+                          {t.adminComments?.split('\n').filter(Boolean).pop() || "Nueva consulta..."}
+                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="px-6 py-5 bg-gray-50 border-t border-gray-100 flex gap-3">
+                <button 
+                  onClick={() => {
+                     // Cerramos el modal. El estado 'tasks' ya se actualizó en checkForNewTasks,
+                     // por lo que adminComments local === cloud y no volverá a saltar en el próximo polling.
+                     setNewQueryNotifications(null);
+                  }}
+                  className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow-lg shadow-purple-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  ✅ Entendido, ya lo veo
+                </button>
+              </div>
+           </div>
         </div>
       )}
       {/* ADMIN QUERY REPLY MODAL */}
