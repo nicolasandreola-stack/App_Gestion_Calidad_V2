@@ -150,23 +150,61 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
             const myData = result.users?.[user];
             if (myData && myData.tks) {
                 const cloudTasks = myData.tks;
-                const currentIds = new Set(currentStateRef.current.tks.map(t => t.id));
+                const localTasks = currentStateRef.current.tks;
+                const currentIds = new Set(localTasks.map(t => t.id));
+                
+                // 1. Detectar tareas nuevas
                 const newTasks = cloudTasks.filter(t => t.del === 'Admin' && !currentIds.has(t.id));
                 
+                // 2. Detectar nuevas consultas en tareas existentes
+                const tasksWithNewComments = cloudTasks.filter(t => {
+                    const local = localTasks.find(lt => lt.id === t.id);
+                    return local && t.adminComments && t.adminComments !== local.adminComments;
+                });
+
+                let hasChanges = false;
+                
                 if (newTasks.length > 0) {
-                    // Show centered persistent modal instead of auto-disappearing toast
                     setNewAssignmentModal({ count: newTasks.length, tasks: newTasks });
                     playNotificationSound();
-                    
-                    // Inject new tasks into active array
+                    hasChanges = true;
+                }
+
+                if (tasksWithNewComments.length > 0) {
+                    tasksWithNewComments.forEach(t => {
+                        toast.info(`Nueva consulta del Admin: "${t.text.substring(0, 30)}..."`, {
+                            duration: 5000,
+                            icon: '💬'
+                        });
+                    });
+                    if (newTasks.length === 0) playNotificationSound();
+                    hasChanges = true;
+                }
+
+                if (hasChanges) {
+                    // Actualizar el estado local con los datos de la nube (que tienen las nuevas tareas/comentarios)
                     setTasks(prev => {
-                        const updated = [...newTasks, ...prev];
-                        setLastTaskIds(new Set(updated.map(t => t.id)));
-                        currentStateRef.current.tks = updated;
-                        return updated;
+                        // Mezclar: tareas nuevas al principio, actualizar comentarios en las existentes
+                        const updated = cloudTasks.map(ct => {
+                            const local = prev.find(p => p.id === ct.id);
+                            if (local) {
+                                // Preservar estado local que no viene de la nube (si hubiera alguno crítico, 
+                                // pero aquí adminComments y userComments son compartidos)
+                                return { ...local, ...ct };
+                            }
+                            return ct;
+                        });
+                        
+                        // Asegurar que las tareas que ya teníamos pero no están en la nube (raro) se mantengan
+                        const cloudIds = new Set(cloudTasks.map(ct => ct.id));
+                        const missingInCloud = prev.filter(p => !cloudIds.has(p.id));
+                        
+                        const finalTasks = [...missingInCloud, ...updated];
+                        setLastTaskIds(new Set(finalTasks.map(t => t.id)));
+                        currentStateRef.current.tks = finalTasks;
+                        return finalTasks;
                     });
                     
-                    // Mark dirty to ensure it persists in the next auto-save to cloud
                     setHasUnsavedChanges(true);
                 }
             }

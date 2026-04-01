@@ -176,16 +176,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                 const result = await fetchRes.json();
                 let globalData = result as GlobalCloudData;
 
-                if (!globalData.users) globalData.users = {};
                 if (!globalData.users[selectedUser]) {
                     globalData.users[selectedUser] = { tks: [], rtM: [], rtS: {}, h: [], cTks: [] };
                 }
 
-                // Asegurarse de que 'tks' existe
-                if (!globalData.users[selectedUser].tks) globalData.users[selectedUser].tks = [];
-
-                // B. Insertar la nueva tarea en la lista de la nube
-                globalData.users[selectedUser].tks.push(newTask);
+                // Reemplazar la lista de tareas con el estado local actualizado
+                globalData.users[selectedUser].tks = updatedTasks;
                 globalData.lastUpdate = new Date().toISOString();
 
                 // C. Subir (Push) los datos actualizados
@@ -248,9 +244,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                 if (!globalData.users[selectedUser]) {
                     globalData.users[selectedUser] = { tks: [], rtM: [], rtS: {}, h: [], cTks: [] };
                 }
-                globalData.users[selectedUser].tks = (globalData.users[selectedUser].tks || []).map(t =>
-                    t.id === commentModalTask.id ? { ...t, adminComments: updatedComments } : t
-                );
+                
+                // Reemplazar con el estado local que ya tiene el nuevo comentario
+                globalData.users[selectedUser].tks = updatedTasks;
                 globalData.lastUpdate = new Date().toISOString();
                 await fetch(`/api/sync/push`, {
                     method: 'POST',
