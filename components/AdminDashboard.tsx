@@ -376,7 +376,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                     </div>
                     <span className="text-[9px] text-gray-400 font-mono">{t.date || 'S/F'}</span>
                 </div>
-                <p className="text-xs font-medium text-textPrimary mb-1">{t.text}</p>
+                <p className="text-[11px] font-normal text-textPrimary mb-1">{t.text}</p>
 
                 <div className="flex justify-between items-center mt-2">
                     <div className="flex items-center gap-1 flex-wrap">
@@ -702,14 +702,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                             value={newTaskText}
                                             onChange={(e) => setNewTaskText(e.target.value)}
                                             placeholder={`Describe la tarea principal para ${selectedUser}...`}
-                                            className="w-full p-3.5 border border-borderLight rounded-lg text-sm focus:border-accentBlue focus:ring-2 focus:ring-accentBlue/20 outline-none bg-gray-50 text-gray-900 min-h-[80px] transition-all"
+                                            className="w-full p-3.5 border border-borderLight rounded-lg text-sm focus:border-accentBlue focus:ring-2 focus:ring-accentBlue/20 outline-none bg-gray-50 text-gray-900 min-h-[60px] transition-all"
                                         />
 
                                         <textarea
                                             value={newTaskNote}
                                             onChange={(e) => setNewTaskNote(e.target.value)}
                                             placeholder="Observaciones / Indicaciones adicionales..."
-                                            className="w-full p-3 border border-borderLight rounded-lg text-xs focus:border-accentBlue focus:ring-2 focus:ring-accentBlue/20 outline-none bg-gray-50 text-gray-900 min-h-[60px] resize-none transition-all"
+                                            className="w-full p-3 border border-borderLight rounded-lg text-xs focus:border-accentBlue focus:ring-2 focus:ring-accentBlue/20 outline-none bg-gray-50 text-gray-900 min-h-[50px] resize-none transition-all"
                                         />
 
                                         {/* Row 1: Date & Cat */}
@@ -784,7 +784,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                 </div>
 
                                 {/* 2. MINI DONUT CHART (MIDDLE) */}
-                                <div className="bg-white border border-borderLight rounded-xl p-4 shadow-sm flex flex-col items-center justify-center relative min-h-[520px]">
+                                <div className="bg-white border border-borderLight rounded-xl p-4 shadow-sm flex flex-col items-center justify-center relative min-h-[400px]">
                                     <h3 className="font-bold text-textPrimary text-[10px] uppercase tracking-wide text-center absolute top-5 w-full text-slate-400">
                                         Estado General
                                     </h3>
@@ -852,7 +852,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                 </div>
 
                                 {/* 3. ASSIGNED HISTORY PANEL (NARROW) */}
-                                <div className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col h-[520px]">
+                                <div className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col h-[400px]">
                                     <div className="flex justify-between items-center mb-4">
                                         <h3 className="font-bold text-textPrimary flex items-center gap-2 text-xs uppercase tracking-wide">
                                             <ClipboardList size={16} className="text-purple-500" /> Tareas Delegadas
@@ -925,7 +925,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                                         )}
                                                     </div>
                                                 </div>
-                                                <p className={`text-[12px] font-medium mb-1.5 leading-snug ${t.status === 'completed' || t.status === 'deleted' ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
+                                                <p className={`text-[11px] font-normal mb-1.5 leading-snug ${t.status === 'completed' || t.status === 'deleted' ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
                                                     {t.text}
                                                 </p>
                                                 {/* Meta & Notes Action */}
@@ -971,7 +971,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                             <span className="flex items-center gap-1.5"><AlertCircle size={14} /> Vencidas</span>
                                             <span className="bg-red-100 text-red-800 px-2 rounded-full shadow-inner">{groupedTasks.overdue.length}</span>
                                         </h4>
-                                        <div className="space-y-2 max-h-[180px] overflow-y-auto custom-scrollbar pr-1">
+                                        <div className="space-y-2 max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
                                             {groupedTasks.overdue.length === 0 && <p className="text-[11px] text-gray-400 italic">Sin tareas vencidas.</p>}
                                             {groupedTasks.overdue.map(t => renderTaskWithDetails(t))}
                                         </div>
@@ -983,7 +983,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                             <span className="flex items-center gap-1.5"><Calendar size={14} /> Para Hoy</span>
                                             <span className="bg-blue-100 text-blue-800 px-2 rounded-full shadow-inner">{groupedTasks.today.length}</span>
                                         </h4>
-                                        <div className="space-y-2 max-h-[180px] overflow-y-auto custom-scrollbar pr-1">
+                                        <div className="space-y-2 max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
                                             {groupedTasks.today.length === 0 && <p className="text-[11px] text-gray-400 italic">Todo listo por hoy.</p>}
                                             {groupedTasks.today.map(t => renderTaskWithDetails(t))}
                                         </div>
@@ -995,7 +995,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                                             <span className="flex items-center gap-1.5">📥 Bandeja Backlog</span>
                                             <span className="bg-gray-200 text-gray-800 px-2 rounded-full shadow-inner">{groupedTasks.backlog.length}</span>
                                         </h4>
-                                        <div className="space-y-2 max-h-[180px] overflow-y-auto custom-scrollbar pr-1">
+                                        <div className="space-y-2 max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
                                             {groupedTasks.backlog.length === 0 && <p className="text-[11px] text-gray-400 italic">Bandeja vacía.</p>}
                                             {groupedTasks.backlog.map(t => renderTaskWithDetails(t))}
                                         </div>
