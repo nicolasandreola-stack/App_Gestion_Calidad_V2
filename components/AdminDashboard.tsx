@@ -236,7 +236,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
         if (!commentModalTask || !commentText.trim() || !selectedUser) return;
         setIsSendingComment(true);
 
-        const dateStr = new Date().toLocaleDateString('es-AR');
+        const now = new Date();
+        const dateStr = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
         const newEntry = `[${dateStr}] ${commentText.trim()}`;
         const existingComments = commentModalTask.adminComments || '';
         const updatedComments = existingComments
@@ -420,7 +421,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
     const routinePct = todayRoutineItems.length ? Math.round((doneRoutineCount / todayRoutineItems.length) * 100) : 0;
 
     // Productivity: Completed Today
-    const completedTodayList = userCompletedTasks.filter(t => t.completedAt === new Date().toLocaleDateString());
+    const now = new Date();
+    const todayLabelFormat = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+    const completedTodayList = userCompletedTasks.filter(t => t.completedAt === todayLabelFormat);
     const productivityScore = completedTodayList.length;
     const adminAssignedCompleted = completedTodayList.filter(t => t.del === 'Admin').length;
 

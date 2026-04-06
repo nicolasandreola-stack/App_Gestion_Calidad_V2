@@ -2,6 +2,14 @@ import { google } from "googleapis";
 import { GoogleAuth } from "google-auth-library";
 import { GlobalCloudData, Task, RoutineItem, BackupData } from "../types.js";
 
+// Helper para formatear fechas consistentemente como D/M/YYYY (Día/Mes/Año)
+function formatDate(date: Date): string {
+    const d = date.getDate();
+    const m = date.getMonth() + 1;
+    const y = date.getFullYear();
+    return `${d}/${m}/${y}`;
+}
+
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
 const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID || "1yRf1a_wtB0ZM9Q5o0HO0ARQVd5bHBCoGjEiZdfuxlfs";
 
@@ -90,7 +98,7 @@ export async function fetchFromSheets(): Promise<GlobalCloudData> {
             prio: prior === "VERDADERO" || prior === "TRUE" || prior === "Sí",
             note: notas || "",
             isStandby: estado === "Standby",
-            completedAt: estado === "Completada" ? (fechaCarga || new Date().toLocaleDateString()) : undefined,
+            completedAt: estado === "Completada" ? (fechaCarga || formatDate(new Date())) : undefined,
             deleted: estado === "Eliminada",
             subtasks: parsedSubtasks,
             acknowledged: acknowledged === "TRUE" || acknowledged === "Sí" || acknowledged === "true",
@@ -174,10 +182,11 @@ export async function pushToSheets(globalData: GlobalCloudData) {
         ];
 
         allTasks.forEach(t => {
+            const fechaCarga = t.completedAt || formatDate(new Date());
             tareasRows.push([
                 t.id,
                 usuario,
-                t.completedAt || new Date().toLocaleDateString(), // Fecha de carga (simplificada)
+                `'${fechaCarga}`, // Apóstrofe inicial: fuerza texto plano en Google Sheets
                 t.text,
                 t.subtasks && t.subtasks.length > 0 ? JSON.stringify(t.subtasks) : "",
                 t.note || "",

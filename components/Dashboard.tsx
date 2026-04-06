@@ -509,7 +509,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
       closingNote: note,
       closingL1: links.l1, closingN1: links.n1,
       closingL2: links.l2, closingN2: links.n2,
-      completedAt: new Date().toLocaleDateString()
+      completedAt: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`
     };
 
     // 2. Mover a completadas
