@@ -260,8 +260,9 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar pb-10">
-            {Array.from(grouped.map.entries()).map(([projName, phases]) => (
+            {Array.from(grouped.map.entries()).map(([projName, phases], pIdx) => (
               <div key={projName} className="mb-0">
+                {pIdx > 0 && <div className="h-6 w-full bg-slate-50/50 border-t border-white border-b border-gray-200 shadow-sm"></div>}
                 <div 
                   className="bg-slate-800 text-white px-4 py-3 flex items-center gap-2 cursor-pointer hover:bg-slate-700 select-none sticky top-0 z-20 group"
                   onClick={() => toggleProject(projName)}
@@ -371,13 +372,14 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
               <div className="absolute -top-1 -left-1 w-2 h-2 rounded-full bg-red-400"></div>
             </div>
 
-            {Array.from(grouped.map.entries()).map(([projName, phases]) => {
+            {Array.from(grouped.map.entries()).map(([projName, phases], pIdx) => {
               const pm = grouped.pMeta.get(projName)!;
               const pStartOffset = dayDiff(grouped.minD, pm.minD) * 30;
               const pDuration = Math.max(1, dayDiff(pm.minD, pm.maxD)) * 30;
 
               return (
               <div key={projName + '_grid'}>
+                {pIdx > 0 && <div className="h-6 w-full bg-slate-50/50 border-t border-white border-b border-gray-200"></div>}
                 <div className="h-[44px] w-full border-b border-transparent relative">
                   {expandedProjects.has(projName) && (
                      <div className="absolute top-4 h-3 bg-slate-800 rounded shadow-sm opacity-60" style={{left: pStartOffset + 15, width: pDuration}}></div>
@@ -904,48 +906,48 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
           {/* Top KPI Row */}
           <div className="grid grid-cols-3 gap-4 shrink-0">
             <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-              <p className="text-xs font-bold text-slate-400 uppercase">Progreso Total</p>
-              <p className="text-3xl font-black text-slate-800">{Math.round(pm.prog/pm.count)}%</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Progreso Total</p>
+              <p className="text-2xl font-bold text-slate-800">{Math.round(pm.prog/pm.count)}%</p>
             </div>
             <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-              <p className="text-xs font-bold text-slate-400 uppercase">Fases Activas</p>
-              <p className="text-3xl font-black text-slate-800">{phases.length}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Fases Activas</p>
+              <p className="text-2xl font-bold text-slate-800">{phases.length}</p>
             </div>
             <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-              <p className="text-xs font-bold text-slate-400 uppercase">Cierre Estimado</p>
-              <p className="text-lg font-bold text-slate-800 mt-2">{pm.maxD.toLocaleDateString()}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Cierre Estimado</p>
+              <p className="text-lg font-semibold text-slate-700 mt-1">{pm.maxD.toLocaleDateString()}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-6">
             {/* Donut Chart */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center">
-              <h3 className="w-full text-sm font-bold text-slate-700 uppercase mb-6">Estado de Tareas</h3>
+              <h3 className="w-full text-xs font-bold text-slate-400 uppercase tracking-wide mb-6">Estado de Tareas</h3>
               <div className="relative w-48 h-48 rounded-full flex items-center justify-center shadow-inner" style={{ background: gradient }}>
                 <div className="w-32 h-32 bg-white rounded-full flex flex-col items-center justify-center shadow-sm">
-                  <span className="text-3xl font-black text-slate-800">{allTasksCount}</span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Tareas</span>
+                  <span className="text-2xl font-bold text-slate-800">{allTasksCount}</span>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase">Tareas</span>
                 </div>
               </div>
-              <div className="flex gap-4 w-full justify-center mt-6 text-xs font-bold">
+              <div className="flex gap-4 w-full justify-center mt-6 text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
                 <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-emerald-500"></div> Cerradas ({totalC})</div>
-                <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-blue-500"></div> En Progreso ({totalE})</div>
+                <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-blue-500"></div> Progreso ({totalE})</div>
                 <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-slate-200"></div> Pendientes ({totalP})</div>
               </div>
             </div>
 
             {/* Horizontal Bar Chart (Phases) */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-               <h3 className="text-sm font-bold text-slate-700 uppercase mb-4">Métricas por Fase</h3>
+               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-4">Métricas por Fase</h3>
                <div className="space-y-4">
                  {phaseStats.map((ps:any, i:number) => (
                    <div key={i}>
-                     <div className="flex justify-between text-xs font-bold mb-1">
-                       <span className="text-slate-600 truncate max-w-[200px]">{ps.name}</span>
-                       <span className={ps.progress === 100 ? 'text-emerald-600' : 'text-slate-800'}>{ps.progress}%</span>
+                     <div className="flex justify-between text-[11px] font-medium mb-1">
+                       <span className="text-slate-500 truncate max-w-[200px]">{ps.name}</span>
+                       <span className={ps.progress === 100 ? 'text-emerald-500 font-bold' : 'text-slate-600'}>{ps.progress}%</span>
                      </div>
-                     <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden flex">
-                       <div className={`h-2.5 rounded-full ${ps.progress === 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{ width: `${ps.progress}%` }}></div>
+                     <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden flex">
+                       <div className={`h-2 rounded-full ${ps.progress === 100 ? 'bg-emerald-400' : 'bg-indigo-400'}`} style={{ width: `${ps.progress}%` }}></div>
                      </div>
                    </div>
                  ))}
