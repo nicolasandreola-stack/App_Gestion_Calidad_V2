@@ -499,25 +499,42 @@ function TaskEditModal({ task, uniqueProjects, uniquePhases, uniqueAssignees, on
   const [edited, setEdited] = useState<ProjectTask>(JSON.parse(JSON.stringify(task))); // Deep copy
   const [newSubtask, setNewSubtask] = useState("");
 
+  const updateTaskFromSubtasks = (newSubtasks: ProjectSubtask[]) => {
+    let newProgress = edited.progress;
+    let newStatus = edited.status;
+    
+    if (newSubtasks.length > 0) {
+      const completed = newSubtasks.filter(s => s.completed).length;
+      newProgress = Math.round((completed / newSubtasks.length) * 100);
+      
+      if (newProgress === 100) newStatus = 'CERRADO';
+      else if (newProgress > 0) newStatus = 'EN PROGRESO';
+      else newStatus = 'PENDIENTE';
+    }
+    
+    setEdited({
+      ...edited,
+      subtasks: newSubtasks,
+      progress: newProgress,
+      status: newStatus
+    });
+  };
+
   const addSubtask = () => {
     if (!newSubtask.trim()) return;
     const st: ProjectSubtask = { id: 'ST-' + Date.now(), text: newSubtask, completed: false, link: '', observation: '', assignee: '' };
-    setEdited({ ...edited, subtasks: [...(edited.subtasks || []), st] });
+    updateTaskFromSubtasks([...(edited.subtasks || []), st]);
     setNewSubtask("");
   };
 
   const updateSubtask = (stId: string, updates: Partial<ProjectSubtask>) => {
-    setEdited({
-      ...edited,
-      subtasks: edited.subtasks?.map(s => s.id === stId ? { ...s, ...updates } : s)
-    });
+    const newSubtasks = edited.subtasks?.map(s => s.id === stId ? { ...s, ...updates } : s) || [];
+    updateTaskFromSubtasks(newSubtasks);
   };
 
   const removeSubtask = (stId: string) => {
-    setEdited({
-      ...edited,
-      subtasks: edited.subtasks?.filter(s => s.id !== stId)
-    });
+    const newSubtasks = edited.subtasks?.filter(s => s.id !== stId) || [];
+    updateTaskFromSubtasks(newSubtasks);
   };
 
   return (
