@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ProjectTask, ProjectSubtask } from '../types';
-import { Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User } from 'lucide-react';
+import { Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity } from 'lucide-react';
 
 interface AdminGanttProps {
   projects: ProjectTask[];
@@ -170,6 +170,13 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
 
   const today = new Date();
 
+  // --- KPI Calculations ---
+  const totalProjects = grouped.map.size;
+  const totalTasks = projects.length;
+  const closedTasks = projects.filter(p => p.status === 'CERRADO').length;
+  const overdueTasks = projects.filter(p => isOverdue(p.endDate, p.status)).length;
+  const avgProgress = totalTasks > 0 ? Math.round(projects.reduce((acc, p) => acc + (p.progress || 0), 0) / totalTasks) : 0;
+
   return (
     <div className="flex flex-col h-full bg-slate-50 relative overflow-hidden">
       {/* Header Info */}
@@ -190,6 +197,53 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
         >
           <Plus size={16} /> Nueva Tarea de Proyecto
         </button>
+      </div>
+
+      {/* KPI DASHBOARD RIBBON */}
+      <div className="grid grid-cols-4 gap-4 px-4 pt-4 shrink-0">
+        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-4">
+          <div className="bg-blue-100 text-blue-600 p-3 rounded-lg"><FolderKanban size={24} /></div>
+          <div>
+            <p className="text-xs font-bold text-slate-500 uppercase">Proyectos Activos</p>
+            <p className="text-2xl font-black text-slate-800">{totalProjects}</p>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-4">
+          <div className="bg-emerald-100 text-emerald-600 p-3 rounded-lg"><CheckCircle2 size={24} /></div>
+          <div className="flex-1">
+            <p className="text-xs font-bold text-slate-500 uppercase">Tareas de Proyecto</p>
+            <div className="flex justify-between items-end">
+              <p className="text-2xl font-black text-slate-800">{closedTasks}<span className="text-sm font-medium text-slate-400">/{totalTasks}</span></p>
+              <p className="text-xs font-bold text-emerald-600">Completadas</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-4">
+          <div className="bg-indigo-100 text-indigo-600 p-3 rounded-lg"><TrendingUp size={24} /></div>
+          <div className="flex-1">
+            <p className="text-xs font-bold text-slate-500 uppercase">Progreso Global</p>
+            <div className="flex items-center gap-3">
+              <p className="text-2xl font-black text-slate-800">{avgProgress}%</p>
+              <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-indigo-500 transition-all" style={{width: `${avgProgress}%`}}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-4">
+          <div className={`p-3 rounded-lg ${overdueTasks > 0 ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400'}`}>
+            {overdueTasks > 0 ? <AlertTriangle size={24} /> : <Clock size={24} />}
+          </div>
+          <div>
+            <p className="text-xs font-bold text-slate-500 uppercase">Atrasos Críticos</p>
+            <p className={`text-2xl font-black ${overdueTasks > 0 ? 'text-red-600' : 'text-slate-800'}`}>
+              {overdueTasks} <span className="text-sm font-medium text-slate-400">tareas</span>
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* GANTT CONTAINER */}
