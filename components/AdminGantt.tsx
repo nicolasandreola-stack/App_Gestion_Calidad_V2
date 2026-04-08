@@ -37,20 +37,25 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
   // Grouping
   const grouped = useMemo(() => {
     const map = new Map<string, Map<string, ProjectTask[]>>();
-    let minD = new Date(); minD.setFullYear(minD.getFullYear() + 5);
-    let maxD = new Date(2000, 0, 1);
+    let minD = new Date();
+    let maxD = new Date();
 
-    projects.forEach(p => {
-      const start = parseDate(p.startDate);
-      const end = parseDate(p.endDate);
-      if (start < minD) minD = start;
-      if (end > maxD) maxD = end;
+    if (projects && projects.length > 0) {
+      minD.setFullYear(minD.getFullYear() + 5);
+      maxD = new Date(2000, 0, 1);
 
-      if (!map.has(p.project)) map.set(p.project, new Map());
-      const pMap = map.get(p.project)!;
-      if (!pMap.has(p.phase)) pMap.set(p.phase, []);
-      pMap.get(p.phase)!.push(p);
-    });
+      projects.forEach(p => {
+        const start = parseDate(p.startDate);
+        const end = parseDate(p.endDate);
+        if (start < minD) minD = start;
+        if (end > maxD) maxD = end;
+
+        if (!map.has(p.project)) map.set(p.project, new Map());
+        const pMap = map.get(p.project)!;
+        if (!pMap.has(p.phase)) pMap.set(p.phase, []);
+        pMap.get(p.phase)!.push(p);
+      });
+    }
 
     // Add buffer
     minD.setDate(minD.getDate() - 7);
@@ -60,7 +65,9 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
       maxD.setDate(minD.getDate() + 30);
     }
 
-    const totalDays = dayDiff(minD, maxD);
+    let totalDays = dayDiff(minD, maxD);
+    if (totalDays < 0) totalDays = 30; // Fallback if still negative
+    
     const daysArr = Array.from({ length: totalDays }, (_, i) => {
       const d = new Date(minD);
       d.setDate(minD.getDate() + i);
