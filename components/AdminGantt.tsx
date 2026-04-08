@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { ProjectTask, ProjectSubtask } from '../types';
-import { Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, Clock, CheckSquare, AlignLeft, Layers } from 'lucide-react';
+import { Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, Clock, CheckSquare, AlignLeft, Layers, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface AdminGanttProps {
   projects: ProjectTask[];
@@ -27,12 +28,22 @@ const dayDiff = (start: Date, end: Date) => {
   return Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 };
 
+const isOverdue = (endStr: string, status: string) => {
+  if (status === 'CERRADO') return false;
+  const endD = parseDate(endStr);
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  endD.setHours(0,0,0,0);
+  return endD < now;
+};
+
 export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject }: AdminGanttProps) {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   
-  // Modal for editing task
+  // Modals state
   const [editTask, setEditTask] = useState<ProjectTask | null>(null);
+  const [viewTask, setViewTask] = useState<ProjectTask | null>(null);
 
   // Grouping
   const grouped = useMemo(() => {
@@ -92,6 +103,10 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
     return { map, minD, maxD, totalDays, daysArr, months };
   }, [projects]);
 
+  // Autocomplete lists
+  const uniqueProjects = Array.from(new Set(projects.map(p => p.project))).filter(Boolean);
+  const uniquePhases = Array.from(new Set(projects.map(p => p.phase))).filter(Boolean);
+
   const toggleProject = (p: string) => {
     const next = new Set(expandedProjects);
     if (next.has(p)) next.delete(p);
@@ -120,9 +135,9 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
         </div>
         <button 
           onClick={() => setEditTask({
-            id: 'PROJ-' + Date.now(), project: 'Nuevo Proyecto', phase: 'FASE A', name: 'Nueva Tarea', 
+            id: 'PROJ-' + Date.now(), project: '', phase: '', name: 'Nueva Tarea', 
             startDate: formatDate(new Date()), endDate: formatDate(new Date(new Date().setDate(new Date().getDate() + 5))),
-            assignee: 'Admin', progress: 0, status: 'PENDIENTE', subtasks: [], details: ''
+            assignee: 'Admin', progress: 0, status: 'PENDIENTE', subtasks: [], details: '', link: ''
           })}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors"
         >
@@ -163,24 +178,30 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                       <span className="text-[10px] text-slate-400 font-medium ml-auto">{tasks.length} tareas</span>
                     </div>
 
-                    {!expandedPhases.has(projName + phaseName) && tasks.map(t => (
+                    {!expandedPhases.has(projName + phaseName) && tasks.map(t => {
+                      const overdue = isOverdue(t.endDate, t.status);
+                      return (
                       <div 
                         key={t.id} 
-                        className="group grid grid-cols-[1fr_50px_70px] items-center px-4 py-3 border-b border-slate-100 hover:bg-blue-50/50 cursor-pointer h-12 transition-colors"
-                        onClick={() => setEditTask(t)}
+                        className="group grid grid-cols-[1fr_50px_70px] items-center px-4 py-3 border-b border-slate-100 hover:bg-blue-50/50 cursor-pointer h-12 transition-colors relative"
+                        onClick={() => setViewTask(t)}
                       >
-                        <div className="pl-8 truncate">
-                          <span className="text-xs text-slate-700 font-medium truncate block group-hover:text-blue-700 transition-colors">{t.name}</span>
-                          {t.subtasks && t.subtasks.length > 0 && (
-                            <span className="text-[9px] text-slate-400">{t.subtasks.filter(s=>s.completed).length}/{t.subtasks.length} subs</span>
-                          )}
+                        <div className="pl-8 truncate flex items-center gap-2">
+                          {overdue && <AlertTriangle size={12} className="text-red-500 shrink-0" title="Tarea Vencida" />}
+                          <div className="truncate">
+                            <span className={`text-xs font-medium truncate block transition-colors group-hover:text-blue-700 ${overdue ? 'text-red-600' : 'text-slate-700'}`}>{t.name}</span>
+                            {t.subtasks && t.subtasks.length > 0 && (
+                              <span className="text-[9px] text-slate-400">{t.subtasks.filter(s=>s.completed).length}/{t.subtasks.length} subs</span>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-[10px] font-bold text-slate-600 text-center">{t.progress}%</div>
+                        <div className={`text-[10px] font-bold text-center ${overdue ? 'text-red-500' : 'text-slate-600'}`}>{t.progress}%</div>
                         <div className="text-center">
                           <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${t.status === 'CERRADO' ? 'bg-emerald-100 text-emerald-700' : t.status === 'EN PROGRESO' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>{t.status || 'PENDIENTE'}</span>
                         </div>
+                        {overdue && <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>}
                       </div>
-                    ))}
+                    )})}
                   </div>
                 ))}
               </div>
@@ -190,9 +211,8 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
 
         {/* RIGHT PANEL - Timeline Grid */}
         <div className="flex-1 overflow-x-auto custom-scrollbar flex flex-col bg-slate-50 relative hide-horizontal-scrollbar">
-          {/* Header Months/Days */}
+          {/* ... grid headers remain mostly the same ... */}
           <div className="sticky top-0 z-10 bg-slate-50/90 backdrop-blur border-b border-gray-200">
-            {/* Months */}
             <div className="flex border-b border-gray-200 h-8">
               {grouped.months.map((m, i) => {
                 const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -203,7 +223,6 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                 )
               })}
             </div>
-            {/* Days */}
             <div className="flex h-8">
               {grouped.daysArr.map((d, i) => {
                 const isToday = d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
@@ -217,9 +236,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
             </div>
           </div>
 
-          {/* Grid Content */}
-          <div className="relative flex-1 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iMTAwJSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48bGluZSB4MT0iMzAiIHkxPSIwIiB4Mj0iMzAiIHkyPSIxMDAlIiBzdHJva2U9IiNlMmU4ZjAiIHN0cm9rZS1kYXNoYXJyYXk9IjIgMiIgLz48L3N2Zz4=')] pb-10">
-            {/* Today Line */}
+          <div className="relative flex-1 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iMTAwJSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48bGluZSB4MT0iMzAiIHkxPSIwIiB4Mj0iMzAiIHkyPSIxMDAlIiBzdHJva2U9IiNlMmU4ZjAiIHN0cm9rZS1kYXNoYXJyYXk9IjIgMiIgLz48L3N2Zz4=')] pb-10 w-max min-w-full">
             <div 
               className="absolute top-0 bottom-0 border-l-2 border-red-400/50 z-0 pointer-events-none" 
               style={{ left: dayDiff(grouped.minD, today) * 30 + 15, display: dayDiff(grouped.minD, today) >= 0 && dayDiff(grouped.minD, today) <= grouped.totalDays ? 'block' : 'none' }}
@@ -229,12 +246,10 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
 
             {Array.from(grouped.map.entries()).map(([projName, phases]) => (
               <div key={projName + '_grid'}>
-                {/* Project Header Row (Empty in timeline) */}
                 <div className="h-[44px] w-full border-b border-transparent"></div>
 
                 {!expandedProjects.has(projName) && Array.from(phases.entries()).map(([phaseName, tasks]) => (
                   <div key={phaseName + '_grid'}>
-                     {/* Phase Header Row */}
                     <div className="h-[37px] w-full border-b border-transparent bg-slate-50/30 line-through-pattern"></div>
 
                     {!expandedPhases.has(projName + phaseName) && tasks.map(t => {
@@ -242,16 +257,16 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                        const eDate = parseDate(t.endDate);
                        const leftOffset = dayDiff(grouped.minD, sDate) * 30;
                        const duration = Math.max(1, dayDiff(sDate, eDate)) * 30;
+                       const overdue = isOverdue(t.endDate, t.status);
 
                        return (
                         <div key={t.id + '_grid'} className="h-12 border-b border-slate-100 flex items-center relative group/row hover:bg-blue-50/20 transition-colors">
                           <div 
-                            className={`absolute h-6 rounded-md shadow-sm border overflow-hidden cursor-pointer flex items-center transition-all hover:-translate-y-0.5 hover:shadow-md ${t.status === 'CERRADO' ? 'bg-emerald-500 border-emerald-600' : t.status === 'EN PROGRESO' ? 'bg-blue-500 border-blue-600' : 'bg-slate-400 border-slate-500'}`}
+                            className={`absolute h-6 rounded-md shadow-sm border overflow-hidden cursor-pointer flex items-center transition-all hover:-translate-y-0.5 hover:shadow-md ${t.status === 'CERRADO' ? 'bg-emerald-500 border-emerald-600' : overdue ? 'bg-red-500 border-red-600' : t.status === 'EN PROGRESO' ? 'bg-blue-500 border-blue-600' : 'bg-slate-400 border-slate-500'}`}
                             style={{ left: leftOffset, width: duration }}
-                            onClick={() => setEditTask(t)}
+                            onClick={() => setViewTask(t)}
                             title={`${t.name} (${t.progress}%)`}
                           >
-                             {/* Progress Fill */}
                              <div className="absolute top-0 bottom-0 left-0 bg-black/20" style={{ width: `${t.progress}%` }}></div>
                              <span className="relative z-10 text-[9px] font-bold text-white px-2 truncate leading-none pt-0.5 pointer-events-none">{t.name}</span>
                           </div>
@@ -266,10 +281,24 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
         </div>
       </div>
 
+      {/* VIEW MODAL (Read-Only) */}
+      {viewTask && (
+        <TaskViewModal 
+           task={viewTask} 
+           onClose={() => setViewTask(null)}
+           onEdit={() => {
+             setEditTask(viewTask);
+             setViewTask(null);
+           }}
+        />
+      )}
+
       {/* EDIT MODAL */}
       {editTask && (
         <TaskEditModal 
            task={editTask} 
+           uniqueProjects={uniqueProjects}
+           uniquePhases={uniquePhases}
            onClose={() => setEditTask(null)} 
            onSave={(updated) => {
              const existing = projects.find(p => p.id === updated.id);
@@ -287,8 +316,104 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
   );
 }
 
-// ------ MODAL COMPONENT (Internal) ------
-function TaskEditModal({ task, onClose, onSave, onDelete }: { task: ProjectTask, onClose: () => void, onSave: (t: ProjectTask) => void, onDelete: (id: string) => void }) {
+// ------ VIEW MODAL COMPONENT ------
+function TaskViewModal({ task, onClose, onEdit }: { task: ProjectTask, onClose: () => void, onEdit: () => void }) {
+  const overdue = isOverdue(task.endDate, task.status);
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+        
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-start bg-slate-50">
+          <div>
+             <div className="flex items-center gap-2 mb-1">
+               <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded uppercase">{task.project}</span>
+               <span className="text-[10px] font-bold text-slate-500 uppercase">{task.phase}</span>
+             </div>
+             <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 mt-2">
+               {task.name}
+               {overdue && <span className="bg-red-100 text-red-600 text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1"><AlertTriangle size={12}/> VENCIDA</span>}
+             </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={onEdit} className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-50 transition-colors flex items-center gap-1 text-sm font-bold">
+              <Edit2 size={16} /> Editar
+            </button>
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-200 transition-colors">
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 bg-white custom-scrollbar">
+          
+          {/* Quick Stats Row */}
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+               <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Estado</p>
+               <p className="text-sm font-bold text-slate-700">{task.status || 'PENDIENTE'}</p>
+            </div>
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+               <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Avance</p>
+               <p className="text-sm font-bold text-slate-700">{task.progress}%</p>
+            </div>
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+               <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Fechas</p>
+               <p className={`text-xs font-bold ${overdue ? 'text-red-500' : 'text-slate-700'}`}>{task.startDate} a {task.endDate}</p>
+            </div>
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+               <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Asignado</p>
+               <p className="text-sm font-bold text-slate-700">{task.assignee || 'Sin Asignar'}</p>
+            </div>
+          </div>
+
+          <div className="mb-6">
+             <h3 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2"><AlignLeft size={14}/> Detalle / Observaciones Principales</h3>
+             <div className="text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100 min-h-[60px] whitespace-pre-wrap">
+               {task.details || <span className="text-slate-400 italic">No hay detalles cargados para la tarea principal.</span>}
+             </div>
+             {task.link && (
+               <a href={task.link} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 bg-blue-50 px-4 py-2 rounded-lg transition-colors font-medium">
+                 <ExternalLink size={16} /> Abrir Documento/Link Principal
+               </a>
+             )}
+          </div>
+
+          {/* Subtasks Summary */}
+          <div>
+            <h3 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-3"><CheckSquare size={14}/> Subtareas ({task.subtasks?.filter(s=>s.completed).length || 0}/{task.subtasks?.length || 0})</h3>
+            {(!task.subtasks || task.subtasks.length === 0) ? (
+              <p className="text-sm text-slate-400 italic">No hay subtareas cargadas.</p>
+            ) : (
+              <div className="space-y-3">
+                {task.subtasks.map(st => (
+                  <div key={st.id} className="border border-slate-100 rounded-lg p-3 relative bg-white shadow-sm flex flex-col gap-2">
+                     <div className="flex items-start gap-2">
+                       <span className="mt-0.5">{st.completed ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Circle size={16} className="text-slate-300" />}</span>
+                       <span className={`text-sm font-medium ${st.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>{st.text}</span>
+                     </div>
+                     {(st.observation || st.link) && (
+                       <div className="pl-6 space-y-1">
+                         {st.observation && <p className="text-[11px] text-slate-500 bg-slate-50 p-2 rounded">{st.observation}</p>}
+                         {st.link && <a href={st.link} target="_blank" rel="noopener noreferrer" className="text-[11px] text-blue-600 flex items-center gap-1 hover:underline w-fit"><ExternalLink size={10} /> Link adjunto</a>}
+                       </div>
+                     )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ------ EDIT MODAL COMPONENT ------
+function TaskEditModal({ task, uniqueProjects, uniquePhases, onClose, onSave, onDelete }: { task: ProjectTask, uniqueProjects: string[], uniquePhases: string[], onClose: () => void, onSave: (t: ProjectTask) => void, onDelete: (id: string) => void }) {
   const [edited, setEdited] = useState<ProjectTask>(JSON.parse(JSON.stringify(task))); // Deep copy
   const [newSubtask, setNewSubtask] = useState("");
 
@@ -317,10 +442,18 @@ function TaskEditModal({ task, onClose, onSave, onDelete }: { task: ProjectTask,
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
         
+        {/* Datalists for autocompletion */}
+        <datalist id="projects-list">
+          {uniqueProjects.map(p => <option key={p} value={p} />)}
+        </datalist>
+        <datalist id="phases-list">
+          {uniquePhases.map(ph => <option key={ph} value={ph} />)}
+        </datalist>
+
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
+        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50 shrink-0">
           <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <Edit2 size={18} className="text-blue-600" /> Editar Tarea de Proyecto
+            <Edit2 size={18} className="text-blue-600" /> {task.id.startsWith('PROJ') ? 'Editar' : 'Nueva'} Tarea de Proyecto
           </h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-200 transition-colors">
             <X size={20} />
@@ -334,12 +467,12 @@ function TaskEditModal({ task, onClose, onSave, onDelete }: { task: ProjectTask,
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block">Proyecto</label>
-                <input type="text" value={edited.project} onChange={e => setEdited({...edited, project: e.target.value})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="Ej: Certificación OEA" />
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block">Proyecto Existente o Nuevo</label>
+                <input list="projects-list" type="text" value={edited.project} onChange={e => setEdited({...edited, project: e.target.value})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="Selecciona o escribe..." />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block">Fase / Etapa</label>
-                <input type="text" value={edited.phase} onChange={e => setEdited({...edited, phase: e.target.value})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="Ej: FASE A" />
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block">Fase o Etapa</label>
+                <input list="phases-list" type="text" value={edited.phase} onChange={e => setEdited({...edited, phase: e.target.value})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="Selecciona o escribe..." />
               </div>
             </div>
 
@@ -378,9 +511,16 @@ function TaskEditModal({ task, onClose, onSave, onDelete }: { task: ProjectTask,
               </div>
             </div>
 
-            <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block flex items-center gap-1"><AlignLeft size={12} /> Detalle / Observaciones de Tarea</label>
-              <textarea value={edited.details || ''} onChange={e => setEdited({...edited, details: e.target.value})} className="w-full p-3 text-sm rounded-lg border border-gray-300 min-h-[100px] resize-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="Observaciones generales o instrucciones para la tarea principal..." />
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block flex items-center gap-1"><AlignLeft size={12} /> Detalle / Observaciones de Tarea</label>
+                <textarea value={edited.details || ''} onChange={e => setEdited({...edited, details: e.target.value})} className="w-full p-3 text-sm rounded-lg border border-gray-300 min-h-[100px] resize-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="Observaciones generales o instrucciones para la tarea principal..." />
+              </div>
+              
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block flex items-center gap-1"><ExternalLink size={12} /> Enlace de Tarea/Carpeta Principal</label>
+                <input type="text" value={edited.link || ''} onChange={e => setEdited({...edited, link: e.target.value})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="Pega aquí el enlace de Drive..." />
+              </div>
             </div>
           </div>
 
@@ -432,7 +572,7 @@ function TaskEditModal({ task, onClose, onSave, onDelete }: { task: ProjectTask,
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-100 bg-slate-50 flex justify-between items-center rounded-b-2xl">
+        <div className="p-4 border-t border-gray-100 bg-slate-50 flex justify-between items-center rounded-b-2xl shrink-0">
           <button onClick={() => { if(confirm("¿Eliminar tarea de proyecto por completo?")) onDelete(edited.id); }} className="text-red-500 text-xs font-bold hover:underline">Eliminar Tarea</button>
           <div className="flex gap-3">
              <button onClick={onClose} className="px-5 py-2 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">Cancelar</button>

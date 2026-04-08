@@ -117,6 +117,7 @@ export interface ProjectTask {
   status: string; // Col I: CERRADO, EN PROGRESO, PENDIENTE
   subtasks?: ProjectSubtask[]; // Col J: JSON
   details?: string; // Col K: Observaciones de tarea
+  link?: string; // Col L: Enlace Principal de la tarea
 }
 
 // Estructura Global para JSONBin (Multi-usuario)

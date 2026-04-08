@@ -176,7 +176,7 @@ export async function fetchFromSheets(): Promise<GlobalCloudData> {
     }
 
     proyectosRows.forEach(row => {
-        const [id, project, phase, name, startDate, endDate, assignee, progress, status, subtasksStr, details] = row;
+        const [id, project, phase, name, startDate, endDate, assignee, progress, status, subtasksStr, details, link] = row;
         if (!id) return;
         
         let parsedSubtasks = undefined;
@@ -197,7 +197,8 @@ export async function fetchFromSheets(): Promise<GlobalCloudData> {
             progress: Number(progress) || 0,
             status: status || "PENDIENTE",
             subtasks: parsedSubtasks,
-            details: details || ""
+            details: details || "",
+            link: link || ""
         });
     });
 
@@ -283,7 +284,8 @@ export async function pushToSheets(globalData: GlobalCloudData) {
                 p.progress,
                 p.status,
                 p.subtasks && p.subtasks.length > 0 ? JSON.stringify(p.subtasks) : "",
-                p.details || ""
+                p.details || "",
+                p.link || ""
              ]);
         });
     }
