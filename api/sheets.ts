@@ -168,7 +168,7 @@ export async function fetchFromSheets(): Promise<GlobalCloudData> {
     try {
         const proyectosRes = await sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
-            range: "Proyectos!A2:K",
+            range: "Proyectos!A2:L",
         });
         proyectosRows = proyectosRes.data.values || [];
     } catch (e) {
@@ -295,7 +295,7 @@ export async function pushToSheets(globalData: GlobalCloudData) {
         await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Tareas!A2:U" });
         await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Rutinas!A2:P" });
         try {
-            await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Proyectos!A2:K" });
+            await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Proyectos!A2:L" });
         } catch (e) {
             console.warn("Could not clear Proyectos sheet, maybe it doesn't exist yet");
         }
@@ -322,7 +322,7 @@ export async function pushToSheets(globalData: GlobalCloudData) {
         if (proyectosRows.length > 0) {
             await sheets.spreadsheets.values.update({
                 spreadsheetId: SPREADSHEET_ID,
-                range: "Proyectos!A2:K",
+                range: "Proyectos!A2:L",
                 valueInputOption: "RAW",
                 requestBody: { values: proyectosRows }
             });
