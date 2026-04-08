@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ProjectTask, ProjectSubtask } from '../types';
-import { Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity } from 'lucide-react';
+import { Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart } from 'lucide-react';
 
 interface AdminGanttProps {
   projects: ProjectTask[];
@@ -62,6 +62,8 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
   // Modals state
   const [editTask, setEditTask] = useState<ProjectTask | null>(null);
   const [viewTask, setViewTask] = useState<ProjectTask | null>(null);
+  const [activeKpiModal, setActiveKpiModal] = useState<'proyectos' | 'completadas' | 'atrasadas' | null>(null);
+  const [activeProjectDashboard, setActiveProjectDashboard] = useState<string | null>(null);
 
   // Grouping
   const grouped = useMemo(() => {
@@ -201,7 +203,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
 
       {/* KPI DASHBOARD RIBBON */}
       <div className="grid grid-cols-4 gap-4 px-4 pt-4 shrink-0">
-        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-4">
+        <div onClick={() => setActiveKpiModal('proyectos')} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-4 cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all">
           <div className="bg-blue-100 text-blue-600 p-3 rounded-lg"><FolderKanban size={24} /></div>
           <div>
             <p className="text-xs font-bold text-slate-500 uppercase">Proyectos Activos</p>
@@ -209,7 +211,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
           </div>
         </div>
         
-        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-4">
+        <div onClick={() => setActiveKpiModal('completadas')} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-4 cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all">
           <div className="bg-emerald-100 text-emerald-600 p-3 rounded-lg"><CheckCircle2 size={24} /></div>
           <div className="flex-1">
             <p className="text-xs font-bold text-slate-500 uppercase">Tareas de Proyecto</p>
@@ -233,7 +235,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
           </div>
         </div>
         
-        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-4">
+        <div onClick={() => setActiveKpiModal('atrasadas')} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-4 cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all">
           <div className={`p-3 rounded-lg ${overdueTasks > 0 ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400'}`}>
             {overdueTasks > 0 ? <AlertTriangle size={24} /> : <Clock size={24} />}
           </div>
@@ -271,6 +273,13 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                       {Math.round(grouped.pMeta.get(projName)!.prog / grouped.pMeta.get(projName)!.count)}%
                     </span>
                   )}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setActiveProjectDashboard(projName); }} 
+                    className={`p-1.5 rounded-md hover:bg-slate-600 transition-colors ${expandedProjects.has(projName) ? 'ml-2' : 'ml-auto'}`}
+                    title="Dashboard de Métricas del Proyecto"
+                  >
+                     <BarChart size={14} className="text-slate-300 hover:text-white" />
+                  </button>
                 </div>
 
                 {!expandedProjects.has(projName) && Array.from(phases.entries()).map(([phaseName, tasks]) => (
@@ -419,6 +428,26 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
           </div>
         </div>
       </div>
+
+      {/* MODALS RENDER LIST */}
+      
+      {activeKpiModal && (
+        <KpiListModal
+          mode={activeKpiModal}
+          projects={projects}
+          grouped={grouped}
+          onClose={() => setActiveKpiModal(null)}
+          onViewTask={(t) => { setActiveKpiModal(null); setViewTask(t); }}
+        />
+      )}
+
+      {activeProjectDashboard && (
+        <ProjectDashboardModal
+          projectName={activeProjectDashboard}
+          grouped={grouped}
+          onClose={() => setActiveProjectDashboard(null)}
+        />
+      )}
 
       {/* VIEW MODAL (Read-Only) */}
       {viewTask && (
@@ -748,9 +777,184 @@ function TaskEditModal({ task, uniqueProjects, uniquePhases, uniqueAssignees, on
              <button onClick={() => onSave(edited)} className="px-5 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md transition-colors flex items-center gap-2">
                <CheckCircle2 size={16} /> Guardar Cambios
              </button>
-          </div>
+            </div>
         </div>
       </div>
     </div>
   );
 }
+
+const KpiListModal = ({ mode, projects, grouped, onClose, onViewTask }: any) => {
+  const isOverdue = (dateStr: string, status: string) => {
+    if (status === 'CERRADO') return false;
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+      return d < new Date(new Date().setHours(0,0,0,0));
+    }
+    return false;
+  };
+
+  let title = "Detalles";
+  let items: any[] = [];
+  
+  if (mode === 'proyectos') {
+    title = "Proyectos Activos";
+    items = Array.from(grouped.map.keys()).map(k => ({ name: k, type: 'project' }));
+  } else if (mode === 'completadas') {
+    title = "Tareas Completadas";
+    items = projects.filter((p: any) => p.status === 'CERRADO');
+  } else if (mode === 'atrasadas') {
+    title = "Tareas Atrasadas Críticas";
+    items = projects.filter((p: any) => isOverdue(p.endDate, p.status));
+  }
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[300] flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl flex flex-col max-h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50">
+          <h2 className="text-xl font-bold text-slate-800">{title} ({items.length})</h2>
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors"><X size={20} className="text-slate-500" /></button>
+        </div>
+        <div className="p-6 overflow-y-auto flex-1 bg-white">
+          {items.length === 0 ? (
+            <p className="text-slate-500 text-center py-8">No hay elementos para mostrar.</p>
+          ) : (
+            <ul className="space-y-3">
+              {items.map((item, idx) => (
+                <li key={idx} className="p-4 rounded-xl border border-gray-100 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                  {item.type === 'project' ? (
+                    <div className="flex items-center gap-3">
+                      <FolderKanban size={20} className="text-blue-500" />
+                      <span className="font-bold text-slate-700">{item.name}</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-1 w-full" onClick={() => onViewTask(item)} role="button">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-slate-800 text-sm">{item.name}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.status === 'CERRADO' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                          {item.status}
+                        </span>
+                      </div>
+                      <div className="flex text-xs text-slate-500 gap-4">
+                        <span>{item.project} &gt; {item.phase}</span>
+                        <span>{item.endDate}</span>
+                      </div>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
+  const mapList = grouped.map.get(projectName);
+  if (!mapList) return null;
+
+  const phases = Array.from(mapList.keys());
+  const pm = grouped.pMeta.get(projectName)!;
+
+  let totalP = 0, totalE = 0, totalC = 0;
+  
+  const phaseStats: any[] = [];
+
+  for (const phaseName of phases) {
+    const tasks = mapList.get(phaseName)!;
+    const closedTasks = tasks.filter((t:any) => t.status === 'CERRADO').length;
+    const progressTotal = tasks.reduce((acc:any, t:any) => acc + (t.progress || 0), 0);
+    const avgProg = tasks.length > 0 ? Math.round(progressTotal / tasks.length) : 0;
+    
+    phaseStats.push({ name: phaseName, progress: avgProg, total: tasks.length, closed: closedTasks });
+
+    tasks.forEach((t:any) => {
+      if (t.status === 'CERRADO') totalC++;
+      else if (t.status === 'EN PROGRESO') totalE++;
+      else totalP++;
+    });
+  }
+
+  const allTasksCount = totalP + totalE + totalC;
+  const pTotalC = allTasksCount > 0 ? (totalC / allTasksCount) * 100 : 0;
+  const pTotalE = allTasksCount > 0 ? (totalE / allTasksCount) * 100 : 0;
+  const pTotalP = allTasksCount > 0 ? (totalP / allTasksCount) * 100 : 0;
+
+  // conic gradient logic
+  const closedDeg = (pTotalC / 100) * 360;
+  const inProgDeg = (pTotalE / 100) * 360;
+  const gradient = `conic-gradient(#10b981 0deg ${closedDeg}deg, #3b82f6 ${closedDeg}deg ${closedDeg + inProgDeg}deg, #e2e8f0 ${closedDeg + inProgDeg}deg 360deg)`;
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[300] flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-800 text-white shrink-0">
+          <div className="flex items-center gap-3">
+            <PieChart size={24} className="text-blue-400" />
+            <h2 className="text-xl font-black uppercase tracking-wider">{projectName}</h2>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-full transition-colors"><X size={20} className="text-slate-300" /></button>
+        </div>
+
+        <div className="p-6 overflow-y-auto flex-1 bg-slate-50 flex flex-col gap-6">
+          {/* Top KPI Row */}
+          <div className="grid grid-cols-3 gap-4 shrink-0">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+              <p className="text-xs font-bold text-slate-400 uppercase">Progreso Total</p>
+              <p className="text-3xl font-black text-slate-800">{Math.round(pm.prog/pm.count)}%</p>
+            </div>
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+              <p className="text-xs font-bold text-slate-400 uppercase">Fases Activas</p>
+              <p className="text-3xl font-black text-slate-800">{phases.length}</p>
+            </div>
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+              <p className="text-xs font-bold text-slate-400 uppercase">Cierre Estimado</p>
+              <p className="text-lg font-bold text-slate-800 mt-2">{pm.maxD.toLocaleDateString()}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            {/* Donut Chart */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center">
+              <h3 className="w-full text-sm font-bold text-slate-700 uppercase mb-6">Estado de Tareas</h3>
+              <div className="relative w-48 h-48 rounded-full flex items-center justify-center shadow-inner" style={{ background: gradient }}>
+                <div className="w-32 h-32 bg-white rounded-full flex flex-col items-center justify-center shadow-sm">
+                  <span className="text-3xl font-black text-slate-800">{allTasksCount}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Tareas</span>
+                </div>
+              </div>
+              <div className="flex gap-4 w-full justify-center mt-6 text-xs font-bold">
+                <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-emerald-500"></div> Cerradas ({totalC})</div>
+                <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-blue-500"></div> En Progreso ({totalE})</div>
+                <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-slate-200"></div> Pendientes ({totalP})</div>
+              </div>
+            </div>
+
+            {/* Horizontal Bar Chart (Phases) */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+               <h3 className="text-sm font-bold text-slate-700 uppercase mb-4">Métricas por Fase</h3>
+               <div className="space-y-4">
+                 {phaseStats.map((ps:any, i:number) => (
+                   <div key={i}>
+                     <div className="flex justify-between text-xs font-bold mb-1">
+                       <span className="text-slate-600 truncate max-w-[200px]">{ps.name}</span>
+                       <span className={ps.progress === 100 ? 'text-emerald-600' : 'text-slate-800'}>{ps.progress}%</span>
+                     </div>
+                     <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden flex">
+                       <div className={`h-2.5 rounded-full ${ps.progress === 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{ width: `${ps.progress}%` }}></div>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  );
+};
