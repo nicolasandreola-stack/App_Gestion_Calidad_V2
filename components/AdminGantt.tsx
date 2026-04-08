@@ -243,11 +243,16 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                       >
                         <div className="pl-8 truncate flex items-center gap-2">
                           {overdue && <AlertTriangle size={12} className="text-red-500 shrink-0" title="Tarea Vencida" />}
-                          <div className="truncate">
+                          <div className="flex flex-col truncate">
                             <span className={`text-xs font-medium truncate block transition-colors group-hover:text-blue-700 ${overdue ? 'text-red-600' : 'text-slate-700'}`}>{t.name}</span>
-                            {t.subtasks && t.subtasks.length > 0 && (
-                              <span className="text-[9px] text-slate-400">{t.subtasks.filter(s=>s.completed).length}/{t.subtasks.length} subs</span>
-                            )}
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {t.assignee && (
+                                <span className="text-[9px] text-slate-500 flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded-sm"><User size={8} /> {t.assignee}</span>
+                              )}
+                              {t.subtasks && t.subtasks.length > 0 && (
+                                <span className="text-[9px] text-slate-400">{t.subtasks.filter(s=>s.completed).length}/{t.subtasks.length} subs</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <div className={`text-[10px] font-bold text-center ${overdue ? 'text-red-500' : 'text-slate-600'}`}>{t.progress}%</div>
