@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ProjectTask, ProjectSubtask } from '../types';
-import { Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, Clock, CheckSquare, AlignLeft, Layers, AlertTriangle } from 'lucide-react';
+import { Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface AdminGanttProps {
@@ -23,6 +23,20 @@ const parseDate = (dStr: string) => {
 const formatDate = (d: Date) => {
   return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
 };
+
+const toInputDate = (dStr: string) => {
+   if (!dStr) return '';
+   const p = dStr.split('/');
+   if(p.length === 3) return `${p[2]}-${p[1]}-${p[0]}`;
+   return '';
+};
+
+const fromInputDate = (dStr: string) => {
+   if (!dStr) return '';
+   const p = dStr.split('-');
+   if(p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+   return '';
+}
 
 const dayDiff = (start: Date, end: Date) => {
   return Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
@@ -106,6 +120,15 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
   // Autocomplete lists
   const uniqueProjects = Array.from(new Set(projects.map(p => p.project))).filter(Boolean);
   const uniquePhases = Array.from(new Set(projects.map(p => p.phase))).filter(Boolean);
+  
+  // Get unique assignees covering both main tasks and subtasks
+  const uniqueAssignees = Array.from(new Set(projects.flatMap(p => {
+    const list = [p.assignee];
+    if (p.subtasks) {
+      p.subtasks.forEach(s => { if (s.assignee) list.push(s.assignee); });
+    }
+    return list;
+  }))).filter(Boolean);
 
   const toggleProject = (p: string) => {
     const next = new Set(expandedProjects);
@@ -137,7 +160,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
           onClick={() => setEditTask({
             id: 'PROJ-' + Date.now(), project: '', phase: '', name: 'Nueva Tarea', 
             startDate: formatDate(new Date()), endDate: formatDate(new Date(new Date().setDate(new Date().getDate() + 5))),
-            assignee: 'Admin', progress: 0, status: 'PENDIENTE', subtasks: [], details: '', link: ''
+            assignee: '', progress: 0, status: 'PENDIENTE', subtasks: [], details: '', link: ''
           })}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors"
         >
@@ -211,7 +234,6 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
 
         {/* RIGHT PANEL - Timeline Grid */}
         <div className="flex-1 overflow-x-auto custom-scrollbar flex flex-col bg-slate-50 relative hide-horizontal-scrollbar">
-          {/* ... grid headers remain mostly the same ... */}
           <div className="sticky top-0 z-10 bg-slate-50/90 backdrop-blur border-b border-gray-200">
             <div className="flex border-b border-gray-200 h-8">
               {grouped.months.map((m, i) => {
@@ -299,6 +321,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
            task={editTask} 
            uniqueProjects={uniqueProjects}
            uniquePhases={uniquePhases}
+           uniqueAssignees={uniqueAssignees}
            onClose={() => setEditTask(null)} 
            onSave={(updated) => {
              const existing = projects.find(p => p.id === updated.id);
@@ -361,11 +384,11 @@ function TaskViewModal({ task, onClose, onEdit }: { task: ProjectTask, onClose: 
             </div>
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Fechas</p>
-               <p className={`text-xs font-bold ${overdue ? 'text-red-500' : 'text-slate-700'}`}>{task.startDate} a {task.endDate}</p>
+               <p className={`text-xs font-bold ${overdue ? 'text-red-500' : 'text-slate-700'}`}>{task.startDate} al {task.endDate}</p>
             </div>
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Asignado</p>
-               <p className="text-sm font-bold text-slate-700">{task.assignee || 'Sin Asignar'}</p>
+               <p className="text-sm font-bold text-slate-700">{task.assignee || 'Sin área asignada'}</p>
             </div>
           </div>
 
@@ -394,8 +417,9 @@ function TaskViewModal({ task, onClose, onEdit }: { task: ProjectTask, onClose: 
                        <span className="mt-0.5">{st.completed ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Circle size={16} className="text-slate-300" />}</span>
                        <span className={`text-sm font-medium ${st.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>{st.text}</span>
                      </div>
-                     {(st.observation || st.link) && (
+                     {(st.observation || st.link || st.assignee) && (
                        <div className="pl-6 space-y-1">
+                         {st.assignee && <p className="text-[11px] font-bold text-slate-600 bg-slate-100 w-fit px-2 py-0.5 rounded flex items-center gap-1"><User size={10} /> Delegado a: {st.assignee}</p>}
                          {st.observation && <p className="text-[11px] text-slate-500 bg-slate-50 p-2 rounded">{st.observation}</p>}
                          {st.link && <a href={st.link} target="_blank" rel="noopener noreferrer" className="text-[11px] text-blue-600 flex items-center gap-1 hover:underline w-fit"><ExternalLink size={10} /> Link adjunto</a>}
                        </div>
@@ -413,13 +437,13 @@ function TaskViewModal({ task, onClose, onEdit }: { task: ProjectTask, onClose: 
 }
 
 // ------ EDIT MODAL COMPONENT ------
-function TaskEditModal({ task, uniqueProjects, uniquePhases, onClose, onSave, onDelete }: { task: ProjectTask, uniqueProjects: string[], uniquePhases: string[], onClose: () => void, onSave: (t: ProjectTask) => void, onDelete: (id: string) => void }) {
+function TaskEditModal({ task, uniqueProjects, uniquePhases, uniqueAssignees, onClose, onSave, onDelete }: { task: ProjectTask, uniqueProjects: string[], uniquePhases: string[], uniqueAssignees: string[], onClose: () => void, onSave: (t: ProjectTask) => void, onDelete: (id: string) => void }) {
   const [edited, setEdited] = useState<ProjectTask>(JSON.parse(JSON.stringify(task))); // Deep copy
   const [newSubtask, setNewSubtask] = useState("");
 
   const addSubtask = () => {
     if (!newSubtask.trim()) return;
-    const st: ProjectSubtask = { id: 'ST-' + Date.now(), text: newSubtask, completed: false, link: '', observation: '' };
+    const st: ProjectSubtask = { id: 'ST-' + Date.now(), text: newSubtask, completed: false, link: '', observation: '', assignee: '' };
     setEdited({ ...edited, subtasks: [...(edited.subtasks || []), st] });
     setNewSubtask("");
   };
@@ -449,6 +473,9 @@ function TaskEditModal({ task, uniqueProjects, uniquePhases, onClose, onSave, on
         <datalist id="phases-list">
           {uniquePhases.map(ph => <option key={ph} value={ph} />)}
         </datalist>
+        <datalist id="assignees-list">
+          {uniqueAssignees.map(a => <option key={a} value={a} />)}
+        </datalist>
 
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50 shrink-0">
@@ -464,7 +491,7 @@ function TaskEditModal({ task, uniqueProjects, uniquePhases, onClose, onSave, on
         <div className="flex-1 overflow-y-auto p-6 bg-white custom-scrollbar grid grid-cols-1 md:grid-cols-[1fr_400px] gap-8">
           
           {/* Main Info */}
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block">Proyecto Existente o Nuevo</label>
@@ -477,25 +504,29 @@ function TaskEditModal({ task, uniqueProjects, uniquePhases, onClose, onSave, on
             </div>
 
             <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block">Nombre de la Tarea</label>
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block">Nombre de la Tarea Principal</label>
               <input type="text" value={edited.name} onChange={e => setEdited({...edited, name: e.target.value})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block flex items-center gap-1"><Calendar size={12}/> Fecha Inicio</label>
-                <input type="text" value={edited.startDate} onChange={e => setEdited({...edited, startDate: e.target.value})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="DD/MM/YYYY" />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block flex items-center gap-1"><Calendar size={12}/> Fecha Fin</label>
-                <input type="text" value={edited.endDate} onChange={e => setEdited({...edited, endDate: e.target.value})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="DD/MM/YYYY" />
-              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block">Asignado a (Área / Pers.)</label>
+                <input list="assignees-list" type="text" value={edited.assignee} onChange={e => setEdited({...edited, assignee: e.target.value})} className="w-full p-2 text-sm rounded-lg border border-gray-300 focus:border-blue-500 outline-none" placeholder="Ej: Finanzas" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block flex items-center gap-1"><Calendar size={12}/> Inicio</label>
+                <input type="date" value={toInputDate(edited.startDate)} onChange={e => setEdited({...edited, startDate: fromInputDate(e.target.value)})} className="w-full p-2 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block flex items-center gap-1"><Calendar size={12}/> Fin / Vencimiento</label>
+                <input type="date" value={toInputDate(edited.endDate)} onChange={e => setEdited({...edited, endDate: fromInputDate(e.target.value)})} className="w-full p-2 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block">Estado</label>
-                <select value={edited.status} onChange={e => setEdited({...edited, status: e.target.value})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 outline-none">
+                <select value={edited.status} onChange={e => setEdited({...edited, status: e.target.value})} className="w-full p-2 text-sm rounded-lg border border-gray-300 focus:border-blue-500 outline-none">
                   <option value="PENDIENTE">Pendiente</option>
                   <option value="EN PROGRESO">En Progreso</option>
                   <option value="CERRADO">Cerrado</option>
@@ -503,36 +534,32 @@ function TaskEditModal({ task, uniqueProjects, uniquePhases, onClose, onSave, on
               </div>
               <div>
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block">% Avance</label>
-                <input type="number" min="0" max="100" value={edited.progress} onChange={e => setEdited({...edited, progress: parseInt(e.target.value) || 0})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 font-bold text-center outline-none" />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block">Asignado a</label>
-                <input type="text" value={edited.assignee} onChange={e => setEdited({...edited, assignee: e.target.value})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 outline-none" />
+                <input type="number" min="0" max="100" value={edited.progress} onChange={e => setEdited({...edited, progress: parseInt(e.target.value) || 0})} className="w-full p-2 text-sm rounded-lg border border-gray-300 focus:border-blue-500 font-bold text-center outline-none" />
               </div>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block flex items-center gap-1"><AlignLeft size={12} /> Detalle / Observaciones de Tarea</label>
-                <textarea value={edited.details || ''} onChange={e => setEdited({...edited, details: e.target.value})} className="w-full p-3 text-sm rounded-lg border border-gray-300 min-h-[100px] resize-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="Observaciones generales o instrucciones para la tarea principal..." />
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block flex items-center gap-1"><AlignLeft size={12} /> Detalle / Observaciones Principales</label>
+                <textarea value={edited.details || ''} onChange={e => setEdited({...edited, details: e.target.value})} className="w-full p-3 text-sm rounded-lg border border-gray-300 min-h-[100px] resize-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="Instrucciones generales para la tarea principal..." />
               </div>
               
               <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block flex items-center gap-1"><ExternalLink size={12} /> Enlace de Tarea/Carpeta Principal</label>
-                <input type="text" value={edited.link || ''} onChange={e => setEdited({...edited, link: e.target.value})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="Pega aquí el enlace de Drive..." />
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block flex items-center gap-1"><ExternalLink size={12} /> Enlace Carpeta Principal Drive</label>
+                <input type="text" value={edited.link || ''} onChange={e => setEdited({...edited, link: e.target.value})} className="w-full p-2 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="https://..." />
               </div>
             </div>
           </div>
 
           {/* Subtasks (Column J, K, L abstract) */}
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col h-full">
-            <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2"><CheckSquare size={16} className="text-blue-600"/> Subtareas y Documentos</h3>
+            <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2"><CheckSquare size={16} className="text-blue-600"/> Subtareas Específicas</h3>
             
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
               {(!edited.subtasks || edited.subtasks.length === 0) && (
                  <div className="text-center py-10 text-slate-400">
                     <Info size={24} className="mx-auto mb-2 opacity-50" />
-                    <p className="text-xs">No hay subtareas. Añade una para gestionar avances y links a Drive.</p>
+                    <p className="text-xs">Usa este espacio para delegar micro-tareas o enlazar documentos específicos a personas concretas.</p>
                  </div>
               )}
               {edited.subtasks?.map(st => (
@@ -543,27 +570,33 @@ function TaskEditModal({ task, uniqueProjects, uniquePhases, onClose, onSave, on
                     <button onClick={() => updateSubtask(st.id, { completed: !st.completed })} className="mt-0.5 shrink-0">
                       {st.completed ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Circle size={16} className="text-gray-300" />}
                     </button>
-                    <input type="text" value={st.text} onChange={e => updateSubtask(st.id, { text: e.target.value })} className={`flex-1 text-sm outline-none bg-transparent ${st.completed ? 'text-gray-400 line-through' : 'text-slate-700 font-medium'}`} placeholder="Nombre sub-tarea..." />
+                    <input type="text" value={st.text} onChange={e => updateSubtask(st.id, { text: e.target.value })} className={`flex-1 text-sm outline-none bg-transparent ${st.completed ? 'text-gray-400 line-through' : 'text-slate-700 font-medium'}`} placeholder="Instrucción corta..." />
                   </div>
                   
                   <div className="space-y-2 pl-6">
-                    <div className="relative">
-                      <ExternalLink size={12} className="absolute left-2 top-2.5 text-gray-400" />
-                      <input type="text" value={st.link || ''} onChange={e => updateSubtask(st.id, { link: e.target.value })} placeholder="Link Drive / Documento (Opcional)..." className="w-full text-[11px] p-2 pl-6 bg-slate-50 border border-slate-200 rounded outline-none focus:border-blue-400" />
+                    <div className="flex gap-2">
+                        <div className="relative flex-1">
+                           <User size={12} className="absolute left-2 top-2.5 text-gray-400" />
+                           <input list="assignees-list" type="text" value={st.assignee || ''} onChange={e => updateSubtask(st.id, { assignee: e.target.value })} placeholder="Delegar a..." className="w-full text-[11px] p-2 pl-6 bg-slate-50 border border-slate-200 rounded outline-none focus:border-blue-400" />
+                        </div>
+                        <div className="relative flex-1">
+                          <ExternalLink size={12} className="absolute left-2 top-2.5 text-gray-400" />
+                          <input type="text" value={st.link || ''} onChange={e => updateSubtask(st.id, { link: e.target.value })} placeholder="Link Doc. Interno..." className="w-full text-[11px] p-2 pl-6 bg-slate-50 border border-slate-200 rounded outline-none focus:border-blue-400" />
+                        </div>
                     </div>
-                    <textarea value={st.observation || ''} onChange={e => updateSubtask(st.id, { observation: e.target.value })} placeholder="Observaciones e instrucciones de la subtarea..." className="w-full text-[11px] p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:border-blue-400 min-h-[50px] resize-none" />
+                    <textarea value={st.observation || ''} onChange={e => updateSubtask(st.id, { observation: e.target.value })} placeholder="Observaciones adicionales, notas o explicaciones..." className="w-full text-[11px] p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:border-blue-400 min-h-[50px] resize-none" />
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-slate-200 flex gap-2">
+            <div className="mt-4 pt-4 border-t border-slate-200 flex gap-2 shrink-0">
               <input 
                  type="text" 
                  value={newSubtask} 
                  onChange={e => setNewSubtask(e.target.value)} 
                  onKeyDown={e => e.key === 'Enter' && addSubtask()}
-                 placeholder="Nueva subtarea..." 
+                 placeholder="Cargar nueva subtarea..." 
                  className="flex-1 text-sm p-2 border border-slate-300 rounded-lg outline-none focus:border-blue-500" 
               />
               <button onClick={addSubtask} className="bg-slate-200 hover:bg-slate-300 text-slate-700 p-2 rounded-lg transition-colors"><Plus size={20} /></button>
