@@ -103,6 +103,7 @@ export interface ProjectSubtask {
   completed: boolean;
   link?: string;
   observation?: string;
+  assignee?: string;
 }
 
 export interface ProjectTask {
