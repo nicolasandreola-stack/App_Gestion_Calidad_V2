@@ -14,7 +14,12 @@ const parseDate = (dStr: string) => {
   if (!dStr) return new Date();
   const parts = dStr.split('/');
   if (parts.length === 3) {
-    return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    const d = parseInt(parts[0]);
+    const m = parseInt(parts[1]) - 1;
+    const y = parseInt(parts[2]);
+    if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
+      return new Date(y, m, d);
+    }
   }
   return new Date();
 };
@@ -74,8 +79,8 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
       projects.forEach(p => {
         const start = parseDate(p.startDate);
         const end = parseDate(p.endDate);
-        if (start < minD) minD = start;
-        if (end > maxD) maxD = end;
+        if (start < minD) minD = new Date(start);
+        if (end > maxD) maxD = new Date(end);
 
         if (!map.has(p.project)) map.set(p.project, new Map());
         const pMap = map.get(p.project)!;
@@ -83,21 +88,21 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
         pMap.get(p.phase)!.push(p);
 
         // Project Meta
-        if (!pMeta.has(p.project)) pMeta.set(p.project, {prog: 0, count: 0, minD: start, maxD: end});
+        if (!pMeta.has(p.project)) pMeta.set(p.project, {prog: 0, count: 0, minD: new Date(start), maxD: new Date(end)});
         const pm = pMeta.get(p.project)!;
         pm.count += 1;
         pm.prog += p.progress || 0;
-        if (start < pm.minD) pm.minD = start;
-        if (end > pm.maxD) pm.maxD = end;
+        if (start < pm.minD) pm.minD = new Date(start);
+        if (end > pm.maxD) pm.maxD = new Date(end);
 
         // Phase Meta
         const phKey = p.project + p.phase;
-        if (!phMeta.has(phKey)) phMeta.set(phKey, {prog: 0, count: 0, minD: start, maxD: end});
+        if (!phMeta.has(phKey)) phMeta.set(phKey, {prog: 0, count: 0, minD: new Date(start), maxD: new Date(end)});
         const phm = phMeta.get(phKey)!;
         phm.count += 1;
         phm.prog += p.progress || 0;
-        if (start < phm.minD) phm.minD = start;
-        if (end > phm.maxD) phm.maxD = end;
+        if (start < phm.minD) phm.minD = new Date(start);
+        if (end > phm.maxD) phm.maxD = new Date(end);
       });
     }
 
