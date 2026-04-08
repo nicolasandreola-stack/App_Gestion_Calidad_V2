@@ -57,7 +57,7 @@ export async function fetchFromSheets(): Promise<GlobalCloudData> {
     const auth = await getAuthClient();
     const sheets = google.sheets({ version: "v4", auth });
 
-    const globalData: GlobalCloudData = { users: {}, lastUpdate: new Date().toISOString() };
+    const globalData: GlobalCloudData = { users: {}, projects: [], lastUpdate: new Date().toISOString() };
 
     // Fetch Tareas
     let tareasRows: any[][] = [];
@@ -163,6 +163,44 @@ export async function fetchFromSheets(): Promise<GlobalCloudData> {
         }
     });
 
+    // Fetch Proyectos
+    let proyectosRows: any[][] = [];
+    try {
+        const proyectosRes = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: "Proyectos!A2:K",
+        });
+        proyectosRows = proyectosRes.data.values || [];
+    } catch (e) {
+        console.error("Error leyendo Proyectos", e);
+    }
+
+    proyectosRows.forEach(row => {
+        const [id, project, phase, name, startDate, endDate, assignee, progress, status, subtasksStr, details] = row;
+        if (!id) return;
+        
+        let parsedSubtasks = undefined;
+        if (subtasksStr) {
+            try {
+                parsedSubtasks = JSON.parse(subtasksStr);
+            } catch (e) {}
+        }
+
+        globalData.projects!.push({
+            id: id,
+            project: project || "",
+            phase: phase || "",
+            name: name || "",
+            startDate: startDate || "",
+            endDate: endDate || "",
+            assignee: assignee || "",
+            progress: Number(progress) || 0,
+            status: status || "PENDIENTE",
+            subtasks: parsedSubtasks,
+            details: details || ""
+        });
+    });
+
     return globalData;
 }
 
@@ -231,10 +269,34 @@ export async function pushToSheets(globalData: GlobalCloudData) {
         });
     }
 
+    const proyectosRows: any[][] = [];
+    if (globalData.projects) {
+        globalData.projects.forEach(p => {
+             proyectosRows.push([
+                p.id,
+                p.project,
+                p.phase,
+                p.name,
+                p.startDate,
+                p.endDate,
+                p.assignee,
+                p.progress,
+                p.status,
+                p.subtasks && p.subtasks.length > 0 ? JSON.stringify(p.subtasks) : "",
+                p.details || ""
+             ]);
+        });
+    }
+
     try {
         // Clear old rows first (starting from row 2)
         await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Tareas!A2:U" });
         await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Rutinas!A2:P" });
+        try {
+            await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Proyectos!A2:K" });
+        } catch (e) {
+            console.warn("Could not clear Proyectos sheet, maybe it doesn't exist yet");
+        }
 
         // Batch upload
         if (tareasRows.length > 0) {
@@ -252,6 +314,15 @@ export async function pushToSheets(globalData: GlobalCloudData) {
                 range: "Rutinas!A2:P",
                 valueInputOption: "RAW",
                 requestBody: { values: rutinasRows }
+            });
+        }
+
+        if (proyectosRows.length > 0) {
+            await sheets.spreadsheets.values.update({
+                spreadsheetId: SPREADSHEET_ID,
+                range: "Proyectos!A2:K",
+                valueInputOption: "RAW",
+                requestBody: { values: proyectosRows }
             });
         }
 

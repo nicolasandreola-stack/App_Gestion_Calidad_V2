@@ -97,11 +97,34 @@ export interface BackupData {
   rtH?: Record<string, number>;
 }
 
+export interface ProjectSubtask {
+  id: string;
+  text: string;
+  completed: boolean;
+  link?: string;
+  observation?: string;
+}
+
+export interface ProjectTask {
+  id: string; // Col A
+  project: string; // Col B: Certificación OEA
+  phase: string; // Col C: FASE A
+  name: string; // Col D: Nombre Tarea
+  startDate: string; // Col E: DD/MM/YYYY
+  endDate: string; // Col F: DD/MM/YYYY
+  assignee: string; // Col G
+  progress: number; // Col H: 0-100
+  status: string; // Col I: CERRADO, EN PROGRESO, PENDIENTE
+  subtasks?: ProjectSubtask[]; // Col J: JSON
+  details?: string; // Col K: Observaciones de tarea
+}
+
 // Estructura Global para JSONBin (Multi-usuario)
 export interface GlobalCloudData {
   users: {
     [username: string]: BackupData;
   };
+  projects?: ProjectTask[];
   lastUpdate: string;
 }
 

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Users, BarChart3, CheckSquare, AlertTriangle, ArrowRight, Plus, UserCircle, LogOut, Trash2, LayoutDashboard, RefreshCw, Clock, Code, Key, ShieldAlert, Globe, Github, Server, FileText, ExternalLink, Sun, Calendar, ChevronDown, ChevronUp, X, Info, Link as LinkIcon, Loader2, Cloud, AlertCircle, PauseCircle, CalendarDays, CheckCircle2, Circle, Archive, ClipboardList, MessageSquare, Send } from 'lucide-react';
+import { Search, Users, BarChart3, CheckSquare, AlertTriangle, ArrowRight, Plus, UserCircle, LogOut, Trash2, LayoutDashboard, RefreshCw, Clock, Code, Key, ShieldAlert, Globe, Github, Server, FileText, ExternalLink, Sun, Calendar, ChevronDown, ChevronUp, X, Info, Link as LinkIcon, Loader2, Cloud, AlertCircle, PauseCircle, CalendarDays, CheckCircle2, Circle, Archive, ClipboardList, MessageSquare, Send, Layers } from 'lucide-react';
 import { toast } from 'sonner';
-import { Task, RoutineItem, RoutineState, Category, Complexity, GlobalCloudData, TIME_BLOCKS, COMPLEXITY_LABELS, CATEGORY_COLORS } from '../types';
+import { Task, RoutineItem, RoutineState, Category, Complexity, GlobalCloudData, TIME_BLOCKS, COMPLEXITY_LABELS, CATEGORY_COLORS, ProjectTask } from '../types';
 import { KPIDetailsModal, CompletedTasksModal } from './Modals';
 import KPIBoard from './KPIBoard';
+import AdminGantt from './AdminGantt';
 
 interface AdminDashboardProps {
     onLogout: () => void;
@@ -27,6 +28,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
     const [userRoutineState, setUserRoutineState] = useState<RoutineState>({});
     const [userCompletedTasks, setUserCompletedTasks] = useState<Task[]>([]); // New: For productivity calc and details
     const [userDeletedTasks, setUserDeletedTasks] = useState<Task[]>([]); // New: For deleted history
+
+    // Datos globales (Gantt/Proyectos)
+    const [globalProjects, setGlobalProjects] = useState<ProjectTask[]>([]);
 
     // Formulario de Delegación
     const [newTaskText, setNewTaskText] = useState("");
@@ -54,7 +58,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
     // UI States
     const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
     const [showTokenHelp, setShowTokenHelp] = useState(false);
-    const [adminViewTab, setAdminViewTab] = useState<'asignaciones' | 'vista_rapida'>('asignaciones');
+    const [adminViewTab, setAdminViewTab] = useState<'asignaciones' | 'vista_rapida' | 'gantt'>('asignaciones');
 
     // Modal Details State
     const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -80,6 +84,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
         const userList = Object.keys(usersDb).filter(u => u !== currentUser.toLowerCase());
         setUsers(userList);
         if (userList.length > 0) setSelectedUser(userList[0]);
+        
+        const storedProjects = JSON.parse(localStorage.getItem('v25_global_projects') || '[]');
+        setGlobalProjects(storedProjects);
     }, [currentUser]);
 
     // Cargar datos cuando cambia el usuario seleccionado
@@ -320,11 +327,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                 const result = await response.json();
                 const globalData = result as GlobalCloudData;
 
-                if (globalData && globalData.users && !Array.isArray(globalData.users)) {
+                if (globalData) {
                     let hasNewFeedback = false;
                     const newNotifications = { ...notifications };
 
-                    Object.keys(globalData.users).forEach(u => {
+                    if (globalData.projects) {
+                        setGlobalProjects(globalData.projects);
+                        localStorage.setItem('v25_global_projects', JSON.stringify(globalData.projects));
+                    }
+
+                    if (globalData.users && !Array.isArray(globalData.users)) {
+                        Object.keys(globalData.users).forEach(u => {
                         const d = globalData.users[u];
                         
                         // Detectar Feedback Nuevo (userComments ha cambiado)
@@ -344,7 +357,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                         if (d.rtS) localStorage.setItem(getUserKey(u, "rt_state"), JSON.stringify(d.rtS));
                         if (d.cTks) localStorage.setItem(getUserKey(u, "completed_tasks"), JSON.stringify(d.cTks));
                         if (d.dTks) localStorage.setItem(getUserKey(u, "deleted_tasks"), JSON.stringify(d.dTks));
-                    });
+                        });
+                    }
 
                     setNotifications(newNotifications);
                     if (hasNewFeedback) {
@@ -473,6 +487,44 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
         setDetailModalType('tasks_active');
         setDetailModalData(data);
         setDetailModalOpen(true);
+    };
+
+    // --- Handlers for Projects ---
+    const handleUpdateProject = async (proj: ProjectTask) => {
+        const nextList = globalProjects.map(p => p.id === proj.id ? proj : p);
+        setGlobalProjects(nextList);
+        localStorage.setItem('v25_global_projects', JSON.stringify(nextList));
+        await syncProjectsCloud(nextList);
+    };
+    const handleAddProject = async (proj: ProjectTask) => {
+        const nextList = [...globalProjects, proj];
+        setGlobalProjects(nextList);
+        localStorage.setItem('v25_global_projects', JSON.stringify(nextList));
+        await syncProjectsCloud(nextList);
+    };
+    const handleDeleteProject = async (id: string) => {
+        const nextList = globalProjects.filter(p => p.id !== id);
+        setGlobalProjects(nextList);
+        localStorage.setItem('v25_global_projects', JSON.stringify(nextList));
+        await syncProjectsCloud(nextList);
+    };
+    const syncProjectsCloud = async (newProjects: ProjectTask[]) => {
+        try {
+            const fetchRes = await fetch(`/api/sync/get`);
+            if (fetchRes.ok) {
+                const globalData = await fetchRes.json();
+                globalData.projects = newProjects;
+                globalData.lastUpdate = new Date().toISOString();
+                await fetch(`/api/sync/push`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(globalData)
+                });
+                toast.success('Proyectos sincronizados con Sheets.');
+            }
+        } catch (e) {
+            toast.error('Gantt guardado localmente. Falló sincronización.');
+        }
     };
 
     // --- Visual Helpers ---
@@ -610,16 +662,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                     </button>
                 </div>
 
-                {/* User List */}
+                {/* User List & Gantt Toggle */}
                 <div className="p-4 flex-1 overflow-y-auto">
+                    <div className="mb-4">
+                        <h3 className="text-xs font-bold text-textSecondary uppercase mb-2 px-2">Gestión de Proyectos</h3>
+                        <button
+                            onClick={() => setAdminViewTab('gantt')}
+                            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm w-full transition-colors ${adminViewTab === 'gantt' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-slate-700 hover:bg-gray-50'}`}
+                        >
+                            <Layers size={18} />
+                            Diagrama Gantt
+                        </button>
+                    </div>
+
                     <h3 className="text-xs font-bold text-textSecondary uppercase mb-3 px-2">Equipo ({users.length})</h3>
                     <div className="flex flex-col gap-1">
                         {users.length === 0 && <p className="text-xs text-gray-400 px-2">No hay otros usuarios.</p>}
                         {users.map(u => (
                             <button
                                 key={u}
-                                onClick={() => setSelectedUser(u)}
-                                className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors w-full ${selectedUser === u ? 'bg-blue-50 text-accentBlue font-medium border border-blue-100' : 'text-textPrimary hover:bg-gray-50'}`}
+                                onClick={() => { setSelectedUser(u); setAdminViewTab('asignaciones'); }}
+                                className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors w-full ${(adminViewTab !== 'gantt' && selectedUser === u) ? 'bg-blue-50 text-accentBlue font-medium border border-blue-100' : 'text-textPrimary hover:bg-gray-50'}`}
                             >
                                 <div className="flex items-center gap-3 truncate">
                                     <UserCircle size={18} />
@@ -874,7 +937,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
 
             {/* MAIN CONTENT */}
             <main className="flex-1 flex flex-col overflow-hidden relative">
-                {selectedUser ? (
+                {adminViewTab === 'gantt' ? (
+                    <AdminGantt 
+                        projects={globalProjects}
+                        onAddProject={handleAddProject}
+                        onUpdateProject={handleUpdateProject}
+                        onDeleteProject={handleDeleteProject}
+                    />
+                ) : selectedUser ? (
                     <>
                         <header className="h-[60px] bg-white border-b border-borderLight px-6 flex items-center justify-between shadow-sm shrink-0">
                             <div className="flex items-center gap-2">
