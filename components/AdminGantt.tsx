@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ProjectTask, ProjectSubtask } from '../types';
 import { Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface AdminGanttProps {
   projects: ProjectTask[];
@@ -62,6 +61,9 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
   // Grouping
   const grouped = useMemo(() => {
     const map = new Map<string, Map<string, ProjectTask[]>>();
+    const pMeta = new Map<string, {prog:number, count:number, minD:Date, maxD:Date}>();
+    const phMeta = new Map<string, {prog:number, count:number, minD:Date, maxD:Date}>();
+
     let minD = new Date();
     let maxD = new Date();
 
@@ -79,6 +81,23 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
         const pMap = map.get(p.project)!;
         if (!pMap.has(p.phase)) pMap.set(p.phase, []);
         pMap.get(p.phase)!.push(p);
+
+        // Project Meta
+        if (!pMeta.has(p.project)) pMeta.set(p.project, {prog: 0, count: 0, minD: start, maxD: end});
+        const pm = pMeta.get(p.project)!;
+        pm.count += 1;
+        pm.prog += p.progress || 0;
+        if (start < pm.minD) pm.minD = start;
+        if (end > pm.maxD) pm.maxD = end;
+
+        // Phase Meta
+        const phKey = p.project + p.phase;
+        if (!phMeta.has(phKey)) phMeta.set(phKey, {prog: 0, count: 0, minD: start, maxD: end});
+        const phm = phMeta.get(phKey)!;
+        phm.count += 1;
+        phm.prog += p.progress || 0;
+        if (start < phm.minD) phm.minD = start;
+        if (end > phm.maxD) phm.maxD = end;
       });
     }
 
@@ -114,7 +133,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
     }
     months.push({ month: currentMonth, year: daysArr[daysArr.length - 1].getFullYear(), count: currentCount });
 
-    return { map, minD, maxD, totalDays, daysArr, months };
+    return { map, pMeta, phMeta, minD, maxD, totalDays, daysArr, months };
   }, [projects]);
 
   // Autocomplete lists
@@ -188,6 +207,11 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                 >
                   {expandedProjects.has(projName) ? <ChevronRight size={14} className="text-slate-400 group-hover:text-white" /> : <ChevronDown size={14} className="text-white" />}
                   <span className="font-bold text-xs uppercase tracking-wider">{projName}</span>
+                  {expandedProjects.has(projName) && (
+                    <span className="ml-auto text-[10px] font-bold bg-slate-600 text-white px-2 py-0.5 rounded-full" title="Progreso total promedio">
+                      {Math.round(grouped.pMeta.get(projName)!.prog / grouped.pMeta.get(projName)!.count)}%
+                    </span>
+                  )}
                 </div>
 
                 {!expandedProjects.has(projName) && Array.from(phases.entries()).map(([phaseName, tasks]) => (
@@ -198,7 +222,15 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                     >
                       {expandedPhases.has(projName + phaseName) ? <ChevronRight size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-700" />}
                       <span className="font-bold text-xs text-slate-700">{phaseName}</span>
-                      <span className="text-[10px] text-slate-400 font-medium ml-auto">{tasks.length} tareas</span>
+                      
+                      <div className="ml-auto flex gap-2 items-center">
+                         <span className="text-[10px] text-slate-400 font-medium">{tasks.length} tareas</span>
+                         {expandedPhases.has(projName + phaseName) && (
+                            <span className="text-[10px] font-bold bg-slate-300 text-slate-700 px-2 py-0.5 rounded-full" title="Progreso fase">
+                              {Math.round(grouped.phMeta.get(projName + phaseName)!.prog / grouped.phMeta.get(projName + phaseName)!.count)}%
+                            </span>
+                         )}
+                      </div>
                     </div>
 
                     {!expandedPhases.has(projName + phaseName) && tasks.map(t => {
@@ -266,13 +298,34 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
               <div className="absolute -top-1 -left-1 w-2 h-2 rounded-full bg-red-400"></div>
             </div>
 
-            {Array.from(grouped.map.entries()).map(([projName, phases]) => (
-              <div key={projName + '_grid'}>
-                <div className="h-[44px] w-full border-b border-transparent"></div>
+            {Array.from(grouped.map.entries()).map(([projName, phases]) => {
+              const pm = grouped.pMeta.get(projName)!;
+              const pStartOffset = dayDiff(grouped.minD, pm.minD) * 30;
+              const pDuration = Math.max(1, dayDiff(pm.minD, pm.maxD)) * 30;
 
-                {!expandedProjects.has(projName) && Array.from(phases.entries()).map(([phaseName, tasks]) => (
+              return (
+              <div key={projName + '_grid'}>
+                <div className="h-[44px] w-full border-b border-transparent relative">
+                  {expandedProjects.has(projName) && (
+                     <div className="absolute top-4 h-3 bg-slate-800 rounded shadow-sm opacity-60" style={{left: pStartOffset + 15, width: pDuration}}></div>
+                  )}
+                </div>
+
+                {!expandedProjects.has(projName) && Array.from(phases.entries()).map(([phaseName, tasks]) => {
+                  const phm = grouped.phMeta.get(projName + phaseName)!;
+                  const phStartOffset = dayDiff(grouped.minD, phm.minD) * 30;
+                  const phDuration = Math.max(1, dayDiff(phm.minD, phm.maxD)) * 30;
+
+                  return (
                   <div key={phaseName + '_grid'}>
-                    <div className="h-[37px] w-full border-b border-transparent bg-slate-50/30 line-through-pattern"></div>
+                    <div className="h-[37px] w-full border-b border-transparent bg-slate-50/30 line-through-pattern relative">
+                       {expandedPhases.has(projName + phaseName) && (
+                           <div className="absolute top-3 h-2 border-t-2 border-dashed border-slate-400" style={{left: phStartOffset + 15, width: phDuration}}>
+                              <div className="absolute -left-1 -top-1.5 w-0 h-0 border-t-4 border-t-transparent border-l-[6px] border-l-slate-400 border-b-4 border-b-transparent"></div>
+                              <div className="absolute -right-1 -top-1.5 w-0 h-0 border-t-4 border-t-transparent border-r-[6px] border-r-slate-400 border-b-4 border-b-transparent"></div>
+                           </div>
+                       )}
+                    </div>
 
                     {!expandedPhases.has(projName + phaseName) && tasks.map(t => {
                        const sDate = parseDate(t.startDate);
@@ -285,7 +338,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                         <div key={t.id + '_grid'} className="h-12 border-b border-slate-100 flex items-center relative group/row hover:bg-blue-50/20 transition-colors">
                           <div 
                             className={`absolute h-6 rounded-md shadow-sm border overflow-hidden cursor-pointer flex items-center transition-all hover:-translate-y-0.5 hover:shadow-md ${t.status === 'CERRADO' ? 'bg-emerald-500 border-emerald-600' : overdue ? 'bg-red-500 border-red-600' : t.status === 'EN PROGRESO' ? 'bg-blue-500 border-blue-600' : 'bg-slate-400 border-slate-500'}`}
-                            style={{ left: leftOffset, width: duration }}
+                            style={{ left: leftOffset + 15, width: duration }}
                             onClick={() => setViewTask(t)}
                             title={`${t.name} (${t.progress}%)`}
                           >
@@ -296,9 +349,9 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                        );
                     })}
                   </div>
-                ))}
+                  )})}
               </div>
-            ))}
+            )})}
           </div>
         </div>
       </div>
@@ -387,7 +440,7 @@ function TaskViewModal({ task, onClose, onEdit }: { task: ProjectTask, onClose: 
                <p className={`text-xs font-bold ${overdue ? 'text-red-500' : 'text-slate-700'}`}>{task.startDate} al {task.endDate}</p>
             </div>
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-               <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Asignado</p>
+               <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Asignado a</p>
                <p className="text-sm font-bold text-slate-700">{task.assignee || 'Sin área asignada'}</p>
             </div>
           </div>
@@ -511,22 +564,22 @@ function TaskEditModal({ task, uniqueProjects, uniquePhases, uniqueAssignees, on
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block">Asignado a (Área / Pers.)</label>
-                <input list="assignees-list" type="text" value={edited.assignee} onChange={e => setEdited({...edited, assignee: e.target.value})} className="w-full p-2 text-sm rounded-lg border border-gray-300 focus:border-blue-500 outline-none" placeholder="Ej: Finanzas" />
+                <input list="assignees-list" type="text" value={edited.assignee} onChange={e => setEdited({...edited, assignee: e.target.value})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 outline-none" placeholder="Ej: Finanzas" />
               </div>
               <div>
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block flex items-center gap-1"><Calendar size={12}/> Inicio</label>
-                <input type="date" value={toInputDate(edited.startDate)} onChange={e => setEdited({...edited, startDate: fromInputDate(e.target.value)})} className="w-full p-2 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" />
+                <input type="date" value={toInputDate(edited.startDate)} onChange={e => setEdited({...edited, startDate: fromInputDate(e.target.value)})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" />
               </div>
               <div>
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block flex items-center gap-1"><Calendar size={12}/> Fin / Vencimiento</label>
-                <input type="date" value={toInputDate(edited.endDate)} onChange={e => setEdited({...edited, endDate: fromInputDate(e.target.value)})} className="w-full p-2 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" />
+                <input type="date" value={toInputDate(edited.endDate)} onChange={e => setEdited({...edited, endDate: fromInputDate(e.target.value)})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block">Estado</label>
-                <select value={edited.status} onChange={e => setEdited({...edited, status: e.target.value})} className="w-full p-2 text-sm rounded-lg border border-gray-300 focus:border-blue-500 outline-none">
+                <select value={edited.status} onChange={e => setEdited({...edited, status: e.target.value})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 outline-none">
                   <option value="PENDIENTE">Pendiente</option>
                   <option value="EN PROGRESO">En Progreso</option>
                   <option value="CERRADO">Cerrado</option>
@@ -534,7 +587,7 @@ function TaskEditModal({ task, uniqueProjects, uniquePhases, uniqueAssignees, on
               </div>
               <div>
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block">% Avance</label>
-                <input type="number" min="0" max="100" value={edited.progress} onChange={e => setEdited({...edited, progress: parseInt(e.target.value) || 0})} className="w-full p-2 text-sm rounded-lg border border-gray-300 focus:border-blue-500 font-bold text-center outline-none" />
+                <input type="number" min="0" max="100" value={edited.progress} onChange={e => setEdited({...edited, progress: parseInt(e.target.value) || 0})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 font-bold text-center outline-none" />
               </div>
             </div>
 
@@ -546,7 +599,7 @@ function TaskEditModal({ task, uniqueProjects, uniquePhases, uniqueAssignees, on
               
               <div>
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 block flex items-center gap-1"><ExternalLink size={12} /> Enlace Carpeta Principal Drive</label>
-                <input type="text" value={edited.link || ''} onChange={e => setEdited({...edited, link: e.target.value})} className="w-full p-2 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="https://..." />
+                <input type="text" value={edited.link || ''} onChange={e => setEdited({...edited, link: e.target.value})} className="w-full p-2.5 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="https://..." />
               </div>
             </div>
           </div>
@@ -555,7 +608,7 @@ function TaskEditModal({ task, uniqueProjects, uniquePhases, uniqueAssignees, on
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col h-full">
             <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2"><CheckSquare size={16} className="text-blue-600"/> Subtareas Específicas</h3>
             
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2">
               {(!edited.subtasks || edited.subtasks.length === 0) && (
                  <div className="text-center py-10 text-slate-400">
                     <Info size={24} className="mx-auto mb-2 opacity-50" />
@@ -566,25 +619,27 @@ function TaskEditModal({ task, uniqueProjects, uniquePhases, uniqueAssignees, on
                 <div key={st.id} className="bg-white border border-gray-200 p-3 rounded-lg shadow-sm relative group">
                   <button onClick={() => removeSubtask(st.id)} className="absolute top-2 right-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><X size={14} /></button>
                   
-                  <div className="flex items-start gap-2 mb-2 pr-4">
+                  <div className="flex items-start gap-2 mb-3 pr-4">
                     <button onClick={() => updateSubtask(st.id, { completed: !st.completed })} className="mt-0.5 shrink-0">
                       {st.completed ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Circle size={16} className="text-gray-300" />}
                     </button>
                     <input type="text" value={st.text} onChange={e => updateSubtask(st.id, { text: e.target.value })} className={`flex-1 text-sm outline-none bg-transparent ${st.completed ? 'text-gray-400 line-through' : 'text-slate-700 font-medium'}`} placeholder="Instrucción corta..." />
                   </div>
                   
-                  <div className="space-y-2 pl-6">
-                    <div className="flex gap-2">
-                        <div className="relative flex-1">
-                           <User size={12} className="absolute left-2 top-2.5 text-gray-400" />
-                           <input list="assignees-list" type="text" value={st.assignee || ''} onChange={e => updateSubtask(st.id, { assignee: e.target.value })} placeholder="Delegar a..." className="w-full text-[11px] p-2 pl-6 bg-slate-50 border border-slate-200 rounded outline-none focus:border-blue-400" />
+                  <div className="space-y-3 pl-6">
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="relative">
+                           <User size={12} className="absolute left-2.5 top-2.5 text-gray-400" />
+                           <input list="assignees-list" type="text" value={st.assignee || ''} onChange={e => updateSubtask(st.id, { assignee: e.target.value })} placeholder="Delegar a..." className="w-full text-xs p-2 pl-7 border border-gray-200 rounded-md outline-none focus:border-blue-400" />
                         </div>
-                        <div className="relative flex-1">
-                          <ExternalLink size={12} className="absolute left-2 top-2.5 text-gray-400" />
-                          <input type="text" value={st.link || ''} onChange={e => updateSubtask(st.id, { link: e.target.value })} placeholder="Link Doc. Interno..." className="w-full text-[11px] p-2 pl-6 bg-slate-50 border border-slate-200 rounded outline-none focus:border-blue-400" />
+                        <div className="relative">
+                          <ExternalLink size={12} className="absolute left-2.5 top-2.5 text-gray-400" />
+                          <input type="text" value={st.link || ''} onChange={e => updateSubtask(st.id, { link: e.target.value })} placeholder="Link Doc. Interno..." className="w-full text-xs p-2 pl-7 border border-gray-200 rounded-md outline-none focus:border-blue-400" />
                         </div>
                     </div>
-                    <textarea value={st.observation || ''} onChange={e => updateSubtask(st.id, { observation: e.target.value })} placeholder="Observaciones adicionales, notas o explicaciones..." className="w-full text-[11px] p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:border-blue-400 min-h-[50px] resize-none" />
+                    <div>
+                      <textarea value={st.observation || ''} onChange={e => updateSubtask(st.id, { observation: e.target.value })} placeholder="Observaciones adicionales o notas..." className="w-full text-xs p-2 border border-gray-200 rounded-md outline-none focus:border-blue-400 min-h-[40px] resize-none" />
+                    </div>
                   </div>
                 </div>
               ))}
