@@ -58,6 +58,7 @@ const isOverdue = (endStr: string, status: string) => {
 export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject }: AdminGanttProps) {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   
   // Modals state
   const [editTask, setEditTask] = useState<ProjectTask | null>(null);
@@ -168,6 +169,13 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
     if (next.has(ph)) next.delete(ph);
     else next.add(ph);
     setExpandedPhases(next);
+  };
+
+  const toggleTask = (taskId: string) => {
+    const next = new Set(expandedTasks);
+    if (next.has(taskId)) next.delete(taskId);
+    else next.add(taskId);
+    setExpandedTasks(next);
   };
 
   const today = new Date();
@@ -304,32 +312,54 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
 
                     {!expandedPhases.has(projName + phaseName) && tasks.map(t => {
                       const overdue = isOverdue(t.endDate, t.status);
+                      const isTaskExpanded = expandedTasks.has(t.id);
                       return (
-                      <div 
-                        key={t.id} 
-                        className="group grid grid-cols-[1fr_50px_70px] items-center px-4 py-3 border-b border-slate-100 hover:bg-blue-50/50 cursor-pointer h-12 transition-colors relative"
-                        onClick={() => setViewTask(t)}
-                      >
-                        <div className="pl-8 truncate flex items-center gap-2">
-                          {overdue && <AlertTriangle size={12} className="text-red-500 shrink-0" title="Tarea Vencida" />}
-                          <div className="flex flex-col truncate">
-                            <span className={`text-xs font-medium truncate block transition-colors group-hover:text-blue-700 ${overdue ? 'text-red-600' : 'text-slate-700'}`}>{t.name}</span>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              {t.assignee && (
-                                <span className="text-[9px] text-slate-500 flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded-sm"><User size={8} /> {t.assignee}</span>
-                              )}
-                              {t.subtasks && t.subtasks.length > 0 && (
-                                <span className="text-[9px] text-slate-400">{t.subtasks.filter(s=>s.completed).length}/{t.subtasks.length} subs</span>
-                              )}
+                      <React.Fragment key={t.id}>
+                        <div 
+                          className="group grid grid-cols-[1fr_50px_70px] items-center px-4 py-3 border-b border-slate-100 hover:bg-blue-50/50 cursor-pointer h-12 transition-colors relative flex-1"
+                          onClick={() => setViewTask(t)}
+                        >
+                          <div className="pl-6 truncate flex items-center gap-2">
+                            {t.subtasks && t.subtasks.length > 0 ? (
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); toggleTask(t.id); }} 
+                                className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+                              >
+                                {isTaskExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                              </button>
+                            ) : (
+                              <div className="w-6 shrink-0"></div>
+                            )}
+                            {overdue && <AlertTriangle size={12} className="text-red-500 shrink-0" title="Tarea Vencida" />}
+                            <div className="flex flex-col truncate">
+                              <span className={`text-xs font-medium truncate block transition-colors group-hover:text-blue-700 ${overdue ? 'text-red-600' : 'text-slate-700'}`}>{t.name}</span>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                {t.assignee && (
+                                  <span className="text-[9px] text-slate-500 flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded-sm"><User size={8} /> {t.assignee}</span>
+                                )}
+                                {t.subtasks && t.subtasks.length > 0 && (
+                                  <span className="text-[9px] text-slate-400">{t.subtasks.filter(s=>s.completed).length}/{t.subtasks.length} subs</span>
+                                )}
+                              </div>
                             </div>
                           </div>
+                          <div className={`text-[10px] font-bold text-center ${overdue ? 'text-red-500' : 'text-slate-600'}`}>{t.progress}%</div>
+                          <div className="text-center">
+                            <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${t.status === 'CERRADO' ? 'bg-emerald-100 text-emerald-700' : t.status === 'EN PROGRESO' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>{t.status || 'PENDIENTE'}</span>
+                          </div>
+                          {overdue && <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>}
                         </div>
-                        <div className={`text-[10px] font-bold text-center ${overdue ? 'text-red-500' : 'text-slate-600'}`}>{t.progress}%</div>
-                        <div className="text-center">
-                          <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${t.status === 'CERRADO' ? 'bg-emerald-100 text-emerald-700' : t.status === 'EN PROGRESO' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>{t.status || 'PENDIENTE'}</span>
-                        </div>
-                        {overdue && <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>}
-                      </div>
+                        {isTaskExpanded && t.subtasks?.map(st => (
+                           <div key={st.id} className="grid grid-cols-[1fr_50px_70px] items-center px-4 py-2 border-b border-slate-50 bg-slate-50/50 h-[34px]">
+                             <div className="pl-14 truncate flex items-center gap-2">
+                               <span className="mt-0.5 shrink-0">{st.completed ? <CheckCircle2 size={12} className="text-emerald-500" /> : <Circle size={12} className="text-slate-300" />}</span>
+                               <span className={`text-[11px] truncate ${st.completed ? 'text-slate-400 line-through' : 'text-slate-600'}`}>{st.text}</span>
+                             </div>
+                             <div></div>
+                             <div></div>
+                           </div>
+                        ))}
+                      </React.Fragment>
                     )})}
                   </div>
                 ))}
@@ -408,19 +438,24 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                        const leftOffset = dayDiff(grouped.minD, sDate) * 30;
                        const duration = Math.max(1, dayDiff(sDate, eDate)) * 30;
                        const overdue = isOverdue(t.endDate, t.status);
+                       const isTaskExpanded = expandedTasks.has(t.id);
 
                        return (
-                        <div key={t.id + '_grid'} className="h-12 border-b border-slate-100 flex items-center relative group/row hover:bg-blue-50/20 transition-colors">
-                          <div 
-                            className={`absolute h-6 rounded-md shadow-sm border overflow-hidden cursor-pointer flex items-center transition-all hover:-translate-y-0.5 hover:shadow-md ${t.status === 'CERRADO' ? 'bg-emerald-500 border-emerald-600' : overdue ? 'bg-red-500 border-red-600' : t.status === 'EN PROGRESO' ? 'bg-blue-500 border-blue-600' : 'bg-slate-400 border-slate-500'}`}
-                            style={{ left: leftOffset + 15, width: duration }}
-                            onClick={() => setViewTask(t)}
-                            title={`${t.name} (${t.progress}%)`}
-                          >
-                             <div className="absolute top-0 bottom-0 left-0 bg-black/20" style={{ width: `${t.progress}%` }}></div>
-                             <span className="relative z-10 text-[9px] font-bold text-white px-2 truncate leading-none pt-0.5 pointer-events-none">{t.name}</span>
+                        <React.Fragment key={t.id + '_grid_wrapper'}>
+                          <div key={t.id + '_grid'} className="h-12 border-b border-slate-100 flex items-center relative group/row hover:bg-blue-50/20 transition-colors cursor-pointer" onClick={() => setViewTask(t)}>
+                            <div 
+                              className={`absolute h-6 rounded-md shadow-sm border overflow-hidden flex items-center transition-all hover:-translate-y-0.5 hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.3)] ${t.status === 'CERRADO' ? 'bg-emerald-500 border-emerald-600' : overdue ? 'bg-red-500 border-red-600' : t.status === 'EN PROGRESO' ? 'bg-blue-500 border-blue-600' : 'bg-slate-400 border-slate-500'}`}
+                              style={{ left: leftOffset + 15, width: duration }}
+                              title={`${t.name} (${t.progress}%)`}
+                            >
+                               <div className="absolute top-0 bottom-0 left-0 bg-black/20" style={{ width: `${t.progress}%` }}></div>
+                               <span className="relative z-10 text-[9px] font-bold text-white px-2 truncate leading-none pt-0.5 pointer-events-none">{t.name}</span>
+                            </div>
                           </div>
-                        </div>
+                          {isTaskExpanded && t.subtasks?.map(st => (
+                             <div key={st.id + '_grid_spacer'} className="h-[34px] border-b border-transparent bg-slate-50/30"></div>
+                          ))}
+                        </React.Fragment>
                        );
                     })}
                   </div>
