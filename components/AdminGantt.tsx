@@ -260,7 +260,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
       <div className="flex-1 overflow-auto flex relative bg-white m-4 rounded-xl shadow-sm border border-gray-200">
         
         {/* LEFT PANEL - Data List */}
-        <div className="w-[380px] shrink-0 border-r border-gray-200 bg-white z-10 sticky left-0 flex flex-col">
+        <div className="w-[480px] shrink-0 border-r border-gray-200 bg-white z-10 sticky left-0 flex flex-col">
           <div className="h-16 border-b border-gray-200 bg-slate-50/80 backdrop-blur shrink-0 grid grid-cols-[1fr_50px_70px] items-end pb-2 px-4 shadow-[0_4px_10px_-4px_rgba(0,0,0,0.05)]">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Estructura / Tarea</span>
             <span className="text-[10px] font-bold text-slate-500 uppercase text-center">%</span>
@@ -332,7 +332,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                             )}
                             {overdue && <AlertTriangle size={12} className="text-red-500 shrink-0" title="Tarea Vencida" />}
                             <div className="flex flex-col truncate">
-                              <span className={`text-xs font-medium truncate block transition-colors group-hover:text-blue-700 ${overdue ? 'text-red-600' : 'text-slate-700'}`}>{t.name}</span>
+                              <span title={t.name} className={`text-xs font-medium truncate block transition-colors group-hover:text-blue-700 ${overdue ? 'text-red-600' : 'text-slate-700'}`}>{t.name}</span>
                               <div className="flex items-center gap-2 mt-0.5">
                                 {t.assignee && (
                                   <span className="text-[9px] text-slate-500 flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded-sm"><User size={8} /> {t.assignee}</span>
@@ -353,7 +353,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                            <div key={st.id} className="grid grid-cols-[1fr_50px_70px] items-center px-4 py-2 border-b border-slate-50 bg-slate-50/50 h-[34px]">
                              <div className="pl-14 truncate flex items-center gap-2">
                                <span className="mt-0.5 shrink-0">{st.completed ? <CheckCircle2 size={12} className="text-emerald-500" /> : <Circle size={12} className="text-slate-300" />}</span>
-                               <span className={`text-[11px] truncate ${st.completed ? 'text-slate-400 line-through' : 'text-slate-600'}`}>{st.text}</span>
+                               <span title={st.text} className={`text-[11px] truncate ${st.completed ? 'text-slate-400 line-through' : 'text-slate-600'}`}>{st.text}</span>
                              </div>
                              <div></div>
                              <div></div>
