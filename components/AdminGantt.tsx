@@ -436,7 +436,13 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                             {overdue && <AlertTriangle size={12} className="text-red-500 shrink-0" title="Tarea Vencida" />}
                             <div className="flex flex-col truncate">
                               <span title={t.name} className={`text-xs font-medium truncate flex items-center gap-1.5 transition-colors group-hover:text-blue-700 ${overdue ? 'text-red-600' : 'text-slate-700'}`}>
-                                 <span className="text-[9px] font-mono font-bold bg-slate-200 text-slate-700 px-1 py-0.5 rounded">{grouped.taskCodes.get(t.id)}</span>
+                                 {t.link ? (
+                                   <a href={t.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[9px] font-mono font-bold bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white px-1 py-0.5 rounded cursor-pointer transition-colors shrink-0" title="Abrir carpeta asociada">
+                                     {grouped.taskCodes.get(t.id)}
+                                   </a>
+                                 ) : (
+                                   <span className="text-[9px] font-mono font-bold bg-slate-200 text-slate-700 px-1 py-0.5 rounded shrink-0">{grouped.taskCodes.get(t.id)}</span>
+                                 )}
                                  <span className="truncate">{t.name}</span>
                               </span>
                               <div className="flex items-center gap-2 mt-0.5">
@@ -565,7 +571,13 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                             >
                                <div className="absolute top-0 bottom-0 left-0 bg-black/20" style={{ width: `${t.progress}%` }}></div>
                                <span className="relative z-10 text-[9px] font-bold text-white px-2 truncate flex items-center gap-1 leading-none pt-0.5 pointer-events-none">
-                                  <span className="bg-black/30 px-1 py-0.5 rounded-sm">{grouped.taskCodes.get(t.id)}</span>
+                                  {t.link ? (
+                                    <a href={t.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="bg-black/30 hover:bg-white hover:text-blue-700 px-1 py-0.5 rounded-sm cursor-pointer transition-colors pointer-events-auto shrink-0" title="Abrir carpeta asociada">
+                                      {grouped.taskCodes.get(t.id)}
+                                    </a>
+                                  ) : (
+                                    <span className="bg-black/30 px-1 py-0.5 rounded-sm shrink-0">{grouped.taskCodes.get(t.id)}</span>
+                                  )}
                                   <span className="truncate">{t.name}</span>
                                </span>
                             </div>
