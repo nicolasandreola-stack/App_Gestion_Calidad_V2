@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ProjectTask, ProjectSubtask } from '../types';
-import { Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart } from 'lucide-react';
+import { Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart, MessageSquare } from 'lucide-react';
 
 interface AdminGanttProps {
   projects: ProjectTask[];
