@@ -71,6 +71,7 @@ const SubtaskRowLink = ({ link, closingNote, onSave }: { link: string, closingNo
           <div className="flex items-center w-[120px]">
             <input 
                type="text"
+               title={localObs}
                placeholder="Nota de cierre..."
                className="w-full text-[10px] bg-slate-50 border border-slate-200 text-slate-700 rounded px-1.5 py-1 focus:border-blue-400 focus:outline-none placeholder:text-slate-400"
                value={localObs}
@@ -86,6 +87,7 @@ const SubtaskRowLink = ({ link, closingNote, onSave }: { link: string, closingNo
       <div className="flex items-center gap-1 w-[120px]">
         <input 
           type="text" 
+          title={localLink}
           placeholder="Añadir link..." 
           className="w-full text-[10px] bg-white border border-slate-200 rounded px-1.5 py-1 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
           value={localLink}
