@@ -55,27 +55,27 @@ const isOverdue = (endStr: string, status: string) => {
   return endD < now;
 };
 
-const SubtaskRowLink = ({ link, obs, onSave }: { link: string, obs: string, onSave: (link: string, obs: string) => void }) => {
+const SubtaskRowLink = ({ link, closingNote, onSave }: { link: string, closingNote: string, onSave: (link: string, closingNote: string) => void }) => {
   const [localLink, setLocalLink] = useState(link);
-  const [localObs, setLocalObs] = useState(obs);
+  const [localObs, setLocalObs] = useState(closingNote);
   const [showObs, setShowObs] = useState(false);
 
   return (
     <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover/sub:opacity-100 focus-within:opacity-100 transition-opacity">
       <div className="relative flex items-center">
         {!showObs && !localObs ? (
-          <button onClick={(e) => { e.stopPropagation(); setShowObs(true); }} className="text-slate-400 hover:text-blue-500 p-1 rounded" title="Añadir Observación">
-            <Plus size={12} />
+          <button onClick={(e) => { e.stopPropagation(); setShowObs(true); }} className="text-slate-400 hover:text-blue-500 p-1 rounded transition-colors" title="Añadir nota de cierre">
+            <MessageSquare size={12} />
           </button>
         ) : (
           <div className="flex items-center w-[120px]">
             <input 
                type="text"
-               placeholder="Observaciones..."
-               className="w-full text-[10px] bg-yellow-50 border border-yellow-300 text-yellow-800 rounded px-1.5 py-1 focus:border-yellow-500 focus:outline-none placeholder:text-yellow-600/50"
+               placeholder="Nota de cierre..."
+               className="w-full text-[10px] bg-slate-50 border border-slate-200 text-slate-700 rounded px-1.5 py-1 focus:border-blue-400 focus:outline-none placeholder:text-slate-400"
                value={localObs}
                onChange={e => setLocalObs(e.target.value)}
-               onBlur={() => { if (localObs !== obs || localLink !== link) onSave(localLink, localObs); if (!localObs) setShowObs(false); }}
+               onBlur={() => { if (localObs !== closingNote || localLink !== link) onSave(localLink, localObs); if (!localObs) setShowObs(false); }}
                onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
                onClick={e => e.stopPropagation()}
             />
@@ -90,7 +90,7 @@ const SubtaskRowLink = ({ link, obs, onSave }: { link: string, obs: string, onSa
           className="w-full text-[10px] bg-white border border-slate-200 rounded px-1.5 py-1 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
           value={localLink}
           onChange={(e) => setLocalLink(e.target.value)}
-          onBlur={() => { if (localLink !== link || localObs !== obs) onSave(localLink, localObs); }}
+          onBlur={() => { if (localLink !== link || localObs !== closingNote) onSave(localLink, localObs); }}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur(); } }}
           onClick={(e) => e.stopPropagation()}
         />
@@ -266,9 +266,9 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
     onUpdateProject({ ...task, subtasks: newSubtasks, progress: newProgress, status: newStatus });
   };
 
-  const handleUpdateSubtaskMeta = (task: ProjectTask, subtaskId: string, link: string, obs: string) => {
+  const handleUpdateSubtaskMeta = (task: ProjectTask, subtaskId: string, link: string, closingNote: string) => {
     if (!task.subtasks) return;
-    const newSubtasks = task.subtasks.map(st => st.id === subtaskId ? { ...st, link, observation: obs } : st);
+    const newSubtasks = task.subtasks.map(st => st.id === subtaskId ? { ...st, link, closingNote } : st);
     onUpdateProject({ ...task, subtasks: newSubtasks });
   };
 
@@ -469,7 +469,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                              </div>
                              <SubtaskRowLink 
                                link={st.link || ''}
-                               obs={st.observation || ''}
+                               closingNote={st.closingNote || ''}
                                onSave={(newLink, newObs) => handleUpdateSubtaskMeta(t, st.id, newLink, newObs)}
                              />
                            </div>
@@ -902,8 +902,9 @@ function TaskEditModal({ task, uniqueProjects, uniquePhases, uniqueAssignees, on
                           <input type="text" value={st.link || ''} onChange={e => updateSubtask(st.id, { link: e.target.value })} placeholder="Link Doc. Interno..." className="w-full text-xs p-2 pl-7 border border-gray-200 rounded-md outline-none focus:border-blue-400" />
                         </div>
                     </div>
-                    <div>
-                      <textarea value={st.observation || ''} onChange={e => updateSubtask(st.id, { observation: e.target.value })} placeholder="Observaciones adicionales o notas..." className="w-full text-xs p-2 border border-gray-200 rounded-md outline-none focus:border-blue-400 min-h-[40px] resize-none" />
+                    <div className="flex flex-col gap-2">
+                      <textarea value={st.observation || ''} onChange={e => updateSubtask(st.id, { observation: e.target.value })} placeholder="Instrucciones o detalles de la tarea..." className="w-full text-xs p-2 border border-gray-200 bg-gray-50 rounded-md outline-none focus:border-blue-400 min-h-[40px] resize-none" />
+                      <input type="text" value={st.closingNote || ''} onChange={e => updateSubtask(st.id, { closingNote: e.target.value })} placeholder="Nota de cierre / Actualización..." className="w-full text-xs p-2 border border-blue-100 bg-blue-50/30 rounded-md outline-none focus:border-blue-400" />
                     </div>
                   </div>
                 </div>
