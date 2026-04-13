@@ -173,11 +173,26 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
     let totalDays = dayDiff(minD, maxD);
     if (totalDays < 0) totalDays = 30; // Fallback if still negative
     
-    const daysArr = Array.from({ length: totalDays }, (_, i) => {
+    const rawDays = Array.from({ length: totalDays }, (_, i) => {
       const d = new Date(minD);
       d.setDate(minD.getDate() + i);
       return d;
     });
+    const daysArr = rawDays.filter(d => d.getDay() !== 0 && d.getDay() !== 6);
+
+    const getDateIndex = (d: Date) => {
+      const time = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+      const idx = daysArr.findIndex(x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime() === time);
+      if (idx !== -1) return idx;
+      
+      if (time < daysArr[0].getTime()) return 0;
+      if (time > daysArr[daysArr.length - 1].getTime()) return daysArr.length - 1;
+
+      for (let i = 0; i < daysArr.length; i++) {
+        if (daysArr[i].getTime() > time) return i;
+      }
+      return daysArr.length - 1;
+    };
 
     // Months mapping
     const months = [];
@@ -206,7 +221,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
       });
     });
 
-    return { map, pMeta, phMeta, minD, maxD, totalDays, daysArr, months, taskCodes };
+    return { map, pMeta, phMeta, minD, maxD, totalDays, daysArr, months, taskCodes, getDateIndex };
   }, [projects]);
 
   // Autocomplete lists
@@ -507,9 +522,8 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
             <div className="flex h-8">
               {grouped.daysArr.map((d, i) => {
                 const isToday = d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
-                const isWeekend = d.getDay() === 0 || d.getDay() === 6;
                 return (
-                  <div key={i} className={`shrink-0 w-[30px] border-r border-gray-200 flex flex-col items-center justify-center ${isToday ? 'bg-blue-100 text-blue-700 font-bold' : isWeekend ? 'bg-slate-100/50 text-slate-400' : 'text-slate-500'}`}>
+                  <div key={i} className={`shrink-0 w-[30px] border-r border-gray-200 flex flex-col items-center justify-center ${isToday ? 'bg-blue-100 text-blue-700 font-bold' : 'text-slate-500'}`}>
                     <span className="text-[10px] leading-tight mt-0.5">{d.getDate()}</span>
                   </div>
                 );
@@ -518,17 +532,24 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
           </div>
 
           <div className="relative flex-1 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iMTAwJSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48bGluZSB4MT0iMzAiIHkxPSIwIiB4Mj0iMzAiIHkyPSIxMDAlIiBzdHJva2U9IiNlMmU4ZjAiIHN0cm9rZS1kYXNoYXJyYXk9IjIgMiIgLz48L3N2Zz4=')] pb-10 w-max min-w-full">
+            {grouped.daysArr.map((d, i) => {
+               if (i > 0 && dayDiff(grouped.daysArr[i-1], d) > 1) {
+                 return <div key={`wk_sep_${i}`} className="absolute top-0 bottom-0 w-[2px] bg-slate-200/80 pointer-events-none z-0" style={{ left: i * 30 }}></div>;
+               }
+               return null;
+            })}
+
             <div 
               className="absolute top-0 bottom-0 border-l-2 border-red-400/50 z-0 pointer-events-none" 
-              style={{ left: dayDiff(grouped.minD, today) * 30 + 15, display: dayDiff(grouped.minD, today) >= 0 && dayDiff(grouped.minD, today) <= grouped.totalDays ? 'block' : 'none' }}
+              style={{ left: grouped.getDateIndex(today) * 30 + 15, display: grouped.getDateIndex(today) >= 0 && grouped.getDateIndex(today) < grouped.daysArr.length ? 'block' : 'none' }}
             >
               <div className="absolute -top-1 -left-1 w-2 h-2 rounded-full bg-red-400"></div>
             </div>
 
             {Array.from(grouped.map.entries()).map(([projName, phases], pIdx) => {
               const pm = grouped.pMeta.get(projName)!;
-              const pStartOffset = dayDiff(grouped.minD, pm.minD) * 30;
-              const pDuration = Math.max(1, dayDiff(pm.minD, pm.maxD)) * 30;
+              const pStartOffset = grouped.getDateIndex(pm.minD) * 30;
+              const pDuration = Math.max(1, grouped.getDateIndex(pm.maxD) - grouped.getDateIndex(pm.minD)) * 30;
 
               return (
               <div key={projName + '_grid'}>
@@ -541,8 +562,8 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
 
                 {!expandedProjects.has(projName) && Array.from(phases.entries()).map(([phaseName, tasks]) => {
                   const phm = grouped.phMeta.get(projName + phaseName)!;
-                  const phStartOffset = dayDiff(grouped.minD, phm.minD) * 30;
-                  const phDuration = Math.max(1, dayDiff(phm.minD, phm.maxD)) * 30;
+                  const phStartOffset = grouped.getDateIndex(phm.minD) * 30;
+                  const phDuration = Math.max(1, grouped.getDateIndex(phm.maxD) - grouped.getDateIndex(phm.minD)) * 30;
 
                   return (
                   <div key={phaseName + '_grid'}>
@@ -558,8 +579,8 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                     {!expandedPhases.has(projName + phaseName) && tasks.map(t => {
                        const sDate = parseDate(t.startDate);
                        const eDate = parseDate(t.endDate);
-                       const leftOffset = dayDiff(grouped.minD, sDate) * 30;
-                       const duration = Math.max(1, dayDiff(sDate, eDate)) * 30;
+                       const leftOffset = grouped.getDateIndex(sDate) * 30;
+                       const duration = Math.max(1, grouped.getDateIndex(eDate) - grouped.getDateIndex(sDate)) * 30;
                        const overdue = isOverdue(t.endDate, t.status);
                        const isTaskExpanded = expandedTasks.has(t.id);
 
