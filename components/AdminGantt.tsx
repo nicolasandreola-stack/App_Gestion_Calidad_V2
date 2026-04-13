@@ -55,6 +55,31 @@ const isOverdue = (endStr: string, status: string) => {
   return endD < now;
 };
 
+const SubtaskRowLink = ({ link, onSave }: { link: string, onSave: (val: string) => void }) => {
+  const [localLink, setLocalLink] = useState(link);
+  return (
+    <div className="shrink-0 flex items-center gap-1 w-[130px] opacity-0 group-hover/sub:opacity-100 focus-within:opacity-100 transition-opacity">
+      <input 
+        type="text" 
+        placeholder="Añadir link..." 
+        className="w-full text-[10px] bg-white border border-slate-200 rounded px-1.5 py-1 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+        value={localLink}
+        onChange={(e) => setLocalLink(e.target.value)}
+        onBlur={() => { if (localLink !== link) onSave(localLink); }}
+        onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur(); } }}
+        onClick={(e) => e.stopPropagation()}
+      />
+      {link ? (
+        <a href={link} target="_blank" rel="noopener noreferrer" className="p-1 text-blue-500 hover:bg-blue-100 rounded shrink-0 bg-white border border-slate-200" onClick={e => e.stopPropagation()} title="Abrir link">
+          <ExternalLink size={12} />
+        </a>
+      ) : (
+        <div className="w-[22px]" />
+      )}
+    </div>
+  );
+};
+
 export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject }: AdminGanttProps) {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
@@ -176,6 +201,37 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
     if (next.has(taskId)) next.delete(taskId);
     else next.add(taskId);
     setExpandedTasks(next);
+  };
+
+  const toggleAllSubtasksInPhase = (tasksInPhase: ProjectTask[]) => {
+    const taskIds = tasksInPhase.filter(t => t.subtasks && t.subtasks.length > 0).map(t => t.id);
+    if (taskIds.length === 0) return;
+
+    const areAllExpanded = taskIds.every(id => expandedTasks.has(id));
+    const next = new Set(expandedTasks);
+    
+    if (areAllExpanded) taskIds.forEach(id => next.delete(id));
+    else taskIds.forEach(id => next.add(id));
+    
+    setExpandedTasks(next);
+  };
+
+  const handleToggleSubtask = (task: ProjectTask, subtaskId: string) => {
+    if (!task.subtasks) return;
+    const newSubtasks = task.subtasks.map(st => st.id === subtaskId ? { ...st, completed: !st.completed } : st);
+    const completed = newSubtasks.filter(s => s.completed).length;
+    const newProgress = Math.round((completed / newSubtasks.length) * 100);
+    let newStatus = task.status;
+    if (newProgress === 100) newStatus = 'CERRADO';
+    else if (newProgress > 0) newStatus = 'EN PROGRESO';
+    else newStatus = 'PENDIENTE';
+    onUpdateProject({ ...task, subtasks: newSubtasks, progress: newProgress, status: newStatus });
+  };
+
+  const handleUpdateSubtaskLink = (task: ProjectTask, subtaskId: string, link: string) => {
+    if (!task.subtasks) return;
+    const newSubtasks = task.subtasks.map(st => st.id === subtaskId ? { ...st, link } : st);
+    onUpdateProject({ ...task, subtasks: newSubtasks });
   };
 
   const today = new Date();
@@ -301,6 +357,15 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                       <span className="font-bold text-xs text-slate-700">{phaseName}</span>
                       
                       <div className="ml-auto flex gap-2 items-center">
+                         {!expandedPhases.has(projName + phaseName) && tasks.some(t => t.subtasks && t.subtasks.length > 0) && (
+                           <button 
+                             onClick={(e) => { e.stopPropagation(); toggleAllSubtasksInPhase(tasks); }}
+                             className="text-[9px] font-bold text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded shadow-sm hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors uppercase"
+                             title="Expandir/Colapsar todas las subtareas"
+                           >
+                             {tasks.filter(t => t.subtasks && t.subtasks.length > 0).every(t => expandedTasks.has(t.id)) ? 'Ocultar Subs' : 'Ver Subs'}
+                           </button>
+                         )}
                          <span className="text-[10px] text-slate-400 font-medium">{tasks.length} tareas</span>
                          {expandedPhases.has(projName + phaseName) && (
                             <span className="text-[10px] font-bold bg-slate-300 text-slate-700 px-2 py-0.5 rounded-full" title="Progreso fase">
@@ -350,13 +415,21 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                           {overdue && <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>}
                         </div>
                         {isTaskExpanded && t.subtasks?.map(st => (
-                           <div key={st.id} className="grid grid-cols-[1fr_50px_70px] items-center px-4 py-2 border-b border-slate-50 bg-slate-50/50 h-[34px]">
-                             <div className="pl-14 truncate flex items-center gap-2">
-                               <span className="mt-0.5 shrink-0">{st.completed ? <CheckCircle2 size={12} className="text-emerald-500" /> : <Circle size={12} className="text-slate-300" />}</span>
-                               <span title={st.text} className={`text-[11px] truncate ${st.completed ? 'text-slate-400 line-through' : 'text-slate-600'}`}>{st.text}</span>
+                           <div key={st.id} className="group/sub flex items-center px-4 border-b border-slate-50 bg-slate-50/50 h-[34px] overflow-hidden">
+                             <div className="pl-14 flex items-center gap-2 flex-1 min-w-0 pr-2">
+                               <button 
+                                 onClick={(e) => { e.stopPropagation(); handleToggleSubtask(t, st.id); }} 
+                                 className="mt-0.5 shrink-0 hover:scale-110 transition-transform cursor-pointer"
+                                 title={st.completed ? "Marcar como pendiente" : "Marcar como completada"}
+                               >
+                                 {st.completed ? <CheckCircle2 size={13} className="text-emerald-500" /> : <Circle size={13} className="text-slate-300 hover:text-blue-400" />}
+                               </button>
+                               <span title={st.text} className={`text-[11px] truncate flex-1 block ${st.completed ? 'text-slate-400 line-through' : 'text-slate-700 font-medium'}`}>{st.text}</span>
                              </div>
-                             <div></div>
-                             <div></div>
+                             <SubtaskRowLink 
+                               link={st.link || ''}
+                               onSave={(newLink) => handleUpdateSubtaskLink(t, st.id, newLink)}
+                             />
                            </div>
                         ))}
                       </React.Fragment>
