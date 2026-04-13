@@ -732,11 +732,16 @@ function TaskViewModal({ task, onClose, onEdit }: { task: ProjectTask, onClose: 
                        <span className="mt-0.5">{st.completed ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Circle size={16} className="text-slate-300" />}</span>
                        <span className={`text-sm font-medium ${st.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>{st.text}</span>
                      </div>
-                     {(st.observation || st.link || st.assignee) && (
-                       <div className="pl-6 space-y-1">
-                         {st.assignee && <p className="text-[11px] font-bold text-slate-600 bg-slate-100 w-fit px-2 py-0.5 rounded flex items-center gap-1"><User size={10} /> Delegado a: {st.assignee}</p>}
-                         {st.observation && <p className="text-[11px] text-slate-500 bg-slate-50 p-2 rounded">{st.observation}</p>}
-                         {st.link && <a href={st.link} target="_blank" rel="noopener noreferrer" className="text-[11px] text-blue-600 flex items-center gap-1 hover:underline w-fit"><ExternalLink size={10} /> Link adjunto</a>}
+                     {(st.observation || st.closingNote || st.link || st.assignee) && (
+                       <div className="pl-6 space-y-1.5 mt-1">
+                         {st.assignee && <p className="text-[11px] font-bold text-slate-600 bg-slate-100 w-fit px-2 py-0.5 rounded flex items-center gap-1 mb-1"><User size={10} /> Delegado a: {st.assignee}</p>}
+                         {st.observation && <p className="text-[11px] text-yellow-800 bg-yellow-50 border border-yellow-100 p-2 rounded">{st.observation}</p>}
+                         {st.closingNote && (
+                           <p className={`text-[11px] p-2 rounded border ${st.completed ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                              <span className="font-bold">{st.completed ? '✓ Cierre: ' : 'Actualización: '}</span>{st.closingNote}
+                           </p>
+                         )}
+                         {st.link && <a href={st.link} target="_blank" rel="noopener noreferrer" className="text-[11px] text-blue-600 flex items-center gap-1 hover:underline w-fit mt-1"><ExternalLink size={10} /> Link adjunto</a>}
                        </div>
                      )}
                   </div>
