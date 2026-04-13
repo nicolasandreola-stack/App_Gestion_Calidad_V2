@@ -55,27 +55,53 @@ const isOverdue = (endStr: string, status: string) => {
   return endD < now;
 };
 
-const SubtaskRowLink = ({ link, onSave }: { link: string, onSave: (val: string) => void }) => {
+const SubtaskRowLink = ({ link, obs, onSave }: { link: string, obs: string, onSave: (link: string, obs: string) => void }) => {
   const [localLink, setLocalLink] = useState(link);
+  const [localObs, setLocalObs] = useState(obs);
+  const [showObs, setShowObs] = useState(false);
+
   return (
-    <div className="shrink-0 flex items-center gap-1 w-[130px] opacity-0 group-hover/sub:opacity-100 focus-within:opacity-100 transition-opacity">
-      <input 
-        type="text" 
-        placeholder="Añadir link..." 
-        className="w-full text-[10px] bg-white border border-slate-200 rounded px-1.5 py-1 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
-        value={localLink}
-        onChange={(e) => setLocalLink(e.target.value)}
-        onBlur={() => { if (localLink !== link) onSave(localLink); }}
-        onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur(); } }}
-        onClick={(e) => e.stopPropagation()}
-      />
-      {link ? (
-        <a href={link} target="_blank" rel="noopener noreferrer" className="p-1 text-blue-500 hover:bg-blue-100 rounded shrink-0 bg-white border border-slate-200" onClick={e => e.stopPropagation()} title="Abrir link">
-          <ExternalLink size={12} />
-        </a>
-      ) : (
-        <div className="w-[22px]" />
-      )}
+    <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover/sub:opacity-100 focus-within:opacity-100 transition-opacity">
+      <div className="relative flex items-center">
+        {!showObs && !localObs ? (
+          <button onClick={(e) => { e.stopPropagation(); setShowObs(true); }} className="text-slate-400 hover:text-blue-500 p-1 rounded" title="Añadir Observación">
+            <Plus size={12} />
+          </button>
+        ) : (
+          <div className="flex items-center w-[120px]">
+            <input 
+               type="text"
+               placeholder="Observaciones..."
+               className="w-full text-[10px] bg-yellow-50 border border-yellow-300 text-yellow-800 rounded px-1.5 py-1 focus:border-yellow-500 focus:outline-none placeholder:text-yellow-600/50"
+               value={localObs}
+               onChange={e => setLocalObs(e.target.value)}
+               onBlur={() => { if (localObs !== obs || localLink !== link) onSave(localLink, localObs); if (!localObs) setShowObs(false); }}
+               onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+               onClick={e => e.stopPropagation()}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-1 w-[120px]">
+        <input 
+          type="text" 
+          placeholder="Añadir link..." 
+          className="w-full text-[10px] bg-white border border-slate-200 rounded px-1.5 py-1 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+          value={localLink}
+          onChange={(e) => setLocalLink(e.target.value)}
+          onBlur={() => { if (localLink !== link || localObs !== obs) onSave(localLink, localObs); }}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur(); } }}
+          onClick={(e) => e.stopPropagation()}
+        />
+        {link ? (
+          <a href={link} target="_blank" rel="noopener noreferrer" className="p-1 text-blue-500 hover:bg-blue-100 rounded shrink-0 bg-white border border-slate-200" onClick={e => e.stopPropagation()} title="Abrir link">
+            <ExternalLink size={12} />
+          </a>
+        ) : (
+          <div className="w-[22px]" />
+        )}
+      </div>
     </div>
   );
 };
@@ -166,7 +192,19 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
     }
     months.push({ month: currentMonth, year: daysArr[daysArr.length - 1].getFullYear(), count: currentCount });
 
-    return { map, pMeta, phMeta, minD, maxD, totalDays, daysArr, months };
+    const taskCodes = new Map<string, string>();
+    Array.from(map.entries()).forEach(([projName, pMap]) => {
+      let phaseIdx = 0;
+      Array.from(pMap.entries()).forEach(([phaseName, phaseTasks]) => {
+        const phaseLetter = String.fromCharCode(65 + phaseIdx);
+        phaseTasks.forEach((t, taskIdx) => {
+          taskCodes.set(t.id, `${phaseLetter}${taskIdx + 1}`);
+        });
+        phaseIdx++;
+      });
+    });
+
+    return { map, pMeta, phMeta, minD, maxD, totalDays, daysArr, months, taskCodes };
   }, [projects]);
 
   // Autocomplete lists
@@ -228,9 +266,9 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
     onUpdateProject({ ...task, subtasks: newSubtasks, progress: newProgress, status: newStatus });
   };
 
-  const handleUpdateSubtaskLink = (task: ProjectTask, subtaskId: string, link: string) => {
+  const handleUpdateSubtaskMeta = (task: ProjectTask, subtaskId: string, link: string, obs: string) => {
     if (!task.subtasks) return;
-    const newSubtasks = task.subtasks.map(st => st.id === subtaskId ? { ...st, link } : st);
+    const newSubtasks = task.subtasks.map(st => st.id === subtaskId ? { ...st, link, observation: obs } : st);
     onUpdateProject({ ...task, subtasks: newSubtasks });
   };
 
@@ -397,7 +435,10 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                             )}
                             {overdue && <AlertTriangle size={12} className="text-red-500 shrink-0" title="Tarea Vencida" />}
                             <div className="flex flex-col truncate">
-                              <span title={t.name} className={`text-xs font-medium truncate block transition-colors group-hover:text-blue-700 ${overdue ? 'text-red-600' : 'text-slate-700'}`}>{t.name}</span>
+                              <span title={t.name} className={`text-xs font-medium truncate flex items-center gap-1.5 transition-colors group-hover:text-blue-700 ${overdue ? 'text-red-600' : 'text-slate-700'}`}>
+                                 <span className="text-[9px] font-mono font-bold bg-slate-200 text-slate-700 px-1 py-0.5 rounded">{grouped.taskCodes.get(t.id)}</span>
+                                 <span className="truncate">{t.name}</span>
+                              </span>
                               <div className="flex items-center gap-2 mt-0.5">
                                 {t.assignee && (
                                   <span className="text-[9px] text-slate-500 flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded-sm"><User size={8} /> {t.assignee}</span>
@@ -428,7 +469,8 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                              </div>
                              <SubtaskRowLink 
                                link={st.link || ''}
-                               onSave={(newLink) => handleUpdateSubtaskLink(t, st.id, newLink)}
+                               obs={st.observation || ''}
+                               onSave={(newLink, newObs) => handleUpdateSubtaskMeta(t, st.id, newLink, newObs)}
                              />
                            </div>
                         ))}
@@ -522,7 +564,10 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                               title={`${t.name} (${t.progress}%)`}
                             >
                                <div className="absolute top-0 bottom-0 left-0 bg-black/20" style={{ width: `${t.progress}%` }}></div>
-                               <span className="relative z-10 text-[9px] font-bold text-white px-2 truncate leading-none pt-0.5 pointer-events-none">{t.name}</span>
+                               <span className="relative z-10 text-[9px] font-bold text-white px-2 truncate flex items-center gap-1 leading-none pt-0.5 pointer-events-none">
+                                  <span className="bg-black/30 px-1 py-0.5 rounded-sm">{grouped.taskCodes.get(t.id)}</span>
+                                  <span className="truncate">{t.name}</span>
+                               </span>
                             </div>
                           </div>
                           {isTaskExpanded && t.subtasks?.map(st => (
