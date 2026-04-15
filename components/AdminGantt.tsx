@@ -1,13 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { ProjectTask, ProjectSubtask } from '../types';
 import ProjectReportView from './ProjectReportView';
-import { Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart, MessageSquare, FileText } from 'lucide-react';
+import ImportProjectModal from './ImportProjectModal';
+import { Bot, Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart, MessageSquare, FileText } from 'lucide-react';
 
 interface AdminGanttProps {
   projects: ProjectTask[];
   onUpdateProject: (p: ProjectTask) => void;
   onAddProject: (p: ProjectTask) => void;
   onDeleteProject: (id: string) => void;
+  onBulkAddProjects?: (projects: ProjectTask[]) => void;
 }
 
 // Helpers for dates (DD/MM/YYYY)
@@ -109,7 +111,7 @@ const SubtaskRowLink = ({ link, closingNote, onSave }: { link: string, closingNo
   );
 };
 
-export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject }: AdminGanttProps) {
+export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject, onBulkAddProjects }: AdminGanttProps) {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
@@ -123,6 +125,9 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
   // States for reporting
   const [showReportSelector, setShowReportSelector] = useState(false);
   const [reportProjectName, setReportProjectName] = useState<string | null>(null);
+
+  // Stats for import modal
+  const [showImportModal, setShowImportModal] = useState(false);
 
   // Grouping
   const grouped = useMemo(() => {
@@ -331,6 +336,14 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
           </button>
           
           <button 
+            onClick={() => setShowImportModal(true)}
+            className="bg-violet-100 hover:bg-violet-200 text-violet-700 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors border border-violet-200"
+            title="Importar Proyecto desde IA (NotebookLM)"
+          >
+            <Bot size={16} /> Importar AI
+          </button>
+
+          <button 
             onClick={() => setEditTask({
               id: 'PROJ-' + Date.now(), project: '', phase: '', name: 'Nueva Tarea', 
               startDate: formatDate(new Date()), endDate: formatDate(new Date(new Date().setDate(new Date().getDate() + 5))),
@@ -373,6 +386,16 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
           projectName={reportProjectName} 
           projects={projects} 
           onClose={() => setReportProjectName(null)} 
+        />
+      )}
+
+      {/* Import Project from AI Modal */}
+      {showImportModal && (
+        <ImportProjectModal
+          onClose={() => setShowImportModal(false)}
+          onImport={async (newProj) => {
+            if (onBulkAddProjects) await onBulkAddProjects(newProj);
+          }}
         />
       )}
 

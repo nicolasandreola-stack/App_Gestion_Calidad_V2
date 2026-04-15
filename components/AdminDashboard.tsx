@@ -502,6 +502,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
         localStorage.setItem('v25_global_projects', JSON.stringify(nextList));
         await syncProjectsCloud(nextList);
     };
+
+    const handleBulkAddProjects = async (newProjList: ProjectTask[]) => {
+        const nextList = [...globalProjects, ...newProjList];
+        setGlobalProjects(nextList);
+        localStorage.setItem('v25_global_projects', JSON.stringify(nextList));
+        await syncProjectsCloud(nextList);
+    };
     const handleDeleteProject = async (id: string) => {
         const nextList = globalProjects.filter(p => p.id !== id);
         setGlobalProjects(nextList);
@@ -943,6 +950,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                         onAddProject={handleAddProject}
                         onUpdateProject={handleUpdateProject}
                         onDeleteProject={handleDeleteProject}
+                        onBulkAddProjects={handleBulkAddProjects}
                     />
                 ) : selectedUser ? (
                     <>
