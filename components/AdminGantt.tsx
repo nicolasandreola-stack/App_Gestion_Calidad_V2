@@ -965,6 +965,18 @@ function TaskEditModal({ task, uniqueProjects, uniquePhases, uniqueAssignees, on
     updateTaskFromSubtasks(newSubtasks);
   };
 
+  const moveSubtask = (index: number, direction: 'up' | 'down') => {
+    if (!edited.subtasks) return;
+    const newSubtasks = [...edited.subtasks];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newSubtasks.length) return;
+    const temp = newSubtasks[index];
+    newSubtasks[index] = newSubtasks[targetIndex];
+    newSubtasks[targetIndex] = temp;
+    updateTaskFromSubtasks(newSubtasks);
+  };
+
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
@@ -1065,11 +1077,17 @@ function TaskEditModal({ task, uniqueProjects, uniquePhases, uniqueAssignees, on
                     <p className="text-xs">Usa este espacio para delegar micro-tareas o enlazar documentos específicos a personas concretas.</p>
                  </div>
               )}
-              {edited.subtasks?.map(st => (
+              {edited.subtasks?.map((st, idx) => (
                 <div key={st.id} className="bg-white border border-gray-200 p-3 rounded-lg shadow-sm relative group">
-                  <button onClick={() => removeSubtask(st.id)} className="absolute top-2 right-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><X size={14} /></button>
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 z-10">
+                    <div className="flex bg-slate-100 rounded border border-slate-200 shadow-sm">
+                      <button onClick={(e) => { e.preventDefault(); moveSubtask(idx, 'up'); }} disabled={idx === 0} className="px-1 py-0.5 text-slate-400 hover:text-blue-600 hover:bg-slate-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Mover arriba"><ChevronUp size={12}/></button>
+                      <button onClick={(e) => { e.preventDefault(); moveSubtask(idx, 'down'); }} disabled={idx === (edited.subtasks?.length || 0) - 1} className="px-1 py-0.5 text-slate-400 hover:text-blue-600 hover:bg-slate-200 border-l border-slate-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Mover abajo"><ChevronDown size={12}/></button>
+                    </div>
+                    <button onClick={(e) => { e.preventDefault(); removeSubtask(st.id); }} className="text-gray-400 hover:text-white hover:bg-red-500 bg-gray-50 border border-gray-200 p-0.5 rounded shadow-sm transition-colors ml-1 mt-[-1px]"><X size={14} /></button>
+                  </div>
                   
-                  <div className="flex items-start gap-2 mb-3 pr-4">
+                  <div className="flex items-start gap-2 mb-3 mr-16">
                     <button onClick={() => updateSubtask(st.id, { completed: !st.completed })} className="mt-0.5 shrink-0">
                       {st.completed ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Circle size={16} className="text-gray-300" />}
                     </button>
