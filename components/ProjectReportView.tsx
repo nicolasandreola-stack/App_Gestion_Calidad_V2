@@ -212,62 +212,66 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
           </div>
         </div>
 
-        {/* Project Context & Global Stats Row */}
-        <div className="flex items-end justify-between gap-6 mb-8 mt-2">
+        {/* General Info Wrapper */}
+        <div className="bg-slate-50/50 border border-slate-200 rounded-[20px] p-7 mb-4">
           
-          <div className="flex-1 max-w-[55%]">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Proyecto en curso</p>
-            <h2 className="text-2xl font-black text-blue-900 leading-tight mb-2 pr-4 break-words">{projectName}</h2>
-            {config.showProjectDates && (
-              <p className="text-[10px] text-slate-500 mt-1">
-                <span className="font-bold text-slate-400 uppercase tracking-widest mr-1">Rango:</span> 
-                {minDStr} al {config.undefinedEndDate ? '"Fecha no definida aún"' : maxDStr}
-              </p>
-            )}
-          </div>
-          
-          {/* KPI Cards */}
-          <div className="flex items-center gap-3">
-             <div className="text-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 min-w-[80px]">
-               <p className="text-2xl font-black text-slate-800 leading-none">{phasesMap.size}</p>
-               <p className="text-[9px] uppercase font-bold text-slate-400 mt-1.5">Fases</p>
-             </div>
-             <div className="text-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 min-w-[80px]">
-               <p className="text-2xl font-black text-slate-800 leading-none">{totalTasks}</p>
-               <p className="text-[9px] uppercase font-bold text-slate-400 mt-1.5">Tareas</p>
-             </div>
-             <div className="text-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 min-w-[90px]">
-               <p className="text-2xl font-black text-amber-500 leading-none">{totalSubtasks}</p>
-               <p className="text-[9px] uppercase font-bold text-slate-400 mt-1.5">Subtareas</p>
-             </div>
-             <div className="text-center px-4 py-3 bg-emerald-50 rounded-xl border border-emerald-200 min-w-[90px]">
-               <p className="text-2xl font-black text-emerald-600 leading-none">{overallProgress}%</p>
-               <p className="text-[9px] uppercase font-bold text-emerald-800 mt-1.5">Progreso</p>
-             </div>
+          {/* Project Context & Global Stats Row */}
+          <div className="flex items-end justify-between gap-6 mb-8">
+            
+            <div className="flex-1 max-w-[55%]">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Proyecto en curso</p>
+              <h2 className="text-2xl font-black text-blue-900 leading-tight mb-2 pr-4 break-words">{projectName}</h2>
+              {config.showProjectDates && (
+                <p className="text-[10px] text-slate-500 mt-1">
+                  <span className="font-bold text-slate-400 uppercase tracking-widest mr-1">Rango:</span> 
+                  {minDStr} al {config.undefinedEndDate ? '"Fecha no definida aún"' : maxDStr}
+                </p>
+              )}
+            </div>
+            
+            {/* KPI Cards */}
+            <div className="flex items-center gap-3">
+               <div className="text-center px-4 py-3 bg-white shadow-sm rounded-xl border border-slate-100 min-w-[80px]">
+                 <p className="text-2xl font-black text-slate-800 leading-none">{phasesMap.size}</p>
+                 <p className="text-[9px] uppercase font-bold text-slate-400 mt-1.5">Fases</p>
+               </div>
+               <div className="text-center px-4 py-3 bg-white shadow-sm rounded-xl border border-slate-100 min-w-[80px]">
+                 <p className="text-2xl font-black text-slate-800 leading-none">{totalTasks}</p>
+                 <p className="text-[9px] uppercase font-bold text-slate-400 mt-1.5">Tareas</p>
+               </div>
+               <div className="text-center px-4 py-3 bg-white shadow-sm rounded-xl border border-slate-100 min-w-[90px]">
+                 <p className="text-2xl font-black text-amber-500 leading-none">{totalSubtasks}</p>
+                 <p className="text-[9px] uppercase font-bold text-slate-400 mt-1.5">Subtareas</p>
+               </div>
+               <div className="text-center px-4 py-3 bg-emerald-50 shadow-sm rounded-xl border border-emerald-200 min-w-[90px]">
+                 <p className="text-2xl font-black text-emerald-600 leading-none">{overallProgress}%</p>
+                 <p className="text-[9px] uppercase font-bold text-emerald-800 mt-1.5">Progreso</p>
+               </div>
+            </div>
+
           </div>
 
-        </div>
-
-        {/* Phase Progress Bars */}
-        <div className="mb-10 text-slate-800 break-inside-avoid bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
-           <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-3 mb-5">Métricas por Fase</h3>
-           <div className="grid grid-cols-3 gap-x-8 gap-y-5 px-2">
-             {Array.from(phasesMap.entries()).map(([phaseName, phaseTasks]) => {
-                const pComplete = phaseTasks.filter(t => t.status === 'CERRADO').length;
-                const pPct = phaseTasks.length > 0 ? Math.round((pComplete / phaseTasks.length) * 100) : 0;
-                return (
-                   <div key={`metric-${phaseName}`}>
-                     <div className="flex justify-between items-end mb-1.5">
-                       <p className="text-[11px] font-bold text-slate-600 truncate pr-2">{phaseName}</p>
-                       <p className="text-[11px] font-black text-slate-800">{pPct}%</p>
+          {/* Phase Progress Bars */}
+          <div className="text-slate-800 break-inside-avoid bg-white border border-slate-100 p-6 rounded-xl shadow-sm">
+             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 pb-3 mb-5">Métricas por Fase</h3>
+             <div className="grid grid-cols-3 gap-x-8 gap-y-5 px-2">
+               {Array.from(phasesMap.entries()).map(([phaseName, phaseTasks]) => {
+                  const pComplete = phaseTasks.filter(t => t.status === 'CERRADO').length;
+                  const pPct = phaseTasks.length > 0 ? Math.round((pComplete / phaseTasks.length) * 100) : 0;
+                  return (
+                     <div key={`metric-${phaseName}`}>
+                       <div className="flex justify-between items-end mb-1.5">
+                         <p className="text-[10px] font-bold text-slate-600 truncate pr-2">{phaseName}</p>
+                         <p className="text-[10px] font-black text-slate-800">{pPct}%</p>
+                       </div>
+                       <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                         <div className="h-full bg-indigo-500 rounded-full transition-all" style={{width: `${pPct}%`}}></div>
+                       </div>
                      </div>
-                     <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                       <div className="h-full bg-indigo-500 rounded-full transition-all" style={{width: `${pPct}%`}}></div>
-                     </div>
-                   </div>
-                );
-             })}
-           </div>
+                  );
+               })}
+             </div>
+          </div>
         </div>
 
 
@@ -288,17 +292,17 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
               <div key={phaseName} className="mb-8">
                 {/* Phase Header */}
                 <div className="flex items-center gap-4 border-b border-slate-300 pb-2 mb-4">
-                  <h3 className="text-[15px] font-black text-black uppercase tracking-wide flex-1 flex items-center gap-2">
+                  <h3 className="text-[14px] font-black text-black uppercase tracking-wide flex-1 flex items-center gap-2">
                     <Layers size={16} className="text-slate-400" /> {phaseName}
                   </h3>
-                  <span className="text-[13px] font-black text-black tracking-wide pr-2">
+                  <span className="text-[12px] font-black text-black tracking-wide pr-2">
                     Gantt: {phasePct}%
                   </span>
                 </div>
 
                 {/* Tasks List */}
                 {config.excludedPhases.includes(phaseName) ? (
-                  <div className="py-1.5 pl-4 border-l-2 border-slate-100 text-[10px] font-bold text-slate-500 tracking-wide">
+                  <div className="py-1.5 pl-4 border-l-2 border-slate-100 text-[9px] font-bold text-slate-500 tracking-wide">
                     {tasks.length} TAREAS ADJUNTAS - DETALLE OMITIDO EN ESTE REPORTE
                   </div>
                 ) : (
@@ -309,26 +313,26 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
                         {/* Task Header */}
                 <div className="flex items-center justify-between gap-4 mb-2">
                   <div className="flex items-start gap-3">
-                    <span className="text-[11px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded mt-0.5 shrink-0">
+                    <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded mt-0.5 shrink-0">
                       {taskCodes.get(t.id)}
                     </span>
                     <div>
-                      <h4 className={`text-[14px] font-bold ${t.status === 'CERRADO' ? 'text-slate-700' : 'text-slate-800'}`}>
+                      <h4 className={`text-[13px] font-bold ${t.status === 'CERRADO' ? 'text-slate-700' : 'text-slate-800'}`}>
                         {t.name}
                       </h4>
                       {t.assignee && (
-                        <p className="text-[9px] text-slate-600 mt-1 flex items-center gap-1">
+                        <p className="text-[8px] text-slate-600 mt-1 flex items-center gap-1">
                           <User size={10} /> Delegado a: <span className="font-bold text-slate-700">{t.assignee}</span>
                         </p>
                       )}
                     </div>
                           </div>
                     <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                      <span className={`text-[9px] font-bold px-2 py-1 rounded uppercase tracking-wider ${t.status === 'CERRADO' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : t.status === 'EN PROGRESO' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+                      <span className={`text-[8px] font-bold px-2 py-1 rounded uppercase tracking-wider ${t.status === 'CERRADO' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : t.status === 'EN PROGRESO' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
                         {t.status}
                       </span>
                       {config.showTaskDates && (
-                        <span className="text-[8px] text-slate-500 font-medium">
+                        <span className="text-[7px] text-slate-500 font-medium">
                           {t.startDate} al {t.endDate}
                         </span>
                       )}
@@ -337,7 +341,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
 
                   {/* Main Task Description (if any) */}
                   {t.details && config.showSubtaskDetails && (
-                    <div className="ml-10 mb-3 text-[11px] text-slate-700 bg-slate-50 p-3 rounded border border-slate-100">
+                    <div className="ml-10 mb-3 text-[10px] text-slate-700 bg-slate-50 p-3 rounded border border-slate-100">
                       {t.details}
                     </div>
                   )}
@@ -351,7 +355,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
                                   {st.completed ? <CheckCircle2 size={12} className="text-emerald-500" /> : <Circle size={12} className="text-slate-300" />}
                                 </span>
                         <div className="flex-1">
-                          <p className={`text-[11px] ${st.completed ? 'text-slate-600' : 'text-slate-800'}`}>
+                          <p className={`text-[10px] ${st.completed ? 'text-slate-500' : 'text-slate-800'}`}>
                             {st.text}
                           </p>
                           
@@ -359,12 +363,12 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
                           {(st.observation || st.closingNote) && config.showSubtaskDetails && (
                             <div className="mt-1 space-y-1">
                               {st.observation && (
-                                <p className="text-[10px] text-slate-700 bg-yellow-50/50 p-1.5 border-l-2 border-yellow-300">
+                                <p className="text-[9px] text-slate-700 bg-yellow-50/50 p-1.5 border-l-2 border-yellow-300">
                                   {st.observation}
                                 </p>
                               )}
                               {st.closingNote && (
-                                <p className={`text-[10px] p-1.5 border-l-2 ${st.completed ? 'bg-emerald-50/50 border-emerald-300 text-emerald-800' : 'bg-slate-50/50 border-slate-300 text-slate-700'}`}>
+                                <p className={`text-[9px] p-1.5 border-l-2 ${st.completed ? 'bg-emerald-50/50 border-emerald-300 text-emerald-800' : 'bg-slate-50/50 border-slate-300 text-slate-700'}`}>
                                   <span className="font-bold">{st.completed ? 'Cierre: ' : 'Actualización: '}</span>
                                   {st.closingNote}
                                 </p>
