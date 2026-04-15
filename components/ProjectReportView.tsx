@@ -180,14 +180,11 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
         
         {/* Document Header */}
         <div className="flex justify-between items-start border-b-2 border-slate-800 pb-5 mb-8">
-          <div className="flex flex-col gap-2.5">
-            <img src={logoUrl} alt="Logo" className="h-16 object-contain self-start" referrerPolicy="no-referrer" />
-            <div className="text-[10px] font-black tracking-widest text-slate-500 uppercase leading-snug">
-              <p>Calidad y</p>
-              <p>Nuevas Tecnologías</p>
-            </div>
+          <div className="flex flex-col justify-center">
+            <img src={logoUrl} alt="Logo" className="h-[84px] object-contain self-start" referrerPolicy="no-referrer" />
           </div>
-          <div className="text-right">
+          <div className="text-right flex flex-col items-end">
+            <h2 className="text-[14px] font-black text-[#ED3833] uppercase tracking-widest mb-0.5">CALIDAD Y NUEVAS TECNOLOGÍAS</h2>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">REPORTE DE ESTADO</h1>
             <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wide">
               Generado por <span className="text-slate-800">{config.generatorName || 'Usuario'}</span>
