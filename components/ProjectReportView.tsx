@@ -199,16 +199,16 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
         {/* Document Header */}
         <div className="flex justify-between items-start border-b-2 border-slate-800 pb-5 mb-8">
           <div className="flex flex-col justify-center">
-            <img src={logoUrl} alt="Logo" className="h-[110px] object-contain self-start" referrerPolicy="no-referrer" />
+            <img src={logoUrl} alt="Logo" className="h-[96px] object-contain self-start" referrerPolicy="no-referrer" />
           </div>
           <div className="text-right flex flex-col items-end">
-            <h2 className="text-[14px] font-black text-[#ED3833] uppercase tracking-widest mb-0.5">CALIDAD Y NUEVAS TECNOLOGÍAS</h2>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">REPORTE DE ESTADO</h1>
-            <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wide">
+            <h2 className="text-[12px] font-black text-[#ED3833] uppercase tracking-widest mb-0.5">CALIDAD Y NUEVAS TECNOLOGÍAS</h2>
+            <h1 className="text-xl font-black text-slate-900 tracking-tight">REPORTE DE ESTADO</h1>
+            <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-wide">
               Generado por <span className="text-slate-800">{config.generatorName || 'Usuario'}</span>
             </p>
-            <p className="text-slate-500 text-sm mt-1 capitalize">{currentDate}</p>
-            <p className="text-slate-600 font-medium text-sm mt-1">Ref: {projectName}</p>
+            <p className="text-[12px] text-slate-500 mt-1 capitalize">{currentDate}</p>
+            <p className="text-[12px] text-slate-600 font-medium mt-1">Ref: {projectName}</p>
           </div>
         </div>
 
@@ -288,10 +288,10 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
               <div key={phaseName} className="mb-8">
                 {/* Phase Header */}
                 <div className="flex items-center gap-4 border-b border-slate-300 pb-2 mb-4">
-                  <h3 className="text-base font-black text-black uppercase tracking-wide flex-1 flex items-center gap-2">
+                  <h3 className="text-[15px] font-black text-black uppercase tracking-wide flex-1 flex items-center gap-2">
                     <Layers size={16} className="text-slate-400" /> {phaseName}
                   </h3>
-                  <span className="text-sm font-black text-black tracking-wide pr-2">
+                  <span className="text-[13px] font-black text-black tracking-wide pr-2">
                     Gantt: {phasePct}%
                   </span>
                 </div>
@@ -307,40 +307,40 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
                       <div key={t.id} className="pl-2 border-l-2 border-slate-200 break-inside-avoid">
                         
                         {/* Task Header */}
-                        <div className="flex items-center justify-between gap-4 mb-2">
-                          <div className="flex items-start gap-3">
-                            <span className="text-xs font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded mt-0.5 shrink-0">
-                              {taskCodes.get(t.id)}
-                            </span>
-                            <div>
-                              <h4 className={`text-[15px] font-bold ${t.status === 'CERRADO' ? 'text-slate-700' : 'text-slate-800'}`}>
-                                {t.name}
-                              </h4>
-                              {t.assignee && (
-                                <p className="text-[10px] text-slate-600 mt-1 flex items-center gap-1">
-                                  <User size={10} /> Delegado a: <span className="font-bold text-slate-700">{t.assignee}</span>
-                                </p>
-                              )}
-                            </div>
+                <div className="flex items-center justify-between gap-4 mb-2">
+                  <div className="flex items-start gap-3">
+                    <span className="text-[11px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded mt-0.5 shrink-0">
+                      {taskCodes.get(t.id)}
+                    </span>
+                    <div>
+                      <h4 className={`text-[14px] font-bold ${t.status === 'CERRADO' ? 'text-slate-700' : 'text-slate-800'}`}>
+                        {t.name}
+                      </h4>
+                      {t.assignee && (
+                        <p className="text-[9px] text-slate-600 mt-1 flex items-center gap-1">
+                          <User size={10} /> Delegado a: <span className="font-bold text-slate-700">{t.assignee}</span>
+                        </p>
+                      )}
+                    </div>
                           </div>
-                          <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                            <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider ${t.status === 'CERRADO' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : t.status === 'EN PROGRESO' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
-                              {t.status}
-                            </span>
-                            {config.showTaskDates && (
-                              <span className="text-[9px] text-slate-500 font-medium">
-                                {t.startDate} al {t.endDate}
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                    <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                      <span className={`text-[9px] font-bold px-2 py-1 rounded uppercase tracking-wider ${t.status === 'CERRADO' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : t.status === 'EN PROGRESO' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+                        {t.status}
+                      </span>
+                      {config.showTaskDates && (
+                        <span className="text-[8px] text-slate-500 font-medium">
+                          {t.startDate} al {t.endDate}
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-                        {/* Main Task Description (if any) */}
-                        {t.details && config.showSubtaskDetails && (
-                          <div className="ml-10 mb-3 text-[12px] text-slate-700 bg-slate-50 p-3 rounded border border-slate-100">
-                            {t.details}
-                          </div>
-                        )}
+                  {/* Main Task Description (if any) */}
+                  {t.details && config.showSubtaskDetails && (
+                    <div className="ml-10 mb-3 text-[11px] text-slate-700 bg-slate-50 p-3 rounded border border-slate-100">
+                      {t.details}
+                    </div>
+                  )}
 
                         {/* Subtasks */}
                         {t.subtasks && t.subtasks.length > 0 && config.showSubtasks && (
@@ -350,27 +350,27 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
                                 <span className="mt-[3px] shrink-0">
                                   {st.completed ? <CheckCircle2 size={12} className="text-emerald-500" /> : <Circle size={12} className="text-slate-300" />}
                                 </span>
-                                <div className="flex-1">
-                                  <p className={`text-[12px] ${st.completed ? 'text-slate-600' : 'text-slate-800'}`}>
-                                    {st.text}
-                                  </p>
-                                  
-                                  {/* Subtask Observations / Details */}
-                                  {(st.observation || st.closingNote) && config.showSubtaskDetails && (
-                                    <div className="mt-1 space-y-1">
-                                      {st.observation && (
-                                        <p className="text-[11px] text-slate-700 bg-yellow-50/50 p-1.5 border-l-2 border-yellow-300">
-                                          {st.observation}
-                                        </p>
-                                      )}
-                                      {st.closingNote && (
-                                        <p className={`text-[11px] p-1.5 border-l-2 ${st.completed ? 'bg-emerald-50/50 border-emerald-300 text-emerald-800' : 'bg-slate-50/50 border-slate-300 text-slate-700'}`}>
-                                          <span className="font-bold">{st.completed ? 'Cierre: ' : 'Actualización: '}</span>
-                                          {st.closingNote}
-                                        </p>
-                                      )}
-                                    </div>
-                                  )}
+                        <div className="flex-1">
+                          <p className={`text-[11px] ${st.completed ? 'text-slate-600' : 'text-slate-800'}`}>
+                            {st.text}
+                          </p>
+                          
+                          {/* Subtask Observations / Details */}
+                          {(st.observation || st.closingNote) && config.showSubtaskDetails && (
+                            <div className="mt-1 space-y-1">
+                              {st.observation && (
+                                <p className="text-[10px] text-slate-700 bg-yellow-50/50 p-1.5 border-l-2 border-yellow-300">
+                                  {st.observation}
+                                </p>
+                              )}
+                              {st.closingNote && (
+                                <p className={`text-[10px] p-1.5 border-l-2 ${st.completed ? 'bg-emerald-50/50 border-emerald-300 text-emerald-800' : 'bg-slate-50/50 border-slate-300 text-slate-700'}`}>
+                                  <span className="font-bold">{st.completed ? 'Cierre: ' : 'Actualización: '}</span>
+                                  {st.closingNote}
+                                </p>
+                              )}
+                            </div>
+                          )}
                                 </div>
                               </div>
                             ))}
