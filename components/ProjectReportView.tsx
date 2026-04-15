@@ -198,15 +198,20 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Proyecto en curso</p>
             <h2 className="text-2xl font-black text-blue-900 leading-tight mb-2 pr-4 break-words">{projectName}</h2>
             {config.showProjectDates && (
-              <p className="text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-1 rounded inline-block border border-slate-100 uppercase tracking-wide">
-                <span className="text-slate-400">Rango:</span> {minDStr} al {config.undefinedEndDate ? 'No definida' : maxDStr}
+              <p className="text-[10px] text-slate-500 mt-1">
+                <span className="font-bold text-slate-400 uppercase tracking-widest mr-1">Rango:</span> 
+                {minDStr} al {config.undefinedEndDate ? '"Fecha no definida aún"' : maxDStr}
               </p>
             )}
           </div>
           
           {/* KPI Cards */}
           <div className="flex items-center gap-3">
-             <div className="text-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 min-w-[90px]">
+             <div className="text-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 min-w-[80px]">
+               <p className="text-2xl font-black text-slate-800 leading-none">{phasesMap.size}</p>
+               <p className="text-[9px] uppercase font-bold text-slate-400 mt-1.5">Fases</p>
+             </div>
+             <div className="text-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 min-w-[80px]">
                <p className="text-2xl font-black text-slate-800 leading-none">{totalTasks}</p>
                <p className="text-[9px] uppercase font-bold text-slate-400 mt-1.5">Tareas</p>
              </div>
@@ -245,8 +250,15 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
         </div>
 
 
+        {/* Section Divider */}
+        <div className="flex items-center gap-4 mb-6 mt-16 break-inside-avoid print:mt-10">
+          <div className="h-[2px] bg-slate-100 flex-1"></div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-100">Desglose Operativo</p>
+          <div className="h-[2px] bg-slate-100 flex-1"></div>
+        </div>
+
         {/* Phases Iteration */}
-        <div className="space-y-8">
+        <div className="space-y-6">
           {Array.from(phasesMap.entries()).map(([phaseName, tasks]) => {
             const phaseCompleted = tasks.filter(t => t.status === 'CERRADO').length;
             const phasePct = Math.round((phaseCompleted / tasks.length) * 100);
