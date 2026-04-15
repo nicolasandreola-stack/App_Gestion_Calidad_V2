@@ -182,7 +182,10 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
         <div className="flex justify-between items-start border-b-2 border-slate-800 pb-5 mb-8">
           <div className="flex flex-col gap-2.5">
             <img src={logoUrl} alt="Logo" className="h-16 object-contain self-start" referrerPolicy="no-referrer" />
-            <p className="text-[9px] font-black tracking-widest text-slate-400 uppercase">Plataforma Calidad y Nuevas Tecnologías</p>
+            <div className="text-[10px] font-black tracking-widest text-slate-500 uppercase leading-snug">
+              <p>Calidad y</p>
+              <p>Nuevas Tecnologías</p>
+            </div>
           </div>
           <div className="text-right">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">REPORTE DE ESTADO</h1>
@@ -270,10 +273,10 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
               <div key={phaseName} className="break-inside-avoid">
                 {/* Phase Header */}
                 <div className="flex items-center gap-4 border-b border-slate-300 pb-2 mb-4">
-                  <h3 className="text-base font-black text-slate-800 uppercase tracking-wide flex-1 flex items-center gap-2">
+                  <h3 className="text-base font-black text-black uppercase tracking-wide flex-1 flex items-center gap-2">
                     <Layers size={16} className="text-slate-400" /> {phaseName}
                   </h3>
-                  <span className="text-sm font-black text-slate-800 tracking-wide pr-2">
+                  <span className="text-sm font-black text-black tracking-wide pr-2">
                     Gantt: {phasePct}%
                   </span>
                 </div>
@@ -371,7 +374,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
         {/* Footer */}
         <div className="mt-16 pt-6 border-t border-slate-200 text-center">
             <p className="text-[10px] text-slate-500 font-medium uppercase tracking-widest leading-relaxed">
-              Plataforma Calidad y nuevas tecnologías <br/>
+              Calidad y nuevas tecnologías <br/>
               {currentDate}
             </p>
         </div>
