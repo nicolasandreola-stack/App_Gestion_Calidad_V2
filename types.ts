@@ -103,6 +103,7 @@ export interface ProjectSubtask {
   completed: boolean;
   link?: string;
   observation?: string;
+  closingNote?: string;
   assignee?: string;
 }
 
@@ -119,6 +120,7 @@ export interface ProjectTask {
   subtasks?: ProjectSubtask[]; // Col J: JSON
   details?: string; // Col K: Observaciones de tarea
   link?: string; // Col L: Enlace Principal de la tarea
+  priorityProject?: boolean;
 }
 
 // Estructura Global para JSONBin (Multi-usuario)

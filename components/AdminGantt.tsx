@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ProjectTask, ProjectSubtask } from '../types';
 import ProjectReportView from './ProjectReportView';
 import ImportProjectModal from './ImportProjectModal';
-import { Bot, Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart, MessageSquare, FileText } from 'lucide-react';
+import { Bot, Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart, MessageSquare, FileText, Star } from 'lucide-react';
 
 interface AdminGanttProps {
   projects: ProjectTask[];
@@ -129,6 +129,14 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
   // Stats for import modal
   const [showImportModal, setShowImportModal] = useState(false);
 
+  const [hiddenProjects, setHiddenProjects] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('v25_hidden_projects');
+      if (stored) return new Set(JSON.parse(stored));
+    } catch (e) {}
+    return new Set();
+  });
+
   // Grouping
   const grouped = useMemo(() => {
     const map = new Map<string, Map<string, ProjectTask[]>>();
@@ -143,6 +151,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
       maxD = new Date(2000, 0, 1);
 
       projects.forEach(p => {
+        if (hiddenProjects.has(p.project)) return;
         const start = parseDate(p.startDate);
         const end = parseDate(p.endDate);
         if (start < minD) minD = new Date(start);
@@ -232,7 +241,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
     });
 
     return { map, pMeta, phMeta, minD, maxD, totalDays, daysArr, months, taskCodes, getDateIndex };
-  }, [projects]);
+  }, [projects, hiddenProjects]);
 
   // Autocomplete lists
   const uniqueProjects = Array.from(new Set(projects.map(p => p.project))).filter(Boolean);
@@ -299,14 +308,28 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
     onUpdateProject({ ...task, subtasks: newSubtasks });
   };
 
+  const toggleProjectPriority = (projName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!onBulkUpdateProjects) return;
+    const projTasks = projects.filter(p => p.project === projName);
+    if (projTasks.length === 0) return;
+    const currentPriority = projTasks[0].priorityProject || false;
+    const updated = projTasks.map(p => ({ ...p, priorityProject: !currentPriority }));
+    onBulkUpdateProjects(updated);
+  };
+
   const today = new Date();
 
   // --- KPI Calculations ---
+  const visibleTasks = projects.filter(p => !hiddenProjects.has(p.project));
   const totalProjects = grouped.map.size;
-  const totalTasks = projects.length;
-  const closedTasks = projects.filter(p => p.status === 'CERRADO').length;
-  const overdueTasks = projects.filter(p => isOverdue(p.endDate, p.status)).length;
-  const avgProgress = totalTasks > 0 ? Math.round(projects.reduce((acc, p) => acc + (p.progress || 0), 0) / totalTasks) : 0;
+  const totalTasks = visibleTasks.length;
+  const closedTasks = visibleTasks.filter(p => p.status === 'CERRADO').length;
+  const overdueTasks = visibleTasks.filter(p => isOverdue(p.endDate, p.status)).length;
+  const avgProgress = totalTasks > 0 ? Math.round(visibleTasks.reduce((acc, p) => acc + (p.progress || 0), 0) / totalTasks) : 0;
+  
+  const totalSubtasks = visibleTasks.reduce((acc, p) => acc + (p.subtasks?.length || 0), 0);
+  const closedSubtasks = visibleTasks.reduce((acc, p) => acc + (p.subtasks?.filter(s => s.completed).length || 0), 0);
 
   return (
     <div className="flex flex-col h-full bg-slate-50 relative overflow-hidden">
@@ -400,47 +423,58 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
       )}
 
       {/* KPI DASHBOARD RIBBON */}
-      <div className="grid grid-cols-4 gap-4 px-4 pt-4 shrink-0">
-        <div onClick={() => setActiveKpiModal('proyectos')} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-4 cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all">
-          <div className="bg-blue-100 text-blue-600 p-3 rounded-lg"><FolderKanban size={24} /></div>
+      <div className="grid grid-cols-5 gap-4 px-4 pt-4 shrink-0">
+        <div onClick={() => setActiveKpiModal('proyectos')} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-3 cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all group">
+          <div className="bg-blue-100 text-blue-600 p-3 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors"><FolderKanban size={24} /></div>
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase">Proyectos Activos</p>
-            <p className="text-2xl font-black text-slate-800">{totalProjects}</p>
+            <p className="text-[10px] font-bold text-slate-500 uppercase leading-tight">Proyectos Activos</p>
+            <p className="text-xl font-black text-slate-800">{totalProjects}</p>
           </div>
         </div>
         
-        <div onClick={() => setActiveKpiModal('completadas')} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-4 cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all">
-          <div className="bg-emerald-100 text-emerald-600 p-3 rounded-lg"><CheckCircle2 size={24} /></div>
+        <div onClick={() => setActiveKpiModal('completadas')} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-3 cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all group">
+          <div className="bg-emerald-100 text-emerald-600 p-3 rounded-lg group-hover:bg-emerald-600 group-hover:text-white transition-colors"><CheckCircle2 size={24} /></div>
           <div className="flex-1">
-            <p className="text-xs font-bold text-slate-500 uppercase">Tareas de Proyecto</p>
-            <div className="flex justify-between items-end">
-              <p className="text-2xl font-black text-slate-800">{closedTasks}<span className="text-sm font-medium text-slate-400">/{totalTasks}</span></p>
-              <p className="text-xs font-bold text-emerald-600">Completadas</p>
+            <p className="text-[10px] font-bold text-slate-500 uppercase leading-tight">Tareas Lógicas</p>
+            <div className="flex justify-between items-end gap-1">
+              <p className="text-xl font-black text-slate-800">{closedTasks}<span className="text-xs font-medium text-slate-400">/{totalTasks}</span></p>
+              <p className="text-[9px] font-bold text-emerald-600 pb-0.5">Terminadas</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-3">
+          <div className="bg-teal-100 text-teal-600 p-3 rounded-lg"><CheckSquare size={24} /></div>
+          <div className="flex-1">
+            <p className="text-[10px] font-bold text-slate-500 uppercase leading-tight">Subtareas Físicas</p>
+            <div className="flex justify-between items-end gap-1">
+              <p className="text-xl font-black text-slate-800">{closedSubtasks}<span className="text-xs font-medium text-slate-400">/{totalSubtasks}</span></p>
+              <p className="text-[9px] font-bold text-teal-600 pb-0.5">Completadas</p>
             </div>
           </div>
         </div>
         
-        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-4">
+        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-3">
           <div className="bg-indigo-100 text-indigo-600 p-3 rounded-lg"><TrendingUp size={24} /></div>
           <div className="flex-1">
-            <p className="text-xs font-bold text-slate-500 uppercase">Progreso Global</p>
-            <div className="flex items-center gap-3">
-              <p className="text-2xl font-black text-slate-800">{avgProgress}%</p>
-              <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+            <p className="text-[10px] font-bold text-slate-500 uppercase leading-tight">Progreso Global</p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-xl font-black text-slate-800">{avgProgress}%</p>
+              <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div className="h-full bg-indigo-500 transition-all" style={{width: `${avgProgress}%`}}></div>
               </div>
             </div>
           </div>
         </div>
         
-        <div onClick={() => setActiveKpiModal('atrasadas')} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-4 cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all">
-          <div className={`p-3 rounded-lg ${overdueTasks > 0 ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400'}`}>
+        <div onClick={() => setActiveKpiModal('atrasadas')} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-3 cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all group">
+          <div className={`p-3 rounded-lg transition-colors ${overdueTasks > 0 ? 'bg-red-100 text-red-600 group-hover:bg-red-600 group-hover:text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'}`}>
             {overdueTasks > 0 ? <AlertTriangle size={24} /> : <Clock size={24} />}
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase">Atrasos Críticos</p>
-            <p className={`text-2xl font-black ${overdueTasks > 0 ? 'text-red-600' : 'text-slate-800'}`}>
-              {overdueTasks} <span className="text-sm font-medium text-slate-400">tareas</span>
+            <p className="text-[10px] font-bold text-slate-500 uppercase leading-tight">Atrasos Críticos</p>
+            <p className={`text-xl font-black ${overdueTasks > 0 ? 'text-red-600' : 'text-slate-800'}`}>
+              {overdueTasks} <span className="text-[10px] font-medium text-slate-400">tareas</span>
             </p>
           </div>
         </div>
@@ -450,31 +484,38 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
       <div className="flex-1 overflow-auto flex relative bg-white m-4 rounded-xl shadow-sm border border-gray-200">
         
         {/* LEFT PANEL - Data List */}
-        <div className="w-[480px] shrink-0 border-r border-gray-200 bg-white z-10 sticky left-0 flex flex-col">
-          <div className="h-16 border-b border-gray-200 bg-slate-50/80 backdrop-blur shrink-0 grid grid-cols-[1fr_50px_70px] items-end pb-2 px-4 shadow-[0_4px_10px_-4px_rgba(0,0,0,0.05)]">
+        <div className="w-[480px] shrink-0 border-r border-gray-200 bg-white z-[25] sticky left-0 flex flex-col pointer-events-none">
+          <div className="h-16 border-b border-gray-200 bg-slate-50/95 backdrop-blur shrink-0 grid grid-cols-[1fr_50px_70px] items-end pb-2 px-4 shadow-[0_4px_10px_-4px_rgba(0,0,0,0.05)] sticky top-0 z-[40] pointer-events-auto">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Estructura / Tarea</span>
             <span className="text-[10px] font-bold text-slate-500 uppercase text-center">%</span>
             <span className="text-[10px] font-bold text-slate-500 uppercase text-center">Estado</span>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar pb-10">
-            {Array.from(grouped.map.entries()).map(([projName, phases], pIdx) => (
+          <div className="pb-10 pointer-events-auto">
+            {Array.from(grouped.map.entries()).map(([projName, phases], pIdx) => {
+              const isPriority = phases.values().next().value?.[0]?.priorityProject || false;
+              return (
               <div key={projName} className="mb-0">
-                {pIdx > 0 && <div className="h-6 w-full bg-slate-50/50 border-t border-white border-b border-gray-200 shadow-sm"></div>}
+                {pIdx > 0 && <div className="h-6 w-full bg-slate-50/50 border-t border-white border-b border-gray-200 shadow-sm relative z-10 w-full"></div>}
                 <div 
-                  className="bg-slate-800 text-white px-4 py-3 flex items-center gap-2 cursor-pointer hover:bg-slate-700 select-none sticky top-0 z-20 group"
+                  className={`px-4 py-3 flex items-center gap-2 cursor-pointer select-none sticky top-16 z-20 group transition-colors shadow-sm ${isPriority ? 'bg-[#1e293b] text-white hover:bg-slate-700' : 'bg-slate-800 text-white hover:bg-slate-700'}`}
                   onClick={() => toggleProject(projName)}
                 >
                   {expandedProjects.has(projName) ? <ChevronRight size={14} className="text-slate-400 group-hover:text-white" /> : <ChevronDown size={14} className="text-white" />}
                   <span className="font-bold text-xs uppercase tracking-wider">{projName}</span>
+                  
+                  <button onClick={(e) => toggleProjectPriority(projName, e)} className="p-1 rounded hover:bg-white/20 transition-colors ml-1" title={isPriority ? "Quitar prioridad" : "Marcar como prioritario"}>
+                    <Star size={14} className={isPriority ? "fill-amber-400 text-amber-400" : "text-slate-400 opacity-50 group-hover:opacity-100 hover:text-amber-400"} />
+                  </button>
+
                   {expandedProjects.has(projName) && (
-                    <span className="ml-auto text-[10px] font-bold bg-slate-600 text-white px-2 py-0.5 rounded-full" title="Progreso total promedio">
+                    <span className="ml-auto text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full" title="Progreso total promedio">
                       {Math.round(grouped.pMeta.get(projName)!.prog / grouped.pMeta.get(projName)!.count)}%
                     </span>
                   )}
                   <button 
                     onClick={(e) => { e.stopPropagation(); setActiveProjectDashboard(projName); }} 
-                    className={`p-1.5 rounded-md hover:bg-slate-600 transition-colors ${expandedProjects.has(projName) ? 'ml-2' : 'ml-auto'}`}
+                    className={`p-1.5 rounded-md hover:bg-white/20 transition-colors ${expandedProjects.has(projName) ? 'ml-2' : 'ml-auto'}`}
                     title="Dashboard de Métricas del Proyecto"
                   >
                      <BarChart size={14} className="text-slate-300 hover:text-white" />
@@ -581,13 +622,13 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                   </div>
                 ))}
               </div>
-            ))}
+            )})}
           </div>
         </div>
 
         {/* RIGHT PANEL - Timeline Grid */}
-        <div className="flex-1 overflow-x-auto custom-scrollbar flex flex-col bg-slate-50 relative hide-horizontal-scrollbar">
-          <div className="sticky top-0 z-10 bg-slate-50/90 backdrop-blur border-b border-gray-200">
+        <div className="flex-1 flex flex-col bg-slate-50 relative min-w-max">
+          <div className="sticky top-0 z-[30] bg-slate-50/95 backdrop-blur border-b border-gray-200">
             <div className="flex border-b border-gray-200 h-8">
               {grouped.months.map((m, i) => {
                 const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -701,12 +742,21 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
       {/* MODALS RENDER LIST */}
       
       {activeKpiModal && (
-        <KpiListModal
-          mode={activeKpiModal}
-          projects={projects}
+        <KpiListModal 
+          mode={activeKpiModal} 
+          projects={visibleTasks} 
           grouped={grouped}
-          onClose={() => setActiveKpiModal(null)}
-          onViewTask={(t) => { setActiveKpiModal(null); setViewTask(t); }}
+          uniqueProjects={uniqueProjects}
+          hiddenProjects={hiddenProjects}
+          onToggleVisibility={(pName: string) => {
+             const next = new Set(hiddenProjects);
+             if (next.has(pName)) next.delete(pName);
+             else next.add(pName);
+             setHiddenProjects(next);
+             localStorage.setItem('v25_hidden_projects', JSON.stringify(Array.from(next)));
+          }}
+          onClose={() => setActiveKpiModal(null)} 
+          onViewTask={(t: any) => { setActiveKpiModal(null); setViewTask(t); }} 
         />
       )}
 
@@ -1059,7 +1109,7 @@ function TaskEditModal({ task, uniqueProjects, uniquePhases, uniqueAssignees, on
   );
 }
 
-const KpiListModal = ({ mode, projects, grouped, onClose, onViewTask }: any) => {
+const KpiListModal = ({ mode, projects, grouped, uniqueProjects, hiddenProjects, onToggleVisibility, onClose, onViewTask }: any) => {
   const isOverdue = (dateStr: string, status: string) => {
     if (status === 'CERRADO') return false;
     const parts = dateStr.split('/');
@@ -1075,7 +1125,7 @@ const KpiListModal = ({ mode, projects, grouped, onClose, onViewTask }: any) => 
   
   if (mode === 'proyectos') {
     title = "Proyectos Activos";
-    items = Array.from(grouped.map.keys()).map(k => ({ name: k, type: 'project' }));
+    items = (uniqueProjects || []).map((k: string) => ({ name: k, type: 'project' }));
   } else if (mode === 'completadas') {
     title = "Tareas Completadas";
     items = projects.filter((p: any) => p.status === 'CERRADO');
@@ -1099,9 +1149,20 @@ const KpiListModal = ({ mode, projects, grouped, onClose, onViewTask }: any) => 
               {items.map((item, idx) => (
                 <li key={idx} className="p-4 rounded-xl border border-gray-100 flex justify-between items-center hover:bg-slate-50 transition-colors">
                   {item.type === 'project' ? (
-                    <div className="flex items-center gap-3">
-                      <FolderKanban size={20} className="text-blue-500" />
-                      <span className="font-bold text-slate-700">{item.name}</span>
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-3">
+                        <FolderKanban size={20} className="text-blue-500" />
+                        <span className="font-bold text-slate-700">{item.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase">{!hiddenProjects?.has(item.name) ? 'Visible' : 'Oculto'}</span>
+                        <div 
+                          onClick={() => onToggleVisibility(item.name)}
+                          className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${!hiddenProjects?.has(item.name) ? 'bg-blue-500' : 'bg-slate-300'}`}
+                        >
+                          <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all shadow-sm ${!hiddenProjects?.has(item.name) ? 'left-[22px]' : 'left-0.5'}`}></div>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="flex flex-col gap-1 w-full" onClick={() => onViewTask(item)} role="button">
