@@ -10,6 +10,7 @@ interface AdminGanttProps {
   onAddProject: (p: ProjectTask) => void;
   onDeleteProject: (id: string) => void;
   onBulkAddProjects?: (projects: ProjectTask[]) => void;
+  onBulkUpdateProjects?: (projects: ProjectTask[]) => void;
 }
 
 // Helpers for dates (DD/MM/YYYY)
@@ -111,7 +112,7 @@ const SubtaskRowLink = ({ link, closingNote, onSave }: { link: string, closingNo
   );
 };
 
-export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject, onBulkAddProjects }: AdminGanttProps) {
+export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject, onBulkAddProjects, onBulkUpdateProjects }: AdminGanttProps) {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
@@ -443,8 +444,8 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-3">
-          <div className="bg-teal-100 text-teal-600 p-3 rounded-lg"><CheckSquare size={24} /></div>
+        <div onClick={() => setActiveKpiModal('subtareas')} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-3 cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all group">
+          <div className="bg-teal-100 text-teal-600 p-3 rounded-lg group-hover:bg-teal-600 group-hover:text-white transition-colors"><CheckSquare size={24} /></div>
           <div className="flex-1">
             <p className="text-[10px] font-bold text-slate-500 uppercase leading-tight">Subtareas Físicas</p>
             <div className="flex justify-between items-end gap-1">
@@ -501,8 +502,23 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                   className={`px-4 py-3 flex items-center gap-2 cursor-pointer select-none sticky top-16 z-20 group transition-colors shadow-sm ${isPriority ? 'bg-[#1e293b] text-white hover:bg-slate-700' : 'bg-slate-800 text-white hover:bg-slate-700'}`}
                   onClick={() => toggleProject(projName)}
                 >
-                  {expandedProjects.has(projName) ? <ChevronRight size={14} className="text-slate-400 group-hover:text-white" /> : <ChevronDown size={14} className="text-white" />}
-                  <span className="font-bold text-xs uppercase tracking-wider">{projName}</span>
+                  {expandedProjects.has(projName) ? <ChevronRight size={14} className="text-slate-400 group-hover:text-white shrink-0" /> : <ChevronDown size={14} className="text-white shrink-0" />}
+                  <div className="flex flex-col flex-1 min-w-0">
+                     <span className="font-bold text-xs uppercase tracking-wider truncate">{projName}</span>
+                     <span className="text-[9px] flex items-center gap-1 font-bold mt-0.5 opacity-80 truncate">
+                        {Math.round(grouped.pMeta.get(projName)!.prog / grouped.pMeta.get(projName)!.count) > 0 ? (
+                           <>
+                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                             <span className="text-emerald-400">EN CURSO</span>
+                           </>
+                        ) : (
+                           <>
+                             <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                             <span className="text-slate-400">NO INICIADO AÚN</span>
+                           </>
+                        )}
+                     </span>
+                  </div>
                   
                   <button onClick={(e) => toggleProjectPriority(projName, e)} className="p-1 rounded hover:bg-white/20 transition-colors ml-1" title={isPriority ? "Quitar prioridad" : "Marcar como prioritario"}>
                     <Star size={14} className={isPriority ? "fill-amber-400 text-amber-400" : "text-slate-400 opacity-50 group-hover:opacity-100 hover:text-amber-400"} />
@@ -556,7 +572,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                       return (
                       <React.Fragment key={t.id}>
                         <div 
-                          className="group grid grid-cols-[1fr_50px_70px] items-center px-4 py-3 border-b border-slate-100 hover:bg-blue-50/50 cursor-pointer h-12 transition-colors relative flex-1"
+                          className="group grid grid-cols-[1fr_50px_70px] items-center px-4 py-3 border-b border-slate-100 bg-white hover:bg-blue-50/50 cursor-pointer h-12 transition-colors relative flex-1"
                           onClick={() => setViewTask(t)}
                         >
                           <div className="pl-6 truncate flex items-center gap-2">
@@ -599,7 +615,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                           {overdue && <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>}
                         </div>
                         {isTaskExpanded && t.subtasks?.map(st => (
-                           <div key={st.id} className="group/sub flex items-center px-4 border-b border-slate-50 bg-slate-50/50 h-[34px] overflow-hidden">
+                           <div key={st.id} className="group/sub flex items-center px-4 border-b border-slate-50 bg-slate-50 h-[34px] overflow-hidden">
                              <div className="pl-14 flex items-center gap-2 flex-1 min-w-0 pr-2">
                                <button 
                                  onClick={(e) => { e.stopPropagation(); handleToggleSubtask(t, st.id); }} 
@@ -1129,6 +1145,15 @@ const KpiListModal = ({ mode, projects, grouped, uniqueProjects, hiddenProjects,
   } else if (mode === 'completadas') {
     title = "Tareas Completadas";
     items = projects.filter((p: any) => p.status === 'CERRADO');
+  } else if (mode === 'subtareas') {
+    title = "Subtareas Completadas";
+    projects.forEach((p: any) => {
+      if (p.subtasks) {
+         p.subtasks.forEach((st: any) => {
+           if (st.completed) items.push({ ...st, type: 'subtask', project: p.project, phase: p.phase, parentTask: p.name });
+         });
+      }
+    });
   } else if (mode === 'atrasadas') {
     title = "Tareas Atrasadas Críticas";
     items = projects.filter((p: any) => isOverdue(p.endDate, p.status));
@@ -1164,6 +1189,16 @@ const KpiListModal = ({ mode, projects, grouped, uniqueProjects, hiddenProjects,
                         </div>
                       </div>
                     </div>
+                  ) : item.type === 'subtask' ? (
+                     <div className="flex flex-col gap-1 w-full relative pl-8">
+                       <CheckSquare size={16} className="text-teal-500 absolute left-0 top-1" />
+                       <span className="font-bold text-slate-800 text-[13px]">{item.text}</span>
+                       <div className="flex text-[10px] text-slate-500 gap-2">
+                         <span className="bg-slate-100 px-1.5 py-0.5 rounded font-bold">PROYECTO: {item.project}</span>
+                         <span className="italic">Tarea: {item.parentTask}</span>
+                       </div>
+                       {item.closingNote && <div className="text-[10px] bg-blue-50 text-blue-700 p-1.5 rounded mt-1 border border-blue-100">Cierre: {item.closingNote}</div>}
+                     </div>
                   ) : (
                     <div className="flex flex-col gap-1 w-full" onClick={() => onViewTask(item)} role="button">
                       <div className="flex justify-between items-center">
