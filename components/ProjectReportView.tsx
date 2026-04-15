@@ -176,7 +176,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
       </div>
 
       {/* A4 Paper Canvas */}
-      <div className="w-full max-w-[210mm] mx-auto bg-white min-h-[297mm] my-8 shadow-2xl print:my-0 print:shadow-none print:max-w-full text-slate-800 p-12">
+      <div className="w-full max-w-[210mm] mx-auto bg-white min-h-[297mm] my-8 shadow-2xl print:my-0 print:shadow-none print:max-w-full text-slate-800 p-12 print:color-adjust-exact print:[-webkit-print-color-adjust:exact]">
         
         {/* Document Header */}
         <div className="flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-8">
@@ -292,7 +292,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
                               {taskCodes.get(t.id)}
                             </span>
                             <div>
-                              <h4 className={`text-sm font-bold ${t.status === 'CERRADO' ? 'text-slate-700' : 'text-slate-800'}`}>
+                              <h4 className={`text-[15px] font-bold ${t.status === 'CERRADO' ? 'text-slate-700' : 'text-slate-800'}`}>
                                 {t.name}
                               </h4>
                               {t.assignee && (
@@ -316,7 +316,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
 
                         {/* Main Task Description (if any) */}
                         {t.details && config.showSubtaskDetails && (
-                          <div className="ml-10 mb-3 text-[11px] text-slate-600 bg-slate-50 p-3 rounded border border-slate-100">
+                          <div className="ml-10 mb-3 text-[12px] text-slate-600 bg-slate-50 p-3 rounded border border-slate-100">
                             {t.details}
                           </div>
                         )}
@@ -330,7 +330,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
                                   {st.completed ? <CheckCircle2 size={12} className="text-emerald-500" /> : <Circle size={12} className="text-slate-300" />}
                                 </span>
                                 <div className="flex-1">
-                                  <p className={`text-[11px] ${st.completed ? 'text-slate-500' : 'text-slate-700'}`}>
+                                  <p className={`text-[12px] ${st.completed ? 'text-slate-500' : 'text-slate-700'}`}>
                                     {st.text}
                                   </p>
                                   
@@ -338,12 +338,12 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
                                   {(st.observation || st.closingNote) && config.showSubtaskDetails && (
                                     <div className="mt-1 space-y-1">
                                       {st.observation && (
-                                        <p className="text-[10px] text-slate-600 bg-yellow-50/50 p-1.5 border-l-2 border-yellow-300">
+                                        <p className="text-[11px] text-slate-600 bg-yellow-50/50 p-1.5 border-l-2 border-yellow-300">
                                           {st.observation}
                                         </p>
                                       )}
                                       {st.closingNote && (
-                                        <p className={`text-[10px] p-1.5 border-l-2 ${st.completed ? 'bg-emerald-50/50 border-emerald-300 text-emerald-800' : 'bg-slate-50/50 border-slate-300 text-slate-600'}`}>
+                                        <p className={`text-[11px] p-1.5 border-l-2 ${st.completed ? 'bg-emerald-50/50 border-emerald-300 text-emerald-800' : 'bg-slate-50/50 border-slate-300 text-slate-600'}`}>
                                           <span className="font-bold">{st.completed ? 'Cierre: ' : 'Actualización: '}</span>
                                           {st.closingNote}
                                         </p>
