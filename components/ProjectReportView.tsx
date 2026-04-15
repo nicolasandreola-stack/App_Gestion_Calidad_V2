@@ -152,13 +152,25 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-slate-900/40 backdrop-blur-sm overflow-y-auto print:static print:bg-white print:overflow-visible print:block print:h-auto">
+    <div id="report-print-container" className="fixed inset-0 z-[9999] bg-slate-900/40 backdrop-blur-sm overflow-y-auto print:static print:bg-white print:overflow-visible print:block print:h-auto">
       <style type="text/css" media="print">
         {`
           body, html, #root { 
             height: auto !important; 
             overflow: visible !important; 
             position: static !important; 
+          }
+          body * {
+            visibility: hidden;
+          }
+          #report-print-container, #report-print-container * {
+            visibility: visible;
+          }
+          #report-print-container {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
           }
         `}
       </style>
