@@ -172,7 +172,14 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
         </div>
         <div className="flex items-center gap-4">
           <button 
-            onClick={() => window.print()} 
+            onClick={() => {
+              const prevTitle = document.title;
+              const now = new Date();
+              const fileDate = `${now.getDate().toString().padStart(2, '0')}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getFullYear()}`;
+              document.title = `Reporte de Estado - ${projectName} - ${fileDate}`;
+              window.print();
+              setTimeout(() => { document.title = prevTitle; }, 100);
+            }} 
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md font-bold transition-colors shadow-md"
           >
             <Printer size={16} /> Guardar como PDF
@@ -278,7 +285,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
             const phasePct = Math.round((phaseCompleted / tasks.length) * 100);
 
             return (
-              <div key={phaseName} className="break-inside-avoid">
+              <div key={phaseName} className="mb-8">
                 {/* Phase Header */}
                 <div className="flex items-center gap-4 border-b border-slate-300 pb-2 mb-4">
                   <h3 className="text-base font-black text-black uppercase tracking-wide flex-1 flex items-center gap-2">
