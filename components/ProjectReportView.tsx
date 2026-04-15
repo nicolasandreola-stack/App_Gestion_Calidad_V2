@@ -223,7 +223,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
                             {taskCodes.get(t.id)}
                           </span>
                           <div>
-                            <h4 className={`text-sm ${t.status === 'CERRADO' ? 'text-slate-700' : 'text-slate-800 font-bold'}`}>
+                            <h4 className={`text-sm font-bold ${t.status === 'CERRADO' ? 'text-slate-700' : 'text-slate-800'}`}>
                               {t.name}
                             </h4>
                             {t.assignee && (
