@@ -16,6 +16,7 @@ const parseObjDate = (dStr: string) => {
 };
 
 export default function ProjectReportView({ projectName, projects, onClose }: ProjectReportViewProps) {
+  const [isConfiguring, setIsConfiguring] = useState(true);
   const [config, setConfig] = useState({
     generatorName: 'Nicolas Andreola',
     showSubtasks: true,
@@ -40,6 +41,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
   targetProjects.forEach(task => {
     totalTasks++;
     if (task.status === 'CERRADO') completedTasks++;
+    if (task.subtasks) totalSubtasks += task.subtasks.length;
     
     const s = parseObjDate(task.startDate);
     const e = parseObjDate(task.endDate);
