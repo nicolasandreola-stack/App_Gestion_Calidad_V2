@@ -181,7 +181,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
         {/* Document Header */}
         <div className="flex justify-between items-start border-b-2 border-slate-800 pb-5 mb-8">
           <div className="flex flex-col justify-center">
-            <img src={logoUrl} alt="Logo" className="h-[84px] object-contain self-start" referrerPolicy="no-referrer" />
+            <img src={logoUrl} alt="Logo" className="h-[110px] object-contain self-start" referrerPolicy="no-referrer" />
           </div>
           <div className="text-right flex flex-col items-end">
             <h2 className="text-[14px] font-black text-[#ED3833] uppercase tracking-widest mb-0.5">CALIDAD Y NUEVAS TECNOLOGÍAS</h2>
