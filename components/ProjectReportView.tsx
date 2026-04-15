@@ -152,7 +152,16 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-slate-900/40 backdrop-blur-sm overflow-y-auto print:bg-white print:overflow-visible">
+    <div className="fixed inset-0 z-[9999] bg-slate-900/40 backdrop-blur-sm overflow-y-auto print:static print:bg-white print:overflow-visible print:block print:h-auto">
+      <style type="text/css" media="print">
+        {`
+          body, html, #root { 
+            height: auto !important; 
+            overflow: visible !important; 
+            position: static !important; 
+          }
+        `}
+      </style>
       {/* Action Bar (Hidden on print) */}
       <div className="sticky top-0 w-full bg-slate-800 text-white p-4 shadow-lg flex justify-between items-center print:hidden z-10">
         <div className="flex items-center gap-3">
