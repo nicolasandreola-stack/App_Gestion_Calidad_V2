@@ -29,6 +29,9 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
 
   // Filter and group by phase
   const targetProjects = projects.filter(p => p.project === projectName);
+  const phasesMap = new Map<string, ProjectTask[]>();
+  let totalTasks = 0;
+  let completedTasks = 0;
   let minD = new Date('2099-12-31');
   let maxD = new Date('2000-01-01');
 
