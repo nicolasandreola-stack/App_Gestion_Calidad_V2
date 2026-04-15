@@ -212,66 +212,62 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
           </div>
         </div>
 
-        {/* General Info Wrapper */}
-        <div className="bg-slate-50/50 border border-slate-200 rounded-[20px] p-7 mb-4">
+        {/* Project Context & Global Stats Row */}
+        <div className="flex items-end justify-between gap-6 mb-8 mt-2">
           
-          {/* Project Context & Global Stats Row */}
-          <div className="flex items-end justify-between gap-6 mb-8">
-            
-            <div className="flex-1 max-w-[55%]">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Proyecto en curso</p>
-              <h2 className="text-2xl font-black text-blue-900 leading-tight mb-2 pr-4 break-words">{projectName}</h2>
-              {config.showProjectDates && (
-                <p className="text-[10px] text-slate-500 mt-1">
-                  <span className="font-bold text-slate-400 uppercase tracking-widest mr-1">Rango:</span> 
-                  {minDStr} al {config.undefinedEndDate ? '"Fecha no definida aún"' : maxDStr}
-                </p>
-              )}
-            </div>
-            
-            {/* KPI Cards */}
-            <div className="flex items-center gap-3">
-               <div className="text-center px-4 py-3 bg-white shadow-sm rounded-xl border border-slate-100 min-w-[80px]">
-                 <p className="text-2xl font-black text-slate-800 leading-none">{phasesMap.size}</p>
-                 <p className="text-[9px] uppercase font-bold text-slate-400 mt-1.5">Fases</p>
-               </div>
-               <div className="text-center px-4 py-3 bg-white shadow-sm rounded-xl border border-slate-100 min-w-[80px]">
-                 <p className="text-2xl font-black text-slate-800 leading-none">{totalTasks}</p>
-                 <p className="text-[9px] uppercase font-bold text-slate-400 mt-1.5">Tareas</p>
-               </div>
-               <div className="text-center px-4 py-3 bg-white shadow-sm rounded-xl border border-slate-100 min-w-[90px]">
-                 <p className="text-2xl font-black text-amber-500 leading-none">{totalSubtasks}</p>
-                 <p className="text-[9px] uppercase font-bold text-slate-400 mt-1.5">Subtareas</p>
-               </div>
-               <div className="text-center px-4 py-3 bg-emerald-50 shadow-sm rounded-xl border border-emerald-200 min-w-[90px]">
-                 <p className="text-2xl font-black text-emerald-600 leading-none">{overallProgress}%</p>
-                 <p className="text-[9px] uppercase font-bold text-emerald-800 mt-1.5">Progreso</p>
-               </div>
-            </div>
-
+          <div className="flex-1 max-w-[55%]">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Proyecto en curso</p>
+            <h2 className="text-2xl font-black text-blue-900 leading-tight mb-2 pr-4 break-words">{projectName}</h2>
+            {config.showProjectDates && (
+              <p className="text-[10px] text-slate-500 mt-1">
+                <span className="font-bold text-slate-400 uppercase tracking-widest mr-1">Rango:</span> 
+                {minDStr} al {config.undefinedEndDate ? '"Fecha no definida aún"' : maxDStr}
+              </p>
+            )}
           </div>
-
-          {/* Phase Progress Bars */}
-          <div className="text-slate-800 break-inside-avoid bg-white border border-slate-100 p-6 rounded-xl shadow-sm">
-             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 pb-3 mb-5">Métricas por Fase</h3>
-             <div className="grid grid-cols-3 gap-x-8 gap-y-5 px-2">
-               {Array.from(phasesMap.entries()).map(([phaseName, phaseTasks]) => {
-                  const pComplete = phaseTasks.filter(t => t.status === 'CERRADO').length;
-                  const pPct = phaseTasks.length > 0 ? Math.round((pComplete / phaseTasks.length) * 100) : 0;
-                  return (
-                     <div key={`metric-${phaseName}`}>
-                       <div className="flex justify-between items-end mb-1.5">
-                         <p className="text-[10px] font-bold text-slate-600 truncate pr-2">{phaseName}</p>
-                         <p className="text-[10px] font-black text-slate-800">{pPct}%</p>
-                       </div>
-                       <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                         <div className="h-full bg-indigo-500 rounded-full transition-all" style={{width: `${pPct}%`}}></div>
-                       </div>
-                     </div>
-                  );
-               })}
+          
+          {/* KPI Cards */}
+          <div className="flex items-center gap-3">
+             <div className="text-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 min-w-[80px]">
+               <p className="text-2xl font-black text-slate-800 leading-none">{phasesMap.size}</p>
+               <p className="text-[9px] uppercase font-bold text-slate-400 mt-1.5">Fases</p>
+             </div>
+             <div className="text-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 min-w-[80px]">
+               <p className="text-2xl font-black text-slate-800 leading-none">{totalTasks}</p>
+               <p className="text-[9px] uppercase font-bold text-slate-400 mt-1.5">Tareas</p>
+             </div>
+             <div className="text-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 min-w-[90px]">
+               <p className="text-2xl font-black text-amber-500 leading-none">{totalSubtasks}</p>
+               <p className="text-[9px] uppercase font-bold text-slate-400 mt-1.5">Subtareas</p>
+             </div>
+             <div className="text-center px-4 py-3 bg-emerald-50 rounded-xl border border-emerald-200 min-w-[90px]">
+               <p className="text-2xl font-black text-emerald-600 leading-none">{overallProgress}%</p>
+               <p className="text-[9px] uppercase font-bold text-emerald-800 mt-1.5">Progreso</p>
              </div>
           </div>
+
+        </div>
+
+        {/* Phase Progress Bars */}
+        <div className="mb-10 text-slate-800 break-inside-avoid bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
+           <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-3 mb-5">Métricas por Fase</h3>
+           <div className="grid grid-cols-3 gap-x-8 gap-y-5 px-2">
+             {Array.from(phasesMap.entries()).map(([phaseName, phaseTasks]) => {
+                const pComplete = phaseTasks.filter(t => t.status === 'CERRADO').length;
+                const pPct = phaseTasks.length > 0 ? Math.round((pComplete / phaseTasks.length) * 100) : 0;
+                return (
+                   <div key={`metric-${phaseName}`}>
+                     <div className="flex justify-between items-end mb-1.5">
+                       <p className="text-[10px] font-bold text-slate-600 truncate pr-2">{phaseName}</p>
+                       <p className="text-[10px] font-black text-slate-800">{pPct}%</p>
+                     </div>
+                     <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                       <div className="h-full bg-indigo-500 rounded-full transition-all" style={{width: `${pPct}%`}}></div>
+                     </div>
+                   </div>
+                );
+             })}
+           </div>
         </div>
 
 
