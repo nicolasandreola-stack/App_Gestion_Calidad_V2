@@ -485,8 +485,8 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
       <div className="flex-1 overflow-auto flex relative bg-white m-4 rounded-xl shadow-sm border border-gray-200">
         
         {/* LEFT PANEL - Data List */}
-        <div className="w-[480px] shrink-0 border-r border-gray-200 bg-white z-[25] sticky left-0 flex flex-col pointer-events-none">
-          <div className="h-16 border-b border-gray-200 bg-slate-50/95 backdrop-blur shrink-0 grid grid-cols-[1fr_50px_70px] items-end pb-2 px-4 shadow-[0_4px_10px_-4px_rgba(0,0,0,0.05)] sticky top-0 z-[40] pointer-events-auto">
+        <div className="w-[480px] shrink-0 border-r border-gray-200 bg-white z-[40] sticky left-0 flex flex-col pointer-events-none">
+          <div className="h-16 border-b border-gray-200 bg-slate-50/95 backdrop-blur shrink-0 grid grid-cols-[1fr_50px_70px] items-end pb-2 px-4 shadow-[0_4px_10px_-4px_rgba(0,0,0,0.05)] sticky top-0 z-[50] pointer-events-auto">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Estructura / Tarea</span>
             <span className="text-[10px] font-bold text-slate-500 uppercase text-center">%</span>
             <span className="text-[10px] font-bold text-slate-500 uppercase text-center">Estado</span>
