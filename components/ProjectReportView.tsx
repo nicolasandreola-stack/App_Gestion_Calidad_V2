@@ -183,46 +183,49 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
           <img src={logoUrl} alt="Logo" className="h-14 object-contain" referrerPolicy="no-referrer" />
           <div className="text-right">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">REPORTE DE ESTADO</h1>
+            <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wide">
+              Generado por <span className="text-slate-800">{config.generatorName || 'Usuario'}</span>
+            </p>
             <p className="text-slate-500 text-sm mt-1 capitalize">{currentDate}</p>
             <p className="text-slate-600 font-medium text-sm mt-1">Ref: {projectName}</p>
           </div>
         </div>
 
-        {/* Global Stats */}
-        <div className="bg-slate-50 rounded-xl border border-slate-200 p-6 mb-10 flex items-center gap-8">
-          <div className="flex-1">
+        {/* Project Context & Global Stats Row */}
+        <div className="flex items-end justify-between gap-6 mb-8 mt-2">
+          
+          <div className="flex-1 max-w-[55%]">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Proyecto en curso</p>
-            <h2 className="text-2xl font-black text-blue-900">{projectName}</h2>
-            <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wide">
-              Reporte generado por <span className="text-slate-800">{config.generatorName || 'Usuario'}</span>
-            </p>
+            <h2 className="text-2xl font-black text-blue-900 leading-tight mb-2 pr-4 break-words">{projectName}</h2>
             {config.showProjectDates && (
-               <p className="text-sm font-medium text-slate-500 mt-2 bg-slate-100 px-3 py-1 rounded inline-block">
-                 <span className="text-slate-400">Rango:</span> {minDStr} al {config.undefinedEndDate ? 'No definida' : maxDStr}
-               </p>
+              <p className="text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-1 rounded inline-block border border-slate-100 uppercase tracking-wide">
+                <span className="text-slate-400">Rango:</span> {minDStr} al {config.undefinedEndDate ? 'No definida' : maxDStr}
+              </p>
             )}
           </div>
-          <div className="w-px h-12 bg-slate-200"></div>
-          <div className="text-center px-4">
-            <p className="text-3xl font-black text-slate-800">{totalTasks}</p>
-            <p className="text-[10px] uppercase font-bold text-slate-400 mt-1">Tareas Totales</p>
+          
+          {/* KPI Cards */}
+          <div className="flex items-center gap-3">
+             <div className="text-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 min-w-[90px]">
+               <p className="text-2xl font-black text-slate-800 leading-none">{totalTasks}</p>
+               <p className="text-[9px] uppercase font-bold text-slate-400 mt-1.5">Tareas</p>
+             </div>
+             <div className="text-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 min-w-[90px]">
+               <p className="text-2xl font-black text-amber-500 leading-none">{totalSubtasks}</p>
+               <p className="text-[9px] uppercase font-bold text-slate-400 mt-1.5">Subtareas</p>
+             </div>
+             <div className="text-center px-4 py-3 bg-emerald-50 rounded-xl border border-emerald-200 min-w-[90px]">
+               <p className="text-2xl font-black text-emerald-600 leading-none">{overallProgress}%</p>
+               <p className="text-[9px] uppercase font-bold text-emerald-800 mt-1.5">Progreso</p>
+             </div>
           </div>
-          <div className="w-px h-12 bg-slate-200"></div>
-          <div className="text-center px-4">
-            <p className="text-3xl font-black text-emerald-600">{overallProgress}%</p>
-            <p className="text-[10px] uppercase font-bold text-slate-400 mt-1">Progreso Global</p>
-          </div>
-          <div className="w-px h-12 bg-slate-200"></div>
-          <div className="text-center px-4">
-            <p className="text-3xl font-black text-amber-500">{totalSubtasks}</p>
-            <p className="text-[10px] uppercase font-bold text-slate-400 mt-1">Subtareas Totales</p>
-          </div>
+
         </div>
 
         {/* Phase Progress Bars */}
         <div className="mb-10 text-slate-800 break-inside-avoid bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-3 mb-5">Métricas por Fase</h3>
-           <div className="grid grid-cols-2 gap-x-12 gap-y-5 px-2">
+           <div className="grid grid-cols-3 gap-x-8 gap-y-5 px-2">
              {Array.from(phasesMap.entries()).map(([phaseName, phaseTasks]) => {
                 const pComplete = phaseTasks.filter(t => t.status === 'CERRADO').length;
                 const pPct = phaseTasks.length > 0 ? Math.round((pComplete / phaseTasks.length) * 100) : 0;
