@@ -20,6 +20,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
   const [config, setConfig] = useState({
     generatorName: 'Nicolas Andreola',
     showSubtasks: true,
+    showSubtaskDetails: true,
     showTaskDates: true,
     showProjectDates: true,
     undefinedEndDate: false
@@ -84,11 +85,17 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
               <input type="text" value={config.generatorName} onChange={e => setConfig({...config, generatorName: e.target.value})} className="w-full px-3 py-2 border border-yellow-400 bg-yellow-50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-slate-800" placeholder="Ej: Nicolas Andreola" />
             </div>
             
-            <div className="flex items-center gap-3 bg-slate-50 p-3 rounded border border-slate-200 cursor-pointer" onClick={() => setConfig({...config, showSubtasks: !config.showSubtasks})}>
-              <input type="checkbox" checked={config.showSubtasks} readOnly className="w-4 h-4 text-blue-600 rounded" />
-              <div>
-                <p className="text-sm font-bold text-slate-700">Visualizar detalles y subtareas</p>
-                <p className="text-[11px] text-slate-500">Incluir el desglose minucioso de cada fase.</p>
+            <div className="flex items-start gap-3 bg-slate-50 p-3 rounded border border-slate-200">
+              <input type="checkbox" checked={config.showSubtasks} onChange={() => setConfig({...config, showSubtasks: !config.showSubtasks})} className="w-4 h-4 text-blue-600 rounded mt-1 cursor-pointer" />
+              <div className="flex-1">
+                <p className="text-sm font-bold text-slate-700 cursor-pointer" onClick={() => setConfig({...config, showSubtasks: !config.showSubtasks})}>Visualizar nombre de subtareas</p>
+                <p className="text-[11px] text-slate-500 cursor-pointer" onClick={() => setConfig({...config, showSubtasks: !config.showSubtasks})}>Muestra la lista de acciones dentro de cada tarea.</p>
+                {config.showSubtasks && (
+                  <label className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200 cursor-pointer">
+                    <input type="checkbox" checked={config.showSubtaskDetails} onChange={() => setConfig({...config, showSubtaskDetails: !config.showSubtaskDetails})} className="w-3 h-3 text-blue-600 rounded" />
+                    <span className="text-[11px] font-bold text-slate-600">Visualizar detalle de subtareas (Observaciones y actualizaciones)</span>
+                  </label>
+                )}
               </div>
             </div>
 
@@ -165,6 +172,9 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
           <div className="flex-1">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Proyecto en curso</p>
             <h2 className="text-2xl font-black text-blue-900">{projectName}</h2>
+            <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wide">
+              Reporte generado por <span className="text-slate-800">{config.generatorName || 'Usuario'}</span>
+            </p>
             {config.showProjectDates && (
                <p className="text-sm font-medium text-slate-500 mt-2 bg-slate-100 px-3 py-1 rounded inline-block">
                  <span className="text-slate-400">Rango:</span> {minDStr} al {config.undefinedEndDate ? 'No definida' : maxDStr}
@@ -213,7 +223,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
                             {taskCodes.get(t.id)}
                           </span>
                           <div>
-                            <h4 className={`text-sm font-bold ${t.status === 'CERRADO' ? 'text-slate-500 line-through' : 'text-slate-800'}`}>
+                            <h4 className={`text-sm ${t.status === 'CERRADO' ? 'text-slate-700' : 'text-slate-800 font-bold'}`}>
                               {t.name}
                             </h4>
                             {t.assignee && (
@@ -235,8 +245,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
                         </div>
                       </div>
 
-                      {/* Main Task Description (if any) */}
-                      {t.details && config.showSubtasks && (
+                      {t.details && config.showSubtaskDetails && (
                         <div className="ml-10 mb-3 text-[11px] text-slate-600 bg-slate-50 p-3 rounded border border-slate-100">
                           {t.details}
                         </div>
@@ -251,12 +260,12 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
                                 {st.completed ? <CheckCircle2 size={12} className="text-emerald-500" /> : <Circle size={12} className="text-slate-300" />}
                               </span>
                               <div className="flex-1">
-                                <p className={`text-[11px] font-medium ${st.completed ? 'text-slate-400' : 'text-slate-700'}`}>
+                                <p className={`text-[11px] ${st.completed ? 'text-slate-500' : 'text-slate-700'}`}>
                                   {st.text}
                                 </p>
                                 
                                 {/* Subtask Observations / Details */}
-                                {(st.observation || st.closingNote) && (
+                                {(st.observation || st.closingNote) && config.showSubtaskDetails && (
                                   <div className="mt-1 space-y-1">
                                     {st.observation && (
                                       <p className="text-[10px] text-slate-600 bg-yellow-50/50 p-1.5 border-l-2 border-yellow-300">
@@ -288,7 +297,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
         {/* Footer */}
         <div className="mt-16 pt-6 border-t border-slate-200 text-center">
             <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest leading-relaxed">
-              Reporte generado por <span className="font-bold text-slate-500">{config.generatorName || 'Usuario'}</span> | Plataforma Dashboard <br/>
+              Plataforma Calidad y nuevas tecnologías <br/>
               {currentDate}
             </p>
         </div>
