@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { ProjectTask, ProjectSubtask } from '../types';
-import { Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart, MessageSquare } from 'lucide-react';
+import ProjectReportView from './ProjectReportView';
+import { Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart, MessageSquare, FileText } from 'lucide-react';
 
 interface AdminGanttProps {
   projects: ProjectTask[];
@@ -118,6 +119,10 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
   const [viewTask, setViewTask] = useState<ProjectTask | null>(null);
   const [activeKpiModal, setActiveKpiModal] = useState<'proyectos' | 'completadas' | 'atrasadas' | null>(null);
   const [activeProjectDashboard, setActiveProjectDashboard] = useState<string | null>(null);
+  
+  // States for reporting
+  const [showReportSelector, setShowReportSelector] = useState(false);
+  const [reportProjectName, setReportProjectName] = useState<string | null>(null);
 
   // Grouping
   const grouped = useMemo(() => {
@@ -308,17 +313,68 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
           </h2>
           <p className="text-xs text-slate-500 mt-1">Gestión avanzada de Proyectos, Fases y Líneas de Tiempo.</p>
         </div>
-        <button 
-          onClick={() => setEditTask({
-            id: 'PROJ-' + Date.now(), project: '', phase: '', name: 'Nueva Tarea', 
-            startDate: formatDate(new Date()), endDate: formatDate(new Date(new Date().setDate(new Date().getDate() + 5))),
-            assignee: '', progress: 0, status: 'PENDIENTE', subtasks: [], details: '', link: ''
-          })}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors"
-        >
-          <Plus size={16} /> Nueva Tarea de Proyecto
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => {
+              if (uniqueProjects.length === 1) {
+                setReportProjectName(uniqueProjects[0]);
+              } else if (uniqueProjects.length > 1) {
+                setShowReportSelector(true);
+              } else {
+                alert("No hay proyectos activos para reportar.");
+              }
+            }}
+            className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-slate-300"
+            title="Generar Reporte de Alta Dirección..."
+          >
+            <FileText size={16} /> Generar Reporte
+          </button>
+          
+          <button 
+            onClick={() => setEditTask({
+              id: 'PROJ-' + Date.now(), project: '', phase: '', name: 'Nueva Tarea', 
+              startDate: formatDate(new Date()), endDate: formatDate(new Date(new Date().setDate(new Date().getDate() + 5))),
+              assignee: '', progress: 0, status: 'PENDIENTE', subtasks: [], details: '', link: ''
+            })}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors"
+          >
+            <Plus size={16} /> Nueva Tarea
+          </button>
+        </div>
       </div>
+
+      {/* Project Selector Modal for Reports */}
+      {showReportSelector && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[990] flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-[400px]">
+            <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2">
+              <FileText size={20} className="text-blue-500" /> Seleccionar Proyecto a Reportar
+            </h3>
+            <p className="text-sm text-slate-500 mb-4">Elige un proyecto para generar el documento de estatus.</p>
+            <div className="space-y-2 mb-6 max-h-[300px] overflow-y-auto">
+              {uniqueProjects.map(pName => (
+                <button
+                  key={pName}
+                  onClick={() => { setReportProjectName(pName); setShowReportSelector(false); }}
+                  className="w-full text-left px-4 py-3 bg-slate-50 hover:bg-blue-50 border border-slate-200 rounded-lg hover:border-blue-300 transition-colors font-medium text-slate-700 hover:text-blue-700 flex items-center justify-between"
+                >
+                  {pName} <ChevronRight size={16} />
+                </button>
+              ))}
+            </div>
+            <button onClick={() => setShowReportSelector(false)} className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors">Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {/* The Report Document Overlay */}
+      {reportProjectName && (
+        <ProjectReportView 
+          projectName={reportProjectName} 
+          projects={projects} 
+          onClose={() => setReportProjectName(null)} 
+        />
+      )}
 
       {/* KPI DASHBOARD RIBBON */}
       <div className="grid grid-cols-4 gap-4 px-4 pt-4 shrink-0">
