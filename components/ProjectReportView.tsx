@@ -179,8 +179,11 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
       <div className="w-full max-w-[210mm] mx-auto bg-white min-h-[297mm] my-8 shadow-2xl print:my-0 print:shadow-none print:max-w-full text-slate-800 p-12 print:color-adjust-exact print:[-webkit-print-color-adjust:exact]">
         
         {/* Document Header */}
-        <div className="flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-8">
-          <img src={logoUrl} alt="Logo" className="h-14 object-contain" referrerPolicy="no-referrer" />
+        <div className="flex justify-between items-start border-b-2 border-slate-800 pb-5 mb-8">
+          <div className="flex flex-col gap-2.5">
+            <img src={logoUrl} alt="Logo" className="h-16 object-contain self-start" referrerPolicy="no-referrer" />
+            <p className="text-[9px] font-black tracking-widest text-slate-400 uppercase">Plataforma Calidad y Nuevas Tecnologías</p>
+          </div>
           <div className="text-right">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">REPORTE DE ESTADO</h1>
             <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wide">
@@ -270,7 +273,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
                   <h3 className="text-base font-black text-slate-800 uppercase tracking-wide flex-1 flex items-center gap-2">
                     <Layers size={16} className="text-slate-400" /> {phaseName}
                   </h3>
-                  <span className="text-xs font-bold bg-slate-100 text-slate-500 px-3 py-1 rounded-full">
+                  <span className="text-sm font-black text-slate-800 tracking-wide pr-2">
                     Gantt: {phasePct}%
                   </span>
                 </div>
