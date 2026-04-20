@@ -1315,7 +1315,10 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
 
   const maxD = pm.maxD.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
   const minD = pm.minD.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
-  const today = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  // Date: es-ES locale produces all-lowercase in es-ES, just capitalize first letter
+  const rawToday = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const todayDisplay = rawToday.charAt(0).toUpperCase() + rawToday.slice(1);
+
 
   const logoUrl = "https://drive.google.com/thumbnail?id=1BkFrIklMROkiE8ekHz3UpWjw7Yoo58dW&sz=h200";
 
@@ -1335,14 +1338,14 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
           </button>
 
           <div className="relative flex items-center gap-6">
-            {/* Logo */}
-            <img src={logoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-xl bg-white/10 p-1 shrink-0 border border-white/10" referrerPolicy="no-referrer" />
+            {/* Logo – no background box, sized to match header height */}
+            <img src={logoUrl} alt="Logo" className="h-16 w-16 object-contain shrink-0" referrerPolicy="no-referrer" />
 
             {/* Title block */}
             <div className="flex-1 min-w-0">
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.25em] mb-0.5">Reporte Ejecutivo · KPI</p>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.25em] mb-0.5">RESUMEN DE REPORTE EJECUTIVO</p>
               <h2 className="text-xl font-black uppercase tracking-wide leading-tight truncate">{projectName}</h2>
-              <p className="text-slate-400 text-[10px] mt-1 capitalize">{today}</p>
+              <p className="text-slate-400 text-[10px] mt-1">{todayDisplay}</p>
               <div className="flex items-center gap-2 mt-2.5 flex-wrap">
                 <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${
                   overdueCount > 0 ? 'border-red-400/50 bg-red-500/20 text-red-300' : 'border-emerald-400/30 bg-emerald-500/10 text-emerald-300'
@@ -1416,12 +1419,17 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
               <Calendar size={14} className="text-slate-400" />
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Rango del Proyecto</span>
             </div>
-            <div className="flex items-center gap-3 text-sm font-bold text-slate-700">
-              <span>{minD}</span>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <span className="text-sm font-bold text-slate-700">{minD}</span>
+              </div>
               <div className="relative h-1 w-24 bg-slate-100 rounded-full overflow-hidden">
                 <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full" style={{width: `${globalProgress}%`}} />
               </div>
-              <span>{maxD}</span>
+              <div className="text-left">
+                <span className="text-sm font-bold text-slate-700 block">{maxD}</span>
+                <span className="text-[9px] text-slate-400 font-medium">Fecha de referencia</span>
+              </div>
             </div>
           </div>
 
@@ -1434,11 +1442,11 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Distribución de Tareas</h3>
               </div>
               <div className="p-5 flex flex-col items-center gap-4">
-                {/* Donut */}
-                <div className="relative w-40 h-40 flex items-center justify-center">
+                {/* Donut – larger */}
+                <div className="relative w-52 h-52 flex items-center justify-center">
                   <div className="absolute inset-0 rounded-full" style={{ background: gradient, boxShadow: '0 4px 20px rgba(0,0,0,0.10)' }} />
-                  <div className="relative w-24 h-24 bg-white rounded-full flex flex-col items-center justify-center shadow-lg z-10">
-                    <span className="text-2xl font-black text-slate-800 leading-none">{allTasksCount}</span>
+                  <div className="relative w-32 h-32 bg-white rounded-full flex flex-col items-center justify-center shadow-lg z-10">
+                    <span className="text-3xl font-black text-slate-800 leading-none">{allTasksCount}</span>
                     <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wide">tareas</span>
                   </div>
                 </div>
