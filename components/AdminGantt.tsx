@@ -462,12 +462,12 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
               <p className="text-[10px] font-bold text-slate-500 uppercase leading-tight">Progreso Global</p>
               <div className="relative">
                 <button className="w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 flex items-center justify-center text-[8px] font-black transition-colors" title="¿Cómo se calcula?">?</button>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-slate-800 text-white text-[10px] rounded-lg p-3 shadow-xl opacity-0 group-hover/info:opacity-100 transition-opacity pointer-events-none z-50 leading-relaxed">
+                <div className="absolute top-full left-0 mt-2 w-64 bg-slate-800 text-white text-[10px] rounded-lg p-3 shadow-xl opacity-0 group-hover/info:opacity-100 transition-opacity pointer-events-none z-50 leading-relaxed">
                   <p className="font-bold text-indigo-300 mb-1 text-[11px]">📊 ¿Cómo se calcula el %?</p>
                   <p>Se promedia el <span className="text-emerald-300 font-bold">% de avance individual</span> de cada tarea del proyecto.</p>
                   <p className="mt-1.5">El avance de cada tarea se actualiza en base a las <span className="text-yellow-300 font-bold">subtareas físicas completadas</span> (check ✓).</p>
                   <p className="mt-1.5 text-slate-400 italic">Fórmula: Suma(avance de cada tarea) ÷ total de tareas</p>
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                  <div className="absolute bottom-full left-4 border-4 border-transparent border-b-slate-800"></div>
                 </div>
               </div>
             </div>

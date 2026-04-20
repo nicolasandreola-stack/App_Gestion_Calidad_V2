@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ProjectTask, ProjectSubtask } from '../types';
-import { Bot, FileJson, X, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
+import { Bot, FileJson, X, CheckCircle2, AlertTriangle, Loader2, ChevronDown, ChevronUp, Copy, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ImportProjectModalProps {
@@ -12,6 +12,38 @@ const ImportProjectModal: React.FC<ImportProjectModalProps> = ({ onClose, onImpo
   const [jsonText, setJsonText] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
+
+  const PROMPT_TEMPLATE = `Necesito que armes el cronograma operativo de mi proyecto en formato JSON estricto para importarlo a mi sistema de gestión.
+
+El JSON debe ser un array (lista) con objetos que representen cada TAREA PRINCIPAL del proyecto. Cada objeto debe tener esta estructura exacta:
+
+[
+  {
+    "project": "NOMBRE DEL PROYECTO",
+    "phase": "NOMBRE DE LA FASE O ETAPA",
+    "name": "Nombre de la Tarea Principal",
+    "startDate": "DD/MM/AAAA",
+    "endDate": "DD/MM/AAAA",
+    "assignee": "Área o persona responsable",
+    "details": "Descripción breve de la tarea y su objetivo.",
+    "subtasks": [
+      {
+        "text": "Descripción concreta de la acción a realizar",
+        "assignee": "Responsable específico (opcional)",
+        "observation": "Detalle adicional, contexto, normativa relacionada, etc. (opcional)"
+      }
+    ]
+  }
+]
+
+REGLAS IMPORTANTES:
+- Agrupar las tareas por FASES (field "phase"). Cada fase puede tener varias tareas.
+- Las fechas deben estar en formato DD/MM/AAAA.
+- Las subtareas son las acciones concretas dentro de cada tarea.
+- No agregar campos extra fuera de la estructura indicada.
+- El output debe ser SOLO el JSON, sin texto adicional antes ni después.`;
+
 
   const handleImport = async () => {
     if (!jsonText.trim()) {
@@ -122,13 +154,43 @@ const ImportProjectModal: React.FC<ImportProjectModalProps> = ({ onClose, onImpo
         </div>
 
         {/* Info Box */}
-        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-50">
-           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4 flex gap-3 text-sm text-blue-800">
+        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-50 space-y-4">
+           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3 text-sm text-blue-800">
                <AlertTriangle size={18} className="shrink-0 text-blue-600 mt-0.5" />
                <p>
                  Pega debajo exactamente el código JSON (con los corchetes <code>[ ]</code> incluidos) que te generó la Inteligencia Artificial.
                  El sistema validará la estructura, asignará IDs únicos y los inyectará automáticamente en la nube.
                </p>
+           </div>
+
+           {/* Prompt Helper */}
+           <div className="border border-violet-200 rounded-xl overflow-hidden">
+             <button
+               onClick={() => setShowPrompt(v => !v)}
+               className="w-full flex items-center justify-between px-4 py-3 bg-violet-50 hover:bg-violet-100 transition-colors text-left"
+             >
+               <div className="flex items-center gap-2">
+                 <Sparkles size={14} className="text-violet-500" />
+                 <span className="text-xs font-bold text-violet-700">¿Cómo pedirle el JSON a NotebookLM o tu IA?</span>
+                 <span className="bg-violet-200 text-violet-700 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase">Prompt</span>
+               </div>
+               {showPrompt ? <ChevronUp size={14} className="text-violet-500" /> : <ChevronDown size={14} className="text-violet-500" />}
+             </button>
+             {showPrompt && (
+               <div className="p-4 bg-white border-t border-violet-100">
+                 <p className="text-[10px] text-slate-500 mb-2">Copiá este prompt y pegalo en NotebookLM (o cualquier IA con contexto de tu proyecto) para obtener el JSON listo para importar:</p>
+                 <div className="relative">
+                   <pre className="bg-slate-900 text-green-300 text-[10px] p-4 rounded-lg overflow-x-auto whitespace-pre-wrap leading-relaxed font-mono max-h-48 overflow-y-auto custom-scrollbar">{PROMPT_TEMPLATE}</pre>
+                   <button
+                     onClick={() => { navigator.clipboard.writeText(PROMPT_TEMPLATE); toast.success('¡Prompt copiado al portapapeles!'); }}
+                     className="absolute top-2 right-2 flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white text-[9px] font-bold px-2 py-1 rounded-md shadow transition-colors"
+                   >
+                     <Copy size={10} /> Copiar
+                   </button>
+                 </div>
+                 <p className="text-[10px] text-slate-400 mt-2 italic">💡 Tip: Pegá este prompt <span className="font-bold">al final</span> de tu sesión de NotebookLM, después de haber consultado toda la documentación del proyecto.</p>
+               </div>
+             )}
            </div>
            
            <div className="flex flex-col flex-1 h-full min-h-[300px]">
