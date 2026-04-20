@@ -58,8 +58,9 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
   const minDStr = minD.toLocaleDateString('es-ES');
   const maxDStr = maxD.toLocaleDateString('es-ES');
 
-  const overallProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const overallProgress = totalTasks > 0 ? Math.round(targetProjects.reduce((acc, t) => acc + (t.progress || 0), 0) / totalTasks) : 0;
   const currentDate = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
 
   // Generate Task Codes Map to be consistent
   const taskCodes = new Map<string, string>();
