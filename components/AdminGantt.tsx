@@ -1253,6 +1253,7 @@ const KpiListModal = ({ mode, projects, grouped, uniqueProjects, hiddenProjects,
   );
 };
 
+
 const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
   const mapList = grouped.map.get(projectName);
   if (!mapList) return null;
@@ -1261,101 +1262,221 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
   const pm = grouped.pMeta.get(projectName)!;
 
   let totalP = 0, totalE = 0, totalC = 0;
-  
+  let totalSubtasks = 0, closedSubtasks = 0, overdueCount = 0;
   const phaseStats: any[] = [];
+
+  const now = new Date(); now.setHours(0,0,0,0);
 
   for (const phaseName of phases) {
     const tasks = mapList.get(phaseName)!;
-    const closedTasks = tasks.filter((t:any) => t.status === 'CERRADO').length;
     const progressTotal = tasks.reduce((acc:any, t:any) => acc + (t.progress || 0), 0);
     const avgProg = tasks.length > 0 ? Math.round(progressTotal / tasks.length) : 0;
-    
-    phaseStats.push({ name: phaseName, progress: avgProg, total: tasks.length, closed: closedTasks });
+    const closedInPhase = tasks.filter((t:any) => t.status === 'CERRADO').length;
+    phaseStats.push({ name: phaseName, progress: avgProg, total: tasks.length, closed: closedInPhase });
 
     tasks.forEach((t:any) => {
       if (t.status === 'CERRADO') totalC++;
       else if (t.status === 'EN PROGRESO') totalE++;
       else totalP++;
+
+      if (t.subtasks) {
+        totalSubtasks += t.subtasks.length;
+        closedSubtasks += t.subtasks.filter((s:any) => s.completed).length;
+      }
+
+      // Overdue check
+      if (t.status !== 'CERRADO' && t.endDate) {
+        const parts = t.endDate.split('/');
+        if (parts.length === 3) {
+          const end = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+          if (end < now) overdueCount++;
+        }
+      }
     });
   }
 
   const allTasksCount = totalP + totalE + totalC;
+  const globalProgress = allTasksCount > 0 ? Math.round(pm.prog / pm.count) : 0;
+
+  // Donut calc
   const pTotalC = allTasksCount > 0 ? (totalC / allTasksCount) * 100 : 0;
   const pTotalE = allTasksCount > 0 ? (totalE / allTasksCount) * 100 : 0;
-  const pTotalP = allTasksCount > 0 ? (totalP / allTasksCount) * 100 : 0;
-
-  // conic gradient logic
   const closedDeg = (pTotalC / 100) * 360;
   const inProgDeg = (pTotalE / 100) * 360;
   const gradient = `conic-gradient(#10b981 0deg ${closedDeg}deg, #3b82f6 ${closedDeg}deg ${closedDeg + inProgDeg}deg, #e2e8f0 ${closedDeg + inProgDeg}deg 360deg)`;
 
+  // Circular progress ring
+  const radius = 44;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (globalProgress / 100) * circumference;
+
+  const statusColor = globalProgress === 100 ? 'text-emerald-400' : globalProgress >= 60 ? 'text-blue-400' : globalProgress >= 30 ? 'text-amber-400' : 'text-red-400';
+  const statusLabel = globalProgress === 100 ? 'COMPLETADO' : globalProgress >= 60 ? 'EN BUEN RITMO' : globalProgress >= 30 ? 'EN PROGRESO' : 'EN INICIO';
+
+  const maxD = pm.maxD.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+  const minD = pm.minD.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+  const today = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[300] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-800 text-white shrink-0">
-          <div className="flex items-center gap-3">
-            <PieChart size={24} className="text-blue-400" />
-            <h2 className="text-xl font-black uppercase tracking-wider">{projectName}</h2>
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[300] flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[92vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+
+        {/* ── HEADER with gradient ── */}
+        <div className="relative px-8 pt-7 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 text-white shrink-0 overflow-hidden">
+          {/* Background decoration */}
+          <div className="absolute top-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+          <div className="absolute bottom-0 left-16 w-40 h-40 bg-indigo-500/10 rounded-full translate-y-1/2 pointer-events-none" />
+
+          <div className="relative flex justify-between items-start">
+            <div className="flex-1">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Reporte Ejecutivo · KPI</p>
+              <h2 className="text-2xl font-black uppercase tracking-wide leading-tight">{projectName}</h2>
+              <p className="text-slate-400 text-[11px] mt-2 capitalize">{today}</p>
+              <div className="flex items-center gap-2 mt-3">
+                <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${
+                  overdueCount > 0 ? 'border-red-400/50 bg-red-500/20 text-red-300' : 'border-emerald-400/30 bg-emerald-500/10 text-emerald-300'
+                }`}>
+                  {overdueCount > 0 ? `⚠ ${overdueCount} TAREA${overdueCount > 1 ? 'S' : ''} ATRASADA${overdueCount > 1 ? 'S' : ''}` : '✓ SIN ATRASOS'}
+                </span>
+                <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border border-blue-400/30 bg-blue-500/10 ${statusColor}`}>
+                  ● {statusLabel}
+                </span>
+              </div>
+            </div>
+
+            {/* Circular Progress Ring */}
+            <div className="flex flex-col items-center gap-1 shrink-0 ml-6">
+              <svg width="110" height="110" viewBox="0 0 110 110" className="-rotate-90">
+                <circle cx="55" cy="55" r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="10" />
+                <circle
+                  cx="55" cy="55" r={radius} fill="none"
+                  stroke={globalProgress === 100 ? '#10b981' : globalProgress >= 60 ? '#60a5fa' : globalProgress >= 30 ? '#fbbf24' : '#f87171'}
+                  strokeWidth="10" strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+                />
+              </svg>
+              <div className="absolute" style={{ position: 'relative', marginTop: '-90px', textAlign: 'center', width: '110px' }}>
+                <p className="text-3xl font-black text-white leading-none text-center">{globalProgress}%</p>
+                <p className="text-[9px] text-slate-400 uppercase font-bold text-center">progreso</p>
+              </div>
+            </div>
+
+            <button onClick={onClose} className="absolute top-0 right-0 p-2 hover:bg-white/10 rounded-full transition-colors">
+              <X size={20} className="text-slate-300" />
+            </button>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-full transition-colors"><X size={20} className="text-slate-300" /></button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1 bg-slate-50 flex flex-col gap-6">
-          {/* Top KPI Row */}
-          <div className="grid grid-cols-3 gap-4 shrink-0">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Progreso Total</p>
-              <p className="text-2xl font-bold text-slate-800">{Math.round(pm.prog/pm.count)}%</p>
+        <div className="p-6 overflow-y-auto flex-1 bg-slate-50 flex flex-col gap-5">
+
+          {/* ── TOP 4 KPI CARDS ── */}
+          <div className="grid grid-cols-4 gap-3 shrink-0">
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex items-center gap-3 hover:shadow-md transition-shadow">
+              <div className="bg-indigo-100 text-indigo-600 p-2.5 rounded-lg shrink-0"><Layers size={20} /></div>
+              <div>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide leading-tight">Fases</p>
+                <p className="text-2xl font-black text-slate-800">{phases.length}</p>
+              </div>
             </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Fases Activas</p>
-              <p className="text-2xl font-bold text-slate-800">{phases.length}</p>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex items-center gap-3 hover:shadow-md transition-shadow">
+              <div className="bg-emerald-100 text-emerald-600 p-2.5 rounded-lg shrink-0"><CheckCircle2 size={20} /></div>
+              <div>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide leading-tight">Tareas Cerradas</p>
+                <p className="text-2xl font-black text-slate-800">{totalC}<span className="text-xs font-medium text-slate-400">/{allTasksCount}</span></p>
+              </div>
             </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Cierre Estimado</p>
-              <p className="text-lg font-semibold text-slate-700 mt-1">{pm.maxD.toLocaleDateString()}</p>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex items-center gap-3 hover:shadow-md transition-shadow">
+              <div className="bg-teal-100 text-teal-600 p-2.5 rounded-lg shrink-0"><CheckSquare size={20} /></div>
+              <div>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide leading-tight">Subtareas</p>
+                <p className="text-2xl font-black text-slate-800">{closedSubtasks}<span className="text-xs font-medium text-slate-400">/{totalSubtasks}</span></p>
+              </div>
+            </div>
+            <div className={`rounded-xl p-4 shadow-sm border flex items-center gap-3 hover:shadow-md transition-shadow ${overdueCount > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-slate-100'}`}>
+              <div className={`p-2.5 rounded-lg shrink-0 ${overdueCount > 0 ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400'}`}><AlertTriangle size={20} /></div>
+              <div>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide leading-tight">Atrasos</p>
+                <p className={`text-2xl font-black ${overdueCount > 0 ? 'text-red-600' : 'text-slate-800'}`}>{overdueCount}</p>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          {/* ── DATES BANNER ── */}
+          <div className="bg-white rounded-xl px-5 py-3 shadow-sm border border-slate-100 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2">
+              <Calendar size={14} className="text-slate-400" />
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Rango del Proyecto</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm font-bold text-slate-700">
+              <span>{minD}</span>
+              <div className="flex-1 h-0.5 w-16 bg-slate-200 relative"><div className="absolute inset-y-0 left-0 bg-blue-400" style={{width: `${globalProgress}%`}} /></div>
+              <span>{maxD}</span>
+            </div>
+          </div>
+
+          {/* ── BOTTOM ROW: Donut + Phase Breakdown ── */}
+          <div className="grid grid-cols-2 gap-5">
+
             {/* Donut Chart */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center">
-              <h3 className="w-full text-xs font-bold text-slate-400 uppercase tracking-wide mb-6">Estado de Tareas</h3>
-              <div className="relative w-48 h-48 rounded-full flex items-center justify-center shadow-inner" style={{ background: gradient }}>
-                <div className="w-32 h-32 bg-white rounded-full flex flex-col items-center justify-center shadow-sm">
-                  <span className="text-2xl font-bold text-slate-800">{allTasksCount}</span>
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase">Tareas</span>
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-4">
+              <h3 className="w-full text-[10px] font-black text-slate-400 uppercase tracking-wider">Distribución de Tareas</h3>
+              <div className="relative w-44 h-44 rounded-full flex items-center justify-center" style={{ background: gradient, boxShadow: 'inset 0 2px 12px rgba(0,0,0,0.08)' }}>
+                <div className="w-28 h-28 bg-white rounded-full flex flex-col items-center justify-center shadow-md">
+                  <span className="text-2xl font-black text-slate-800">{allTasksCount}</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase">Tareas</span>
                 </div>
               </div>
-              <div className="flex gap-4 w-full justify-center mt-6 text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
-                <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-emerald-500"></div> Cerradas ({totalC})</div>
-                <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-blue-500"></div> Progreso ({totalE})</div>
-                <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-slate-200"></div> Pendientes ({totalP})</div>
+              <div className="flex flex-wrap gap-3 w-full justify-center">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm" />Cerradas ({totalC})
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
+                  <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm" />En Progreso ({totalE})
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
+                  <div className="w-2.5 h-2.5 rounded-full bg-slate-200 shadow-sm" />Pendientes ({totalP})
+                </div>
               </div>
             </div>
 
-            {/* Horizontal Bar Chart (Phases) */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-4">Métricas por Fase</h3>
-               <div className="space-y-4">
-                 {phaseStats.map((ps:any, i:number) => (
-                   <div key={i}>
-                     <div className="flex justify-between text-[11px] font-medium mb-1">
-                       <span className="text-slate-500 truncate max-w-[200px]">{ps.name}</span>
-                       <span className={ps.progress === 100 ? 'text-emerald-500 font-bold' : 'text-slate-600'}>{ps.progress}%</span>
-                     </div>
-                     <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden flex">
-                       <div className={`h-2 rounded-full ${ps.progress === 100 ? 'bg-emerald-400' : 'bg-indigo-400'}`} style={{ width: `${ps.progress}%` }}></div>
-                     </div>
-                   </div>
-                 ))}
-               </div>
+            {/* Phase Breakdown */}
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-4">Avance por Fase</h3>
+              <div className="space-y-3.5">
+                {phaseStats.map((ps:any, i:number) => {
+                  const phColor = ps.progress === 100 ? { bg: 'bg-emerald-500', text: 'text-emerald-600', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+                    : ps.progress > 0 ? { bg: 'bg-blue-500', text: 'text-blue-600', badge: 'bg-blue-50 text-blue-700 border-blue-200' }
+                    : { bg: 'bg-slate-300', text: 'text-slate-400', badge: 'bg-slate-50 text-slate-500 border-slate-200' };
+                  return (
+                    <div key={i}>
+                      <div className="flex justify-between items-center mb-1.5">
+                        <span className="text-[11px] font-bold text-slate-600 truncate max-w-[190px]" title={ps.name}>{ps.name}</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[9px] text-slate-400">{ps.closed}/{ps.total} tareas</span>
+                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border ${phColor.badge}`}>
+                            {ps.progress === 100 ? '✓ LISTO' : ps.progress > 0 ? `${ps.progress}%` : 'PENDIENTE'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-2 rounded-full transition-all duration-700 ${phColor.bg}`}
+                          style={{ width: `${ps.progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
-          
+
         </div>
       </div>
     </div>
   );
 };
+
+
