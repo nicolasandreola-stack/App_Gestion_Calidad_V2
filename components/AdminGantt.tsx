@@ -708,67 +708,106 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                   )}
                 </div>
 
-                {!expandedProjects.has(projName) && Array.from(phases.entries()).map(([phaseName, tasks]) => {
-                  const phm = grouped.phMeta.get(projName + phaseName)!;
-                  const phStartOffset = grouped.getDateIndex(phm.minD) * 30;
-                  const phDuration = Math.max(1, grouped.getDateIndex(phm.maxD) - grouped.getDateIndex(phm.minD)) * 30;
+                {!expandedProjects.has(projName) && (() => {
+                  const phaseEntries = Array.from(phases.entries());
+                  return phaseEntries.map(([phaseName, tasks], phaseIdx) => {
+                    const phm = grouped.phMeta.get(projName + phaseName)!;
+                    const phStartOffset = grouped.getDateIndex(phm.minD) * 30;
+                    const phDuration = Math.max(1, grouped.getDateIndex(phm.maxD) - grouped.getDateIndex(phm.minD)) * 30;
 
-                  return (
-                  <div key={phaseName + '_grid'}>
-                    <div className="h-[37px] w-full border-b border-transparent bg-slate-50/30 line-through-pattern relative">
-                       {expandedPhases.has(projName + phaseName) && (
-                           <div className="absolute top-3 h-2 border-t-2 border-dashed border-slate-400" style={{left: phStartOffset + 15, width: phDuration}}>
-                              <div className="absolute -left-1 -top-1.5 w-0 h-0 border-t-4 border-t-transparent border-l-[6px] border-l-slate-400 border-b-4 border-b-transparent"></div>
-                              <div className="absolute -right-1 -top-1.5 w-0 h-0 border-t-4 border-t-transparent border-r-[6px] border-r-slate-400 border-b-4 border-b-transparent"></div>
-                           </div>
-                       )}
-                    </div>
-
-                    {!expandedPhases.has(projName + phaseName) && tasks.map(t => {
-                       const sDate = parseDate(t.startDate);
-                       const eDate = parseDate(t.endDate);
-                       const leftOffset = grouped.getDateIndex(sDate) * 30;
-                       const duration = Math.max(1, grouped.getDateIndex(eDate) - grouped.getDateIndex(sDate)) * 30;
-                       const overdue = isOverdue(t.endDate, t.status);
-                       const isTaskExpanded = expandedTasks.has(t.id);
-
-                       return (
-                        <React.Fragment key={t.id + '_grid_wrapper'}>
-                          <div key={t.id + '_grid'} className="h-12 border-b border-slate-100 flex items-center relative group/row hover:bg-blue-50/20 transition-colors cursor-pointer" onClick={() => setViewTask(t)}>
-                            <div 
-                              className={`absolute h-6 rounded-md shadow-sm border overflow-hidden flex items-center transition-all hover:-translate-y-0.5 hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.3)] ${t.status === 'CERRADO' ? 'bg-emerald-500 border-emerald-600' : overdue ? 'bg-red-500 border-red-600' : t.status === 'EN PROGRESO' ? 'bg-blue-500 border-blue-600' : 'bg-slate-400 border-slate-500'}`}
-                              style={{ left: leftOffset + 15, width: duration }}
-                              title={`${t.name} (${t.progress}%)`}
-                            >
-                               <div className="absolute top-0 bottom-0 left-0 bg-black/20" style={{ width: `${t.progress}%` }}></div>
-                               <span className="relative z-10 text-[9px] font-bold text-white px-2 truncate flex items-center gap-1 leading-none pt-0.5 pointer-events-none">
-                                  {t.link ? (
-                                    <a href={t.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="bg-black/30 hover:bg-white hover:text-blue-700 px-1 py-0.5 rounded-sm cursor-pointer transition-colors pointer-events-auto shrink-0" title="Abrir carpeta asociada">
-                                      {grouped.taskCodes.get(t.id)}
-                                    </a>
-                                  ) : (
-                                    <span className="bg-black/30 px-1 py-0.5 rounded-sm shrink-0">{grouped.taskCodes.get(t.id)}</span>
-                                  )}
-                                  <span className="truncate">{t.name}</span>
-                               </span>
-                            </div>
+                    // ── Gap detection: compare with previous phase ──
+                    let gapBand: React.ReactNode = null;
+                    if (phaseIdx > 0) {
+                      const [prevPhaseName] = phaseEntries[phaseIdx - 1];
+                      const prevPhm = grouped.phMeta.get(projName + prevPhaseName)!;
+                      const gapDays = dayDiff(prevPhm.maxD, phm.minD);
+                      if (gapDays >= 3) {
+                        const gapLeft  = grouped.getDateIndex(prevPhm.maxD) * 30 + 15;
+                        const gapRight = grouped.getDateIndex(phm.minD) * 30 + 15;
+                        const gapWidth = Math.max(0, gapRight - gapLeft);
+                        const gapLabel = gapDays === 1 ? '1 día' : `${gapDays} días`;
+                        gapBand = (
+                          <div
+                            className="absolute top-1 bottom-1 rounded pointer-events-none z-10"
+                            style={{
+                              left: gapLeft,
+                              width: gapWidth,
+                              background: 'repeating-linear-gradient(90deg, rgba(251,191,36,0.18) 0px, rgba(251,191,36,0.18) 6px, transparent 6px, transparent 12px)',
+                              borderTop: '1.5px dashed rgba(217,119,6,0.5)',
+                              borderBottom: '1.5px dashed rgba(217,119,6,0.5)',
+                            }}
+                            title={`Pausa entre fases: ${gapLabel}`}
+                          >
+                            {gapWidth > 40 && (
+                              <span className="absolute inset-0 flex items-center justify-center text-[8px] font-black text-amber-600/80 uppercase tracking-widest select-none">
+                                {gapLabel}
+                              </span>
+                            )}
                           </div>
-                          {isTaskExpanded && t.subtasks?.map(st => (
-                             <div key={st.id + '_grid_spacer'} className="h-[34px] border-b border-transparent bg-slate-50/30"></div>
-                          ))}
-                        </React.Fragment>
-                       );
-                    })}
-                  </div>
-                  )})}
+                        );
+                      }
+                    }
+
+                    return (
+                    <div key={phaseName + '_grid'}>
+                      <div className="h-[37px] w-full border-b border-transparent bg-slate-50/30 line-through-pattern relative">
+                         {gapBand}
+                         {expandedPhases.has(projName + phaseName) && (
+                             <div className="absolute top-3 h-2 border-t-2 border-dashed border-slate-400" style={{left: phStartOffset + 15, width: phDuration}}>
+                                <div className="absolute -left-1 -top-1.5 w-0 h-0 border-t-4 border-t-transparent border-l-[6px] border-l-slate-400 border-b-4 border-b-transparent"></div>
+                                <div className="absolute -right-1 -top-1.5 w-0 h-0 border-t-4 border-t-transparent border-r-[6px] border-r-slate-400 border-b-4 border-b-transparent"></div>
+                             </div>
+                         )}
+                      </div>
+
+                      {!expandedPhases.has(projName + phaseName) && tasks.map(t => {
+                         const sDate = parseDate(t.startDate);
+                         const eDate = parseDate(t.endDate);
+                         const leftOffset = grouped.getDateIndex(sDate) * 30;
+                         const duration = Math.max(1, grouped.getDateIndex(eDate) - grouped.getDateIndex(sDate)) * 30;
+                         const overdue = isOverdue(t.endDate, t.status);
+                         const isTaskExpanded = expandedTasks.has(t.id);
+
+                         return (
+                          <React.Fragment key={t.id + '_grid_wrapper'}>
+                            <div key={t.id + '_grid'} className="h-12 border-b border-slate-100 flex items-center relative group/row hover:bg-blue-50/20 transition-colors cursor-pointer" onClick={() => setViewTask(t)}>
+                              <div 
+                                className={`absolute h-6 rounded-md shadow-sm border overflow-hidden flex items-center transition-all hover:-translate-y-0.5 hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.3)] ${t.status === 'CERRADO' ? 'bg-emerald-500 border-emerald-600' : overdue ? 'bg-red-500 border-red-600' : t.status === 'EN PROGRESO' ? 'bg-blue-500 border-blue-600' : 'bg-slate-400 border-slate-500'}`}
+                                style={{ left: leftOffset + 15, width: duration }}
+                                title={`${t.name} (${t.progress}%)`}
+                              >
+                                 <div className="absolute top-0 bottom-0 left-0 bg-black/20" style={{ width: `${t.progress}%` }}></div>
+                                 <span className="relative z-10 text-[9px] font-bold text-white px-2 truncate flex items-center gap-1 leading-none pt-0.5 pointer-events-none">
+                                    {t.link ? (
+                                      <a href={t.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="bg-black/30 hover:bg-white hover:text-blue-700 px-1 py-0.5 rounded-sm cursor-pointer transition-colors pointer-events-auto shrink-0" title="Abrir carpeta asociada">
+                                        {grouped.taskCodes.get(t.id)}
+                                      </a>
+                                    ) : (
+                                      <span className="bg-black/30 px-1 py-0.5 rounded-sm shrink-0">{grouped.taskCodes.get(t.id)}</span>
+                                    )}
+                                    <span className="truncate">{t.name}</span>
+                                 </span>
+                              </div>
+                            </div>
+                            {isTaskExpanded && t.subtasks?.map(st => (
+                               <div key={st.id + '_grid_spacer'} className="h-[34px] border-b border-transparent bg-slate-50/30"></div>
+                            ))}
+                          </React.Fragment>
+                         );
+                      })}
+                    </div>
+                    );
+                  });
+                })()}
               </div>
-            )})}
+            )})
+          }
           </div>
         </div>
       </div>
 
       {/* MODALS RENDER LIST */}
-      
+
       {activeKpiModal && (
         <KpiListModal 
           mode={activeKpiModal} 
