@@ -254,16 +254,20 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-3 mb-5">Métricas por Fase</h3>
            <div className="grid grid-cols-3 gap-x-8 gap-y-5 px-2">
              {Array.from(phasesMap.entries()).map(([phaseName, phaseTasks]) => {
-                const pComplete = phaseTasks.filter(t => t.status === 'CERRADO').length;
-                const pPct = phaseTasks.length > 0 ? Math.round((pComplete / phaseTasks.length) * 100) : 0;
+                const pPct = phaseTasks.length > 0
+                  ? Math.round(phaseTasks.reduce((acc, t) => acc + (t.progress || 0), 0) / phaseTasks.length)
+                  : 0;
+                const isDone = pPct === 100;
                 return (
                    <div key={`metric-${phaseName}`}>
-                     <div className="flex justify-between items-end mb-1.5">
-                       <p className="text-[10px] font-bold text-slate-600 truncate pr-2">{phaseName}</p>
-                       <p className="text-[10px] font-black text-slate-800">{pPct}%</p>
+                     <div className="flex justify-between items-end mb-1.5 gap-2">
+                       <p className="text-[9px] font-bold text-slate-600 leading-tight break-words">{phaseName}</p>
+                       <p className={`text-[10px] font-black shrink-0 ${isDone ? 'text-emerald-600' : 'text-slate-800'}`}>
+                         {isDone ? '✓ 100%' : `${pPct}%`}
+                       </p>
                      </div>
                      <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                       <div className="h-full bg-indigo-500 rounded-full transition-all" style={{width: `${pPct}%`}}></div>
+                       <div className={`h-full rounded-full transition-all ${isDone ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{width: `${pPct}%`}}></div>
                      </div>
                    </div>
                 );
@@ -282,18 +286,20 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
         {/* Phases Iteration */}
         <div className="space-y-6">
           {Array.from(phasesMap.entries()).map(([phaseName, tasks]) => {
-            const phaseCompleted = tasks.filter(t => t.status === 'CERRADO').length;
-            const phasePct = Math.round((phaseCompleted / tasks.length) * 100);
+            const phasePct = tasks.length > 0
+              ? Math.round(tasks.reduce((acc, t) => acc + (t.progress || 0), 0) / tasks.length)
+              : 0;
+            const phaseIsDone = phasePct === 100;
 
             return (
               <div key={phaseName} className="mb-8">
                 {/* Phase Header */}
                 <div className="flex items-center gap-4 border-b border-slate-300 pb-2 mb-4">
                   <h3 className="text-[14px] font-black text-black uppercase tracking-wide flex-1 flex items-center gap-2">
-                    <Layers size={16} className="text-slate-400" /> {phaseName}
+                    <Layers size={16} className="text-slate-400 shrink-0" /> {phaseName}
                   </h3>
-                  <span className="text-[12px] font-black text-black tracking-wide pr-2">
-                    Gantt: {phasePct}%
+                  <span className={`text-[12px] font-black tracking-wide pr-2 shrink-0 ${phaseIsDone ? 'text-emerald-600' : 'text-black'}`}>
+                    {phaseIsDone ? '✓ Gantt: 100%' : `Gantt: ${phasePct}%`}
                   </span>
                 </div>
 

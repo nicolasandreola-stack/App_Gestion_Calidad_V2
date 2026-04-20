@@ -1572,8 +1572,8 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
 
                   return (
                     <div key={i} className={`rounded-lg border p-3 ${bgCard}`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[11px] font-bold text-slate-700 truncate max-w-[170px]" title={ps.name}>{ps.name}</span>
+                      <div className="flex items-start justify-between mb-2 gap-2">
+                        <span className="text-[10px] font-bold text-slate-700 leading-tight" title={ps.name}>{ps.name}</span>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="text-[9px] text-slate-400 font-medium">{ps.closed}/{ps.total}</span>
                           <span className={`text-[10px] font-black ${textNum}`}>
