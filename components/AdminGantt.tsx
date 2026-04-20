@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ProjectTask, ProjectSubtask } from '../types';
 import ProjectReportView from './ProjectReportView';
 import ImportProjectModal from './ImportProjectModal';
-import { Bot, Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronUp, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart, MessageSquare, FileText, Star } from 'lucide-react';
+import { Bot, Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronUp, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart, MessageSquare, FileText, Star, BookOpen, Link2 } from 'lucide-react';
 
 interface AdminGanttProps {
   projects: ProjectTask[];
@@ -319,6 +319,34 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
     onBulkUpdateProjects(updated);
   };
 
+  // ── Notebook Link ──
+  const [notebookModal, setNotebookModal] = useState<{ projName: string; url: string } | null>(null);
+
+  const openNotebookModal = (projName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const currentLink = projects.find(p => p.project === projName)?.notebookLink || '';
+    setNotebookModal({ projName, url: currentLink });
+  };
+
+  const handleNotebookLinkClick = (projName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const link = projects.find(p => p.project === projName)?.notebookLink;
+    if (link) {
+      window.open(link, '_blank', 'noopener,noreferrer');
+    } else {
+      openNotebookModal(projName, e);
+    }
+  };
+
+  const saveNotebookLink = () => {
+    if (!notebookModal || !onBulkUpdateProjects) return;
+    const { projName, url } = notebookModal;
+    const projTasks = projects.filter(p => p.project === projName);
+    const updated = projTasks.map(p => ({ ...p, notebookLink: url.trim() || undefined }));
+    onBulkUpdateProjects(updated);
+    setNotebookModal(null);
+  };
+
   const today = new Date();
 
   // --- KPI Calculations ---
@@ -535,6 +563,26 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                   <button onClick={(e) => toggleProjectPriority(projName, e)} className="p-1 rounded hover:bg-white/20 transition-colors ml-1" title={isPriority ? "Quitar prioridad" : "Marcar como prioritario"}>
                     <Star size={14} className={isPriority ? "fill-amber-400 text-amber-400" : "text-slate-400 opacity-50 group-hover:opacity-100 hover:text-amber-400"} />
                   </button>
+
+                  {/* Notebook link button */}
+                  {(() => {
+                    const hasLink = !!projects.find(p => p.project === projName)?.notebookLink;
+                    return (
+                      <div className="relative">
+                        <button
+                          onClick={(e) => handleNotebookLinkClick(projName, e)}
+                          onContextMenu={(e) => { e.preventDefault(); openNotebookModal(projName, e); }}
+                          className="p-1 rounded hover:bg-white/20 transition-colors"
+                          title={hasLink ? "Abrir cuaderno (clic derecho para editar)" : "Configurar cuaderno del proyecto"}
+                        >
+                          <BookOpen size={14} className={hasLink ? "text-teal-300" : "text-slate-400 opacity-50 group-hover:opacity-100"} />
+                        </button>
+                        {hasLink && (
+                          <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-teal-400 rounded-full" />
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {expandedProjects.has(projName) && (
                     <span className="ml-auto text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full" title="Progreso total promedio">
@@ -807,6 +855,68 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
       </div>
 
       {/* MODALS RENDER LIST */}
+
+      {/* ── Notebook Link Mini-Modal ── */}
+      {notebookModal && (
+        <div className="fixed inset-0 z-[400] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setNotebookModal(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="bg-teal-100 p-2 rounded-xl"><BookOpen size={20} className="text-teal-600" /></div>
+              <div>
+                <h3 className="font-black text-slate-800 text-base">Cuaderno del Proyecto</h3>
+                <p className="text-[11px] text-slate-500 mt-0.5 font-medium truncate max-w-[300px]">{notebookModal.projName}</p>
+              </div>
+              <button onClick={() => setNotebookModal(null)} className="ml-auto p-1.5 hover:bg-slate-100 rounded-full text-slate-400"><X size={16} /></button>
+            </div>
+
+            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">URL del cuaderno <span className="text-slate-400 font-normal normal-case">(NotebookLM, Drive, Notion, etc.)</span></label>
+            <div className="flex gap-2 items-center">
+              <div className="relative flex-1">
+                <Link2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="url"
+                  className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent bg-slate-50"
+                  placeholder="https://notebooklm.google.com/..."
+                  value={notebookModal.url}
+                  onChange={e => setNotebookModal({ ...notebookModal, url: e.target.value })}
+                  onKeyDown={e => e.key === 'Enter' && saveNotebookLink()}
+                  autoFocus
+                />
+              </div>
+              {notebookModal.url && (
+                <a href={notebookModal.url} target="_blank" rel="noopener noreferrer" className="p-2.5 bg-slate-100 hover:bg-teal-50 rounded-xl text-slate-500 hover:text-teal-600 transition-colors" title="Probar link">
+                  <ExternalLink size={14} />
+                </a>
+              )}
+            </div>
+
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={saveNotebookLink}
+                className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
+              >
+                <BookOpen size={14} /> Guardar y sincronizar
+              </button>
+              {notebookModal.url && (
+                <button
+                  onClick={() => {
+                    if (!onBulkUpdateProjects) return;
+                    const projTasks = projects.filter(p => p.project === notebookModal.projName);
+                    const updated = projTasks.map(p => { const { notebookLink: _, ...rest } = p; return rest as typeof p; });
+                    onBulkUpdateProjects(updated);
+                    setNotebookModal(null);
+                  }}
+                  className="px-4 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2.5 rounded-xl transition-colors text-sm"
+                  title="Borrar link"
+                >
+                  Borrar
+                </button>
+              )}
+            </div>
+            <p className="text-[10px] text-slate-400 text-center mt-3">El link se guarda en todos los equipos vía Google Sheets</p>
+          </div>
+        </div>
+      )}
 
       {activeKpiModal && (
         <KpiListModal 
