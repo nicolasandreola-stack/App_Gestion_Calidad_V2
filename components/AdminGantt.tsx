@@ -1511,35 +1511,47 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
                 {/* Divider */}
                 <div className="w-px bg-slate-100 self-stretch mx-1" />
 
-                {/* Subtask ring – right side */}
+                {/* Subtask info panel – no % to avoid confusion with header % */}
                 {(() => {
-                  const stPct = totalSubtasks > 0 ? (closedSubtasks / totalSubtasks) * 100 : 0;
-                  const stR = 32; const stC = 2 * Math.PI * stR;
-                  const stOffset = stC - (stPct / 100) * stC;
-                  const stColor = stPct === 100 ? '#10b981' : stPct >= 50 ? '#60a5fa' : stPct > 0 ? '#fbbf24' : '#e2e8f0';
                   const remainingSubtasks = totalSubtasks - closedSubtasks;
+                  const fillPct = totalSubtasks > 0 ? (closedSubtasks / totalSubtasks) * 100 : 0;
+                  const barColor = fillPct === 100 ? 'bg-emerald-500' : fillPct >= 50 ? 'bg-blue-500' : fillPct > 0 ? 'bg-amber-400' : 'bg-slate-200';
+                  const allDone = remainingSubtasks === 0 && totalSubtasks > 0;
                   return (
-                    <div className="flex flex-col items-center gap-3 shrink-0 w-24">
-                      <div className="relative flex items-center justify-center" style={{ width: 80, height: 80 }}>
-                        <svg width="80" height="80" viewBox="0 0 80 80" className="-rotate-90 absolute inset-0">
-                          <circle cx="40" cy="40" r={stR} fill="none" stroke="#f1f5f9" strokeWidth="9" />
-                          <circle cx="40" cy="40" r={stR} fill="none" stroke={stColor} strokeWidth="9"
-                            strokeLinecap="round" strokeDasharray={stC} strokeDashoffset={stOffset}
-                            style={{ transition: 'stroke-dashoffset 1s ease-out' }}
-                          />
-                        </svg>
-                        <div className="flex flex-col items-center z-10">
-                          <span className="text-lg font-black text-slate-800 leading-none">{Math.round(stPct)}%</span>
+                    <div className="flex flex-col gap-3 shrink-0 w-[88px]">
+                      {/* Icon + label */}
+                      <div className="flex flex-col items-center gap-1">
+                        <div className={`p-2 rounded-lg ${allDone ? 'bg-emerald-100' : 'bg-teal-50'}`}>
+                          <CheckSquare size={18} className={allDone ? 'text-emerald-500' : 'text-teal-500'} />
                         </div>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Subtareas</span>
                       </div>
+
+                      {/* Big counter */}
                       <div className="text-center">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Subtareas</p>
-                        <p className="text-sm font-black text-slate-800 mt-0.5">{closedSubtasks}<span className="text-[10px] text-slate-400">/{totalSubtasks}</span></p>
-                        <p className="text-[9px] text-slate-400 mt-0.5">{remainingSubtasks > 0 ? `${remainingSubtasks} pendientes` : '✓ Todas listas'}</p>
+                        <p className="text-2xl font-black text-slate-800 leading-none">
+                          {closedSubtasks}
+                          <span className="text-sm font-bold text-slate-400"> / {totalSubtasks}</span>
+                        </p>
+                        <p className="text-[9px] text-slate-500 font-medium mt-0.5">completadas</p>
                       </div>
+
+                      {/* Slim fill bar */}
+                      <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${barColor}`}
+                          style={{ width: `${fillPct}%` }}
+                        />
+                      </div>
+
+                      {/* Status label */}
+                      <p className={`text-[9px] text-center font-bold ${allDone ? 'text-emerald-600' : 'text-slate-400'}`}>
+                        {allDone ? '✓ Todas listas' : `${remainingSubtasks} por cerrar`}
+                      </p>
                     </div>
                   );
                 })()}
+
 
               </div>
             </div>
