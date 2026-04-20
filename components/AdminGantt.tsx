@@ -1420,15 +1420,13 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Rango del Proyecto</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="text-right">
-                <span className="text-sm font-bold text-slate-700">{minD}</span>
-              </div>
+              <span className="text-sm font-bold text-slate-700">{minD}</span>
               <div className="relative h-1 w-24 bg-slate-100 rounded-full overflow-hidden">
                 <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full" style={{width: `${globalProgress}%`}} />
               </div>
-              <div className="text-left">
-                <span className="text-sm font-bold text-slate-700 block">{maxD}</span>
-                <span className="text-[9px] text-slate-400 font-medium">Fecha de referencia</span>
+              <div>
+                <span className="text-sm font-bold text-slate-700">{maxD}</span>
+                <span className="text-[9px] text-slate-400 font-medium ml-1.5">Fecha de referencia</span>
               </div>
             </div>
           </div>
@@ -1436,39 +1434,74 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
           {/* ── BOTTOM: Distribution + Phase Breakdown ── */}
           <div className="grid grid-cols-2 gap-5">
 
-            {/* ── DISTRIBUCIÓN DE TAREAS – premium card ── */}
+            {/* ── DISTRIBUCIÓN DE TAREAS – split layout ── */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
               <div className="px-5 pt-4 pb-2 border-b border-slate-50">
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Distribución de Tareas</h3>
               </div>
-              <div className="p-5 flex flex-col items-center gap-4">
-                {/* Donut – larger */}
-                <div className="relative w-52 h-52 flex items-center justify-center">
-                  <div className="absolute inset-0 rounded-full" style={{ background: gradient, boxShadow: '0 4px 20px rgba(0,0,0,0.10)' }} />
-                  <div className="relative w-32 h-32 bg-white rounded-full flex flex-col items-center justify-center shadow-lg z-10">
-                    <span className="text-3xl font-black text-slate-800 leading-none">{allTasksCount}</span>
-                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wide">tareas</span>
+              <div className="p-4 flex items-center gap-4 h-full">
+
+                {/* Main donut – tasks */}
+                <div className="flex flex-col items-center gap-3 flex-1">
+                  <div className="relative w-44 h-44 flex items-center justify-center">
+                    <div className="absolute inset-0 rounded-full" style={{ background: gradient, boxShadow: '0 4px 20px rgba(0,0,0,0.10)' }} />
+                    <div className="relative w-28 h-28 bg-white rounded-full flex flex-col items-center justify-center shadow-lg z-10">
+                      <span className="text-3xl font-black text-slate-800 leading-none">{allTasksCount}</span>
+                      <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wide">tareas</span>
+                    </div>
+                  </div>
+                  <div className="w-full grid grid-cols-3 gap-1.5">
+                    <div className="flex flex-col items-center gap-0.5 bg-emerald-50 py-1.5 px-1 rounded-lg border border-emerald-100">
+                      <span className="text-base font-black text-emerald-600">{totalC}</span>
+                      <div className="flex items-center gap-0.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /><span className="text-[8px] font-bold text-emerald-700 uppercase">Cerr.</span></div>
+                      <span className="text-[9px] font-black text-emerald-500">{allTasksCount > 0 ? Math.round(totalC/allTasksCount*100) : 0}%</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-0.5 bg-blue-50 py-1.5 px-1 rounded-lg border border-blue-100">
+                      <span className="text-base font-black text-blue-600">{totalE}</span>
+                      <div className="flex items-center gap-0.5"><div className="w-1.5 h-1.5 rounded-full bg-blue-500" /><span className="text-[8px] font-bold text-blue-700 uppercase">Prog.</span></div>
+                      <span className="text-[9px] font-black text-blue-500">{allTasksCount > 0 ? Math.round(totalE/allTasksCount*100) : 0}%</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-0.5 bg-slate-50 py-1.5 px-1 rounded-lg border border-slate-200">
+                      <span className="text-base font-black text-slate-500">{totalP}</span>
+                      <div className="flex items-center gap-0.5"><div className="w-1.5 h-1.5 rounded-full bg-slate-300" /><span className="text-[8px] font-bold text-slate-500 uppercase">Pend.</span></div>
+                      <span className="text-[9px] font-black text-slate-400">{allTasksCount > 0 ? Math.round(totalP/allTasksCount*100) : 0}%</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Legend as mini stat cards */}
-                <div className="w-full grid grid-cols-3 gap-2">
-                  <div className="flex flex-col items-center gap-1 bg-emerald-50 py-2 px-1 rounded-lg border border-emerald-100">
-                    <span className="text-lg font-black text-emerald-600">{totalC}</span>
-                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500" /><span className="text-[9px] font-bold text-emerald-700 uppercase">Cerradas</span></div>
-                    <span className="text-[10px] font-black text-emerald-500">{allTasksCount > 0 ? Math.round(totalC/allTasksCount*100) : 0}%</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1 bg-blue-50 py-2 px-1 rounded-lg border border-blue-100">
-                    <span className="text-lg font-black text-blue-600">{totalE}</span>
-                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500" /><span className="text-[9px] font-bold text-blue-700 uppercase">En curso</span></div>
-                    <span className="text-[10px] font-black text-blue-500">{allTasksCount > 0 ? Math.round(totalE/allTasksCount*100) : 0}%</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1 bg-slate-50 py-2 px-1 rounded-lg border border-slate-200">
-                    <span className="text-lg font-black text-slate-500">{totalP}</span>
-                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-slate-300" /><span className="text-[9px] font-bold text-slate-500 uppercase">Pendientes</span></div>
-                    <span className="text-[10px] font-black text-slate-400">{allTasksCount > 0 ? Math.round(totalP/allTasksCount*100) : 0}%</span>
-                  </div>
-                </div>
+                {/* Divider */}
+                <div className="w-px bg-slate-100 self-stretch mx-1" />
+
+                {/* Subtask ring – right side */}
+                {(() => {
+                  const stPct = totalSubtasks > 0 ? (closedSubtasks / totalSubtasks) * 100 : 0;
+                  const stR = 32; const stC = 2 * Math.PI * stR;
+                  const stOffset = stC - (stPct / 100) * stC;
+                  const stColor = stPct === 100 ? '#10b981' : stPct >= 50 ? '#60a5fa' : stPct > 0 ? '#fbbf24' : '#e2e8f0';
+                  const remainingSubtasks = totalSubtasks - closedSubtasks;
+                  return (
+                    <div className="flex flex-col items-center gap-3 shrink-0 w-24">
+                      <div className="relative flex items-center justify-center" style={{ width: 80, height: 80 }}>
+                        <svg width="80" height="80" viewBox="0 0 80 80" className="-rotate-90 absolute inset-0">
+                          <circle cx="40" cy="40" r={stR} fill="none" stroke="#f1f5f9" strokeWidth="9" />
+                          <circle cx="40" cy="40" r={stR} fill="none" stroke={stColor} strokeWidth="9"
+                            strokeLinecap="round" strokeDasharray={stC} strokeDashoffset={stOffset}
+                            style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+                          />
+                        </svg>
+                        <div className="flex flex-col items-center z-10">
+                          <span className="text-lg font-black text-slate-800 leading-none">{Math.round(stPct)}%</span>
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Subtareas</p>
+                        <p className="text-sm font-black text-slate-800 mt-0.5">{closedSubtasks}<span className="text-[10px] text-slate-400">/{totalSubtasks}</span></p>
+                        <p className="text-[9px] text-slate-400 mt-0.5">{remainingSubtasks > 0 ? `${remainingSubtasks} pendientes` : '✓ Todas listas'}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
               </div>
             </div>
 
