@@ -1442,7 +1442,7 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
               <div className="p-4 flex items-center gap-4 h-full">
 
                 {/* Main donut – tasks */}
-                <div className="flex flex-col items-center gap-3 flex-1">
+                <div className="flex flex-col items-center gap-5 flex-1">
                   <div className="relative w-44 h-44 flex items-center justify-center">
                     <div className="absolute inset-0 rounded-full" style={{ background: gradient, boxShadow: '0 4px 20px rgba(0,0,0,0.10)' }} />
                     <div className="relative w-28 h-28 bg-white rounded-full flex flex-col items-center justify-center shadow-lg z-10">
