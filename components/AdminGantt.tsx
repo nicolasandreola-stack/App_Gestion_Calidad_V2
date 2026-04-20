@@ -1317,55 +1317,62 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
   const minD = pm.minD.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
   const today = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
+  const logoUrl = "https://drive.google.com/thumbnail?id=1BkFrIklMROkiE8ekHz3UpWjw7Yoo58dW&sz=h200";
+
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[300] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[92vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
 
-        {/* ── HEADER with gradient ── */}
-        <div className="relative px-8 pt-7 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 text-white shrink-0 overflow-hidden">
-          {/* Background decoration */}
-          <div className="absolute top-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-          <div className="absolute bottom-0 left-16 w-40 h-40 bg-indigo-500/10 rounded-full translate-y-1/2 pointer-events-none" />
+        {/* ── HEADER ── */}
+        <div className="relative px-8 pt-6 pb-5 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 text-white shrink-0 overflow-hidden">
+          {/* Decorations */}
+          <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+          <div className="absolute bottom-0 left-12 w-48 h-48 bg-indigo-500/10 rounded-full translate-y-1/2 pointer-events-none" />
 
-          <div className="relative flex justify-between items-start">
-            <div className="flex-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Reporte Ejecutivo · KPI</p>
-              <h2 className="text-2xl font-black uppercase tracking-wide leading-tight">{projectName}</h2>
-              <p className="text-slate-400 text-[11px] mt-2 capitalize">{today}</p>
-              <div className="flex items-center gap-2 mt-3">
-                <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${
+          {/* Close button - top right, separate from ring */}
+          <button onClick={onClose} className="absolute top-3 right-3 p-1.5 hover:bg-white/10 rounded-full transition-colors z-10">
+            <X size={18} className="text-slate-400" />
+          </button>
+
+          <div className="relative flex items-center gap-6">
+            {/* Logo */}
+            <img src={logoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-xl bg-white/10 p-1 shrink-0 border border-white/10" referrerPolicy="no-referrer" />
+
+            {/* Title block */}
+            <div className="flex-1 min-w-0">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.25em] mb-0.5">Reporte Ejecutivo · KPI</p>
+              <h2 className="text-xl font-black uppercase tracking-wide leading-tight truncate">{projectName}</h2>
+              <p className="text-slate-400 text-[10px] mt-1 capitalize">{today}</p>
+              <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${
                   overdueCount > 0 ? 'border-red-400/50 bg-red-500/20 text-red-300' : 'border-emerald-400/30 bg-emerald-500/10 text-emerald-300'
                 }`}>
                   {overdueCount > 0 ? `⚠ ${overdueCount} TAREA${overdueCount > 1 ? 'S' : ''} ATRASADA${overdueCount > 1 ? 'S' : ''}` : '✓ SIN ATRASOS'}
                 </span>
-                <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border border-blue-400/30 bg-blue-500/10 ${statusColor}`}>
+                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border border-blue-400/30 bg-blue-500/10 ${statusColor}`}>
                   ● {statusLabel}
                 </span>
               </div>
             </div>
 
-            {/* Circular Progress Ring */}
-            <div className="flex flex-col items-center gap-1 shrink-0 ml-6">
-              <svg width="110" height="110" viewBox="0 0 110 110" className="-rotate-90">
-                <circle cx="55" cy="55" r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="10" />
+            {/* Progress Ring – bigger, with clear spacing from close btn */}
+            <div className="relative shrink-0 mr-6 flex items-center justify-center" style={{ width: 130, height: 130 }}>
+              <svg width="130" height="130" viewBox="0 0 130 130" className="-rotate-90 absolute inset-0">
+                <circle cx="65" cy="65" r="54" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="12" />
                 <circle
-                  cx="55" cy="55" r={radius} fill="none"
+                  cx="65" cy="65" r="54" fill="none"
                   stroke={globalProgress === 100 ? '#10b981' : globalProgress >= 60 ? '#60a5fa' : globalProgress >= 30 ? '#fbbf24' : '#f87171'}
-                  strokeWidth="10" strokeLinecap="round"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
+                  strokeWidth="12" strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 54}
+                  strokeDashoffset={2 * Math.PI * 54 - (globalProgress / 100) * 2 * Math.PI * 54}
                   style={{ transition: 'stroke-dashoffset 1s ease-out' }}
                 />
               </svg>
-              <div className="absolute" style={{ position: 'relative', marginTop: '-90px', textAlign: 'center', width: '110px' }}>
-                <p className="text-3xl font-black text-white leading-none text-center">{globalProgress}%</p>
-                <p className="text-[9px] text-slate-400 uppercase font-bold text-center">progreso</p>
+              <div className="flex flex-col items-center z-10">
+                <span className="text-4xl font-black text-white leading-none">{globalProgress}%</span>
+                <span className="text-[9px] text-slate-400 uppercase font-bold tracking-widest mt-1">progreso</span>
               </div>
             </div>
-
-            <button onClick={onClose} className="absolute top-0 right-0 p-2 hover:bg-white/10 rounded-full transition-colors">
-              <X size={20} className="text-slate-300" />
-            </button>
           </div>
         </div>
 
@@ -1411,66 +1418,99 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
             </div>
             <div className="flex items-center gap-3 text-sm font-bold text-slate-700">
               <span>{minD}</span>
-              <div className="flex-1 h-0.5 w-16 bg-slate-200 relative"><div className="absolute inset-y-0 left-0 bg-blue-400" style={{width: `${globalProgress}%`}} /></div>
+              <div className="relative h-1 w-24 bg-slate-100 rounded-full overflow-hidden">
+                <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full" style={{width: `${globalProgress}%`}} />
+              </div>
               <span>{maxD}</span>
             </div>
           </div>
 
-          {/* ── BOTTOM ROW: Donut + Phase Breakdown ── */}
+          {/* ── BOTTOM: Distribution + Phase Breakdown ── */}
           <div className="grid grid-cols-2 gap-5">
 
-            {/* Donut Chart */}
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-4">
-              <h3 className="w-full text-[10px] font-black text-slate-400 uppercase tracking-wider">Distribución de Tareas</h3>
-              <div className="relative w-44 h-44 rounded-full flex items-center justify-center" style={{ background: gradient, boxShadow: 'inset 0 2px 12px rgba(0,0,0,0.08)' }}>
-                <div className="w-28 h-28 bg-white rounded-full flex flex-col items-center justify-center shadow-md">
-                  <span className="text-2xl font-black text-slate-800">{allTasksCount}</span>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase">Tareas</span>
-                </div>
+            {/* ── DISTRIBUCIÓN DE TAREAS – premium card ── */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+              <div className="px-5 pt-4 pb-2 border-b border-slate-50">
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Distribución de Tareas</h3>
               </div>
-              <div className="flex flex-wrap gap-3 w-full justify-center">
-                <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm" />Cerradas ({totalC})
+              <div className="p-5 flex flex-col items-center gap-4">
+                {/* Donut */}
+                <div className="relative w-40 h-40 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full" style={{ background: gradient, boxShadow: '0 4px 20px rgba(0,0,0,0.10)' }} />
+                  <div className="relative w-24 h-24 bg-white rounded-full flex flex-col items-center justify-center shadow-lg z-10">
+                    <span className="text-2xl font-black text-slate-800 leading-none">{allTasksCount}</span>
+                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wide">tareas</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
-                  <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm" />En Progreso ({totalE})
-                </div>
-                <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-200 shadow-sm" />Pendientes ({totalP})
+
+                {/* Legend as mini stat cards */}
+                <div className="w-full grid grid-cols-3 gap-2">
+                  <div className="flex flex-col items-center gap-1 bg-emerald-50 py-2 px-1 rounded-lg border border-emerald-100">
+                    <span className="text-lg font-black text-emerald-600">{totalC}</span>
+                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500" /><span className="text-[9px] font-bold text-emerald-700 uppercase">Cerradas</span></div>
+                    <span className="text-[10px] font-black text-emerald-500">{allTasksCount > 0 ? Math.round(totalC/allTasksCount*100) : 0}%</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1 bg-blue-50 py-2 px-1 rounded-lg border border-blue-100">
+                    <span className="text-lg font-black text-blue-600">{totalE}</span>
+                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500" /><span className="text-[9px] font-bold text-blue-700 uppercase">En curso</span></div>
+                    <span className="text-[10px] font-black text-blue-500">{allTasksCount > 0 ? Math.round(totalE/allTasksCount*100) : 0}%</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1 bg-slate-50 py-2 px-1 rounded-lg border border-slate-200">
+                    <span className="text-lg font-black text-slate-500">{totalP}</span>
+                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-slate-300" /><span className="text-[9px] font-bold text-slate-500 uppercase">Pendientes</span></div>
+                    <span className="text-[10px] font-black text-slate-400">{allTasksCount > 0 ? Math.round(totalP/allTasksCount*100) : 0}%</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Phase Breakdown */}
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-4">Avance por Fase</h3>
-              <div className="space-y-3.5">
+            {/* ── AVANCE POR FASE – premium card ── */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+              <div className="px-5 pt-4 pb-2 border-b border-slate-50 flex items-center justify-between">
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Avance por Fase</h3>
+                <span className="text-[9px] font-bold text-slate-400">{phaseStats.filter(p => p.progress === 100).length}/{phaseStats.length} completadas</span>
+              </div>
+              <div className="p-5 space-y-3">
                 {phaseStats.map((ps:any, i:number) => {
-                  const phColor = ps.progress === 100 ? { bg: 'bg-emerald-500', text: 'text-emerald-600', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
-                    : ps.progress > 0 ? { bg: 'bg-blue-500', text: 'text-blue-600', badge: 'bg-blue-50 text-blue-700 border-blue-200' }
-                    : { bg: 'bg-slate-300', text: 'text-slate-400', badge: 'bg-slate-50 text-slate-500 border-slate-200' };
+                  const isComplete = ps.progress === 100;
+                  const hasProgress = ps.progress > 0;
+                  const barColor = isComplete ? 'from-emerald-400 to-emerald-500' : hasProgress ? 'from-blue-400 to-indigo-500' : 'from-slate-200 to-slate-300';
+                  const bgCard = isComplete ? 'bg-emerald-50/60 border-emerald-100' : hasProgress ? 'bg-blue-50/40 border-blue-100' : 'bg-slate-50 border-slate-100';
+                  const textNum = isComplete ? 'text-emerald-600' : hasProgress ? 'text-blue-600' : 'text-slate-400';
+
                   return (
-                    <div key={i}>
-                      <div className="flex justify-between items-center mb-1.5">
-                        <span className="text-[11px] font-bold text-slate-600 truncate max-w-[190px]" title={ps.name}>{ps.name}</span>
+                    <div key={i} className={`rounded-lg border p-3 ${bgCard}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-bold text-slate-700 truncate max-w-[170px]" title={ps.name}>{ps.name}</span>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-[9px] text-slate-400">{ps.closed}/{ps.total} tareas</span>
-                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border ${phColor.badge}`}>
-                            {ps.progress === 100 ? '✓ LISTO' : ps.progress > 0 ? `${ps.progress}%` : 'PENDIENTE'}
+                          <span className="text-[9px] text-slate-400 font-medium">{ps.closed}/{ps.total}</span>
+                          <span className={`text-[10px] font-black ${textNum}`}>
+                            {isComplete ? '✓ 100%' : hasProgress ? `${ps.progress}%` : '—'}
                           </span>
                         </div>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                      {/* Segmented bar */}
+                      <div className="w-full h-2.5 bg-slate-200/60 rounded-full overflow-hidden">
                         <div
-                          className={`h-2 rounded-full transition-all duration-700 ${phColor.bg}`}
+                          className={`h-full rounded-full bg-gradient-to-r ${barColor} transition-all duration-700`}
                           style={{ width: `${ps.progress}%` }}
                         />
+                      </div>
+                      {/* Mini task dots */}
+                      <div className="flex gap-1 mt-1.5 flex-wrap">
+                        {Array.from({ length: ps.total }, (_, tidx) => (
+                          <div
+                            key={tidx}
+                            className={`w-1.5 h-1.5 rounded-full ${tidx < ps.closed ? (isComplete ? 'bg-emerald-400' : 'bg-blue-400') : 'bg-slate-300/60'}`}
+                          />
+                        ))}
                       </div>
                     </div>
                   );
                 })}
               </div>
             </div>
+
           </div>
 
         </div>
@@ -1478,5 +1518,7 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
     </div>
   );
 };
+
+
 
 
