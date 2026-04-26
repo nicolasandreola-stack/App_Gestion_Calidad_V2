@@ -121,6 +121,7 @@ export interface ProjectTask {
   details?: string; // Col K: Observaciones de tarea
   link?: string; // Col L: Enlace Principal de la tarea
   priorityProject?: boolean;
+  notebookLink?: string;    // URL al cuaderno NotebookLM / Drive / etc. del proyecto
 }
 
 // Estructura Global para JSONBin (Multi-usuario)
@@ -129,6 +130,7 @@ export interface GlobalCloudData {
     [username: string]: BackupData;
   };
   projects?: ProjectTask[];
+  projectObservations?: Record<string, string>; // projectName → observation text
   lastUpdate: string;
 }
 
