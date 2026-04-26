@@ -126,17 +126,17 @@ export default function ProjectReportView({ projectName, projects, observationTe
                   </label>
                 )}
               </div>
+            </div>
 
             {observationText && (
-              <div className="flex items-center gap-3 bg-amber-50 p-3 rounded border border-amber-200 cursor-pointer" onClick={() => setConfig({...config, showObservation: !config.showObservation})}>
-                <input type="checkbox" checked={config.showObservation} readOnly className="w-4 h-4 text-amber-500 rounded" />
-                <div>
+              <div className="flex items-start gap-3 bg-amber-50 p-3 rounded border border-amber-200 cursor-pointer" onClick={() => setConfig({...config, showObservation: !config.showObservation})}>
+                <input type="checkbox" checked={config.showObservation} readOnly className="w-4 h-4 text-amber-500 rounded mt-1" />
+                <div className="flex-1">
                   <p className="text-sm font-bold text-slate-700">Incluir observación ejecutiva en el reporte</p>
-                  <p className="text-[11px] text-slate-500 italic truncate max-w-[300px]">"{observationText.substring(0, 80)}{observationText.length > 80 ? '...' : ''}"</p>
+                  <p className="text-[11px] text-amber-700 italic mt-0.5 line-clamp-2">"{observationText.substring(0, 100)}{observationText.length > 100 ? '…' : ''}"</p>
                 </div>
               </div>
             )}
-            </div>
 
             <div className="flex flex-col gap-2 bg-slate-50 p-3 rounded border border-slate-200">
               <p className="text-sm font-bold text-slate-700">Fases a profundizar en listado</p>
