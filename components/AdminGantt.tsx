@@ -229,6 +229,18 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
     }
     months.push({ month: currentMonth, year: daysArr[daysArr.length - 1].getFullYear(), count: currentCount });
 
+    // ── Sort phases within each project by their earliest start date ──
+    map.forEach((pMap, projName) => {
+      const sortedPhases = Array.from(pMap.entries()).sort(([nameA], [nameB]) => {
+        const metaA = phMeta.get(projName + nameA);
+        const metaB = phMeta.get(projName + nameB);
+        if (!metaA || !metaB) return 0;
+        return metaA.minD.getTime() - metaB.minD.getTime();
+      });
+      pMap.clear();
+      sortedPhases.forEach(([name, tasks]) => pMap.set(name, tasks));
+    });
+
     const taskCodes = new Map<string, string>();
     Array.from(map.entries()).forEach(([projName, pMap]) => {
       let phaseIdx = 0;
@@ -601,7 +613,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                 {!expandedProjects.has(projName) && Array.from(phases.entries()).map(([phaseName, tasks]) => (
                   <div key={phaseName}>
                     <div 
-                      className="bg-slate-100 border-y border-slate-200 px-4 py-2 pl-8 flex items-center gap-2 cursor-pointer hover:bg-slate-200 select-none"
+                      className="bg-slate-100 border-y border-slate-200 px-4 py-2 pl-8 flex items-center gap-2 cursor-pointer hover:bg-slate-200 select-none group/phase"
                       onClick={() => togglePhase(projName + phaseName)}
                     >
                       {expandedPhases.has(projName + phaseName) ? <ChevronRight size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-700" />}
@@ -623,6 +635,18 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                               {Math.round(grouped.phMeta.get(projName + phaseName)!.prog / grouped.phMeta.get(projName + phaseName)!.count)}%
                             </span>
                          )}
+                         <button
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             if (confirm(`¿Eliminar la fase "${phaseName}" y sus ${tasks.length} tarea(s) por completo? Esta acción no se puede deshacer.`)) {
+                               tasks.forEach(t => onDeleteProject(t.id));
+                             }
+                           }}
+                           className="opacity-0 group-hover/phase:opacity-100 transition-opacity text-[9px] font-bold text-red-500 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded shadow-sm hover:bg-red-500 hover:text-white hover:border-red-500 transition-colors uppercase flex items-center gap-1"
+                           title={`Eliminar fase "${phaseName}" completa`}
+                         >
+                           <X size={10} /> Eliminar Fase
+                         </button>
                       </div>
                     </div>
 
