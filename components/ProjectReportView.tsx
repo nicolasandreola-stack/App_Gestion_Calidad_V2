@@ -57,6 +57,16 @@ export default function ProjectReportView({ projectName, projects, observationTe
     phasesMap.get(task.phase)!.push(task);
   });
 
+  // Sort phases by earliest task startDate — same logic as AdminGantt
+  const sortedPhaseEntries = Array.from(phasesMap.entries()).sort(([, tasksA], [, tasksB]) => {
+    const minA = Math.min(...tasksA.map(t => parseObjDate(t.startDate).getTime()));
+    const minB = Math.min(...tasksB.map(t => parseObjDate(t.startDate).getTime()));
+    return minA - minB;
+  });
+  const sortedPhasesMap = new Map(sortedPhaseEntries);
+  // Replace for downstream use
+  sortedPhaseEntries.forEach(([k, v]) => { phasesMap.delete(k); phasesMap.set(k, v); });
+
   const minDStr = minD.toLocaleDateString('es-ES');
   const maxDStr = maxD.toLocaleDateString('es-ES');
 
@@ -330,17 +340,28 @@ export default function ProjectReportView({ projectName, projects, observationTe
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {tasks.map(t => (
-                      <div key={t.id} className="pl-2 border-l-2 border-slate-200 break-inside-avoid">
+                    {tasks.map(t => {
+                      const isClosed = t.status === 'CERRADO';
+                      return (
+                      <div key={t.id} className={`pl-3 border-l-2 break-inside-avoid rounded-r-lg pr-2 py-1 ${
+                        isClosed
+                          ? 'border-emerald-400 bg-emerald-50/40'
+                          : 'border-slate-200 bg-white'
+                      }`}>
                         
                         {/* Task Header */}
                 <div className="flex items-center justify-between gap-4 mb-2">
                   <div className="flex items-start gap-3">
-                    <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded mt-0.5 shrink-0">
+                    <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded mt-0.5 shrink-0 ${
+                      isClosed ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                    }`}>
                       {taskCodes.get(t.id)}
                     </span>
                     <div>
-                      <h4 className={`text-[13px] font-bold ${t.status === 'CERRADO' ? 'text-slate-700' : 'text-slate-800'}`}>
+                      <h4 className={`text-[13px] font-bold ${
+                        isClosed ? 'text-slate-500' : 'text-slate-800'
+                      }`}>
+                        {isClosed && <span className="text-emerald-500 mr-1.5">✓</span>}
                         {t.name}
                       </h4>
                       {t.assignee && (
@@ -351,7 +372,13 @@ export default function ProjectReportView({ projectName, projects, observationTe
                     </div>
                           </div>
                     <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                      <span className={`text-[8px] font-bold px-2 py-1 rounded uppercase tracking-wider ${t.status === 'CERRADO' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : t.status === 'EN PROGRESO' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+                      <span className={`text-[8px] font-bold px-2 py-1 rounded uppercase tracking-wider ${
+                        isClosed
+                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
+                          : t.status === 'EN PROGRESO'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                            : 'bg-slate-100 text-slate-600 border border-slate-200'
+                      }`}>
                         {t.status}
                       </span>
                       {config.showTaskDates && (
@@ -371,14 +398,20 @@ export default function ProjectReportView({ projectName, projects, observationTe
 
                         {/* Subtasks */}
                         {t.subtasks && t.subtasks.length > 0 && config.showSubtasks && (
-                          <div className="ml-10 space-y-2 mt-2">
+                          <div className="ml-10 space-y-1 mt-2">
                             {t.subtasks.map(st => (
-                              <div key={st.id} className="flex gap-2">
+                              <div key={st.id} className={`flex gap-2 rounded px-1.5 py-0.5 ${
+                                st.completed ? 'bg-emerald-50' : ''
+                              }`}>
                                 <span className="mt-[3px] shrink-0">
                                   {st.completed ? <CheckCircle2 size={12} className="text-emerald-500" /> : <Circle size={12} className="text-slate-300" />}
                                 </span>
                         <div className="flex-1">
-                          <p className={`text-[10px] ${st.completed ? 'text-slate-500' : 'text-slate-800'}`}>
+                          <p className={`text-[10px] ${
+                            st.completed
+                              ? 'line-through text-slate-400'
+                              : 'text-slate-800'
+                          }`}>
                             {st.text}
                           </p>
                           
@@ -405,7 +438,8 @@ export default function ProjectReportView({ projectName, projects, observationTe
                         )}
 
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
