@@ -9,6 +9,7 @@ interface AdminGanttProps {
   onUpdateProject: (p: ProjectTask) => void;
   onAddProject: (p: ProjectTask) => void;
   onDeleteProject: (id: string) => void;
+  onBulkDeleteProjects?: (ids: string[]) => void;
   onBulkAddProjects?: (projects: ProjectTask[]) => void;
   onBulkUpdateProjects?: (projects: ProjectTask[]) => void;
 }
@@ -112,7 +113,7 @@ const SubtaskRowLink = ({ link, closingNote, onSave }: { link: string, closingNo
   );
 };
 
-export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject, onBulkAddProjects, onBulkUpdateProjects }: AdminGanttProps) {
+export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject, onBulkDeleteProjects, onBulkAddProjects, onBulkUpdateProjects }: AdminGanttProps) {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
@@ -639,7 +640,12 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                            onClick={(e) => {
                              e.stopPropagation();
                              if (confirm(`¿Eliminar la fase "${phaseName}" y sus ${tasks.length} tarea(s) por completo? Esta acción no se puede deshacer.`)) {
-                               tasks.forEach(t => onDeleteProject(t.id));
+                               const ids = tasks.map(t => t.id);
+                               if (onBulkDeleteProjects) {
+                                 onBulkDeleteProjects(ids);
+                               } else {
+                                 ids.forEach(id => onDeleteProject(id));
+                               }
                              }
                            }}
                            className="opacity-0 group-hover/phase:opacity-100 transition-opacity text-[9px] font-bold text-red-500 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded shadow-sm hover:bg-red-500 hover:text-white hover:border-red-500 transition-colors uppercase flex items-center gap-1"
