@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ProjectTask, ProjectSubtask } from '../types';
 import ProjectReportView from './ProjectReportView';
 import ImportProjectModal from './ImportProjectModal';
-import { Bot, Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronUp, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart, MessageSquare, FileText, Star, BookOpen, Link2, Eye, EyeOff } from 'lucide-react';
+import { Bot, Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronUp, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart, MessageSquare, FileText, Star, BookOpen, Link2, Eye, EyeOff, SlidersHorizontal } from 'lucide-react';
 
 interface AdminGanttProps {
   projects: ProjectTask[];
@@ -1435,6 +1435,9 @@ const KpiListModal = ({ mode, projects, grouped, uniqueProjects, hiddenProjects,
 
 const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
   const [showDateRange, setShowDateRange] = React.useState(true);
+  const [observationText, setObservationText] = React.useState('');
+  const [isEditingObs, setIsEditingObs] = React.useState(false);
+  const [obsBuffer, setObsBuffer] = React.useState('');
   const mapList = grouped.map.get(projectName);
   if (!mapList) return null;
 
@@ -1593,46 +1596,68 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
             </div>
           </div>
 
-          {/* ── DATES BANNER ── */}
-          <div
-            className={`rounded-xl px-5 py-3 shadow-sm border flex items-center justify-between shrink-0 transition-colors ${
-              showDateRange ? 'bg-white border-slate-100' : 'bg-slate-50 border-slate-200 cursor-pointer hover:bg-slate-100'
-            }`}
-            onClick={!showDateRange ? () => setShowDateRange(true) : undefined}
-          >
-            <div className="flex items-center gap-2">
-              <Calendar size={14} className="text-slate-400" />
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Rango del Proyecto</span>
-              {!showDateRange && (
-                <span className="text-[9px] text-slate-400 italic ml-1">(oculto — clic para mostrar)</span>
-              )}
+          {/* ── DATES BANNER ── — only rendered when showDateRange is true; completely absent otherwise */}
+          {showDateRange && (
+            <div className="bg-white rounded-xl px-5 py-3 shadow-sm border border-slate-100 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <Calendar size={14} className="text-slate-400" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Rango del Proyecto</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-bold text-slate-700">{minD}</span>
+                <div className="relative h-1 w-24 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full" style={{width: `${globalProgress}%`}} />
+                </div>
+                <div>
+                  <span className="text-sm font-bold text-slate-700">{maxD}</span>
+                  <span className="text-[9px] text-slate-400 font-medium ml-1.5">Fecha de referencia</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              {showDateRange && (
-                <>
-                  <span className="text-sm font-bold text-slate-700">{minD}</span>
-                  <div className="relative h-1 w-24 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full" style={{width: `${globalProgress}%`}} />
-                  </div>
-                  <div>
-                    <span className="text-sm font-bold text-slate-700">{maxD}</span>
-                    <span className="text-[9px] text-slate-400 font-medium ml-1.5">Fecha de referencia</span>
-                  </div>
-                </>
-              )}
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowDateRange(v => !v); }}
-                className={`p-1 rounded-lg transition-colors ${
-                  showDateRange
-                    ? 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
-                    : 'text-blue-500 bg-blue-50 hover:bg-blue-100'
-                }`}
-                title={showDateRange ? 'Ocultar rango del proyecto' : 'Mostrar rango del proyecto'}
-              >
-                {showDateRange ? <EyeOff size={14} /> : <Eye size={14} />}
-              </button>
+          )}
+
+          {/* ── OBSERVATION BOX ── — visible in screenshot only when there's text or editing */}
+          {isEditingObs ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 shrink-0 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <MessageSquare size={13} className="text-amber-600" />
+                <span className="text-[10px] font-black text-amber-700 uppercase tracking-wide">Observaciones ejecutivas</span>
+              </div>
+              <textarea
+                autoFocus
+                value={obsBuffer}
+                onChange={e => setObsBuffer(e.target.value)}
+                placeholder="Ej: Estamos a la espera de resolución de DGA OEA para los próximos pasos..."
+                className="w-full text-sm text-slate-700 bg-white border border-amber-200 rounded-lg p-3 resize-none min-h-[80px] focus:outline-none focus:ring-2 focus:ring-amber-400 placeholder:text-slate-400"
+              />
+              <div className="flex gap-2 mt-2 justify-end">
+                <button
+                  onClick={() => { setIsEditingObs(false); setObsBuffer(observationText); }}
+                  className="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+                >Cancelar</button>
+                <button
+                  onClick={() => { setObservationText(obsBuffer); setIsEditingObs(false); }}
+                  className="text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition-colors flex items-center gap-1"
+                >
+                  <CheckCircle2 size={12} /> Guardar nota
+                </button>
+              </div>
             </div>
-          </div>
+          ) : observationText ? (
+            <div
+              className="bg-amber-50 border-l-4 border-amber-400 rounded-r-xl px-5 py-3.5 shrink-0 shadow-sm cursor-pointer group hover:bg-amber-100/60 transition-colors"
+              onClick={() => { setObsBuffer(observationText); setIsEditingObs(true); }}
+            >
+              <div className="flex items-start gap-2">
+                <MessageSquare size={13} className="text-amber-600 mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-[9px] font-black text-amber-700 uppercase tracking-wide mb-1">Observaciones ejecutivas</p>
+                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{observationText}</p>
+                </div>
+                <Edit2 size={12} className="text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5" />
+              </div>
+            </div>
+          ) : null}
 
           {/* ── BOTTOM: Distribution + Phase Breakdown ── */}
           <div className="grid grid-cols-2 gap-5">
@@ -1767,6 +1792,51 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
               </div>
             </div>
 
+          </div>
+
+          {/* ── DISPLAY CONTROLS TOOLBAR ── — internal UI, not part of screenshot content */}
+          <div className="border-t border-dashed border-slate-200 pt-3 mt-1 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-1.5">
+              <SlidersHorizontal size={11} className="text-slate-300" />
+              <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Opciones de visualización</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowDateRange(v => !v)}
+                className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-colors ${
+                  showDateRange
+                    ? 'bg-white border-slate-200 text-slate-500 hover:border-red-200 hover:text-red-500 hover:bg-red-50'
+                    : 'bg-slate-100 border-slate-200 text-slate-400 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200'
+                }`}
+                title={showDateRange ? 'Ocultar rango del proyecto' : 'Mostrar rango del proyecto'}
+              >
+                {showDateRange ? <EyeOff size={11} /> : <Eye size={11} />}
+                Rango de fechas
+              </button>
+
+              <button
+                onClick={() => { setObsBuffer(observationText); setIsEditingObs(true); }}
+                className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-colors ${
+                  observationText
+                    ? 'bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100'
+                    : 'bg-white border-slate-200 text-slate-500 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200'
+                }`}
+                title={observationText ? 'Editar observaciones' : 'Agregar observación ejecutiva'}
+              >
+                <MessageSquare size={11} />
+                {observationText ? 'Editar nota' : 'Agregar observación'}
+              </button>
+
+              {observationText && (
+                <button
+                  onClick={() => { setObservationText(''); setObsBuffer(''); }}
+                  className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg border border-transparent text-slate-300 hover:text-red-400 hover:border-red-200 hover:bg-red-50 transition-colors"
+                  title="Borrar observación"
+                >
+                  <X size={10} /> Borrar nota
+                </button>
+              )}
+            </div>
           </div>
 
         </div>
