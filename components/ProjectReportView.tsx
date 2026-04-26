@@ -6,6 +6,7 @@ import { Layers, CheckCircle2, Circle, User, X, FileText, Printer, Settings } fr
 interface ProjectReportViewProps {
   projectName: string;
   projects: ProjectTask[];
+  observationText?: string;
   onClose: () => void;
 }
 
@@ -16,7 +17,7 @@ const parseObjDate = (dStr: string) => {
   return new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]));
 };
 
-export default function ProjectReportView({ projectName, projects, onClose }: ProjectReportViewProps) {
+export default function ProjectReportView({ projectName, projects, observationText = '', onClose }: ProjectReportViewProps) {
   const [isConfiguring, setIsConfiguring] = useState(true);
   const [config, setConfig] = useState({
     generatorName: 'Nicolas Andreola',
@@ -24,6 +25,7 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
     showSubtaskDetails: true,
     showTaskDates: true,
     showProjectDates: true,
+    showObservation: true,
     undefinedEndDate: false,
     excludedPhases: [] as string[]
   });
@@ -124,6 +126,16 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
                   </label>
                 )}
               </div>
+
+            {observationText && (
+              <div className="flex items-center gap-3 bg-amber-50 p-3 rounded border border-amber-200 cursor-pointer" onClick={() => setConfig({...config, showObservation: !config.showObservation})}>
+                <input type="checkbox" checked={config.showObservation} readOnly className="w-4 h-4 text-amber-500 rounded" />
+                <div>
+                  <p className="text-sm font-bold text-slate-700">Incluir observación ejecutiva en el reporte</p>
+                  <p className="text-[11px] text-slate-500 italic truncate max-w-[300px]">"{observationText.substring(0, 80)}{observationText.length > 80 ? '...' : ''}"</p>
+                </div>
+              </div>
+            )}
             </div>
 
             <div className="flex flex-col gap-2 bg-slate-50 p-3 rounded border border-slate-200">
@@ -275,6 +287,14 @@ export default function ProjectReportView({ projectName, projects, onClose }: Pr
            </div>
         </div>
 
+
+        {/* Observation Box – rendered only when enabled and has text */}
+        {observationText && config.showObservation && (
+          <div className="mb-8 mt-2 border-l-4 border-amber-400 bg-amber-50/60 px-5 py-4 rounded-r-xl break-inside-avoid">
+            <p className="text-[9px] font-black text-amber-700 uppercase tracking-widest mb-2">● Observaciones ejecutivas</p>
+            <p className="text-[11px] text-slate-700 leading-relaxed whitespace-pre-wrap">{observationText}</p>
+          </div>
+        )}
 
         {/* Section Divider */}
         <div className="flex items-center gap-4 mb-6 mt-16 break-inside-avoid print:mt-10">

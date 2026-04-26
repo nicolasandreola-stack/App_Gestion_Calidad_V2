@@ -12,6 +12,8 @@ interface AdminGanttProps {
   onBulkDeleteProjects?: (ids: string[]) => void;
   onBulkAddProjects?: (projects: ProjectTask[]) => void;
   onBulkUpdateProjects?: (projects: ProjectTask[]) => void;
+  projectObservations?: Record<string, string>;
+  onUpdateObservation?: (projName: string, text: string) => void;
 }
 
 // Helpers for dates (DD/MM/YYYY)
@@ -113,7 +115,7 @@ const SubtaskRowLink = ({ link, closingNote, onSave }: { link: string, closingNo
   );
 };
 
-export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject, onBulkDeleteProjects, onBulkAddProjects, onBulkUpdateProjects }: AdminGanttProps) {
+export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject, onBulkDeleteProjects, onBulkAddProjects, onBulkUpdateProjects, projectObservations = {}, onUpdateObservation }: AdminGanttProps) {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
@@ -449,7 +451,8 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
       {reportProjectName && (
         <ProjectReportView 
           projectName={reportProjectName} 
-          projects={projects} 
+          projects={projects}
+          observationText={projectObservations[reportProjectName] || ''}
           onClose={() => setReportProjectName(null)} 
         />
       )}
@@ -971,6 +974,8 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
         <ProjectDashboardModal
           projectName={activeProjectDashboard}
           grouped={grouped}
+          observationText={projectObservations[activeProjectDashboard] || ''}
+          onSaveObservation={(text: string) => onUpdateObservation && onUpdateObservation(activeProjectDashboard, text)}
           onClose={() => setActiveProjectDashboard(null)}
         />
       )}
@@ -1433,11 +1438,29 @@ const KpiListModal = ({ mode, projects, grouped, uniqueProjects, hiddenProjects,
 };
 
 
-const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
+const ProjectDashboardModal = ({ projectName, grouped, observationText: initialObs = '', onSaveObservation, onClose }: any) => {
   const [showDateRange, setShowDateRange] = React.useState(true);
-  const [observationText, setObservationText] = React.useState('');
+  const [observationText, setObservationText] = React.useState(initialObs);
   const [isEditingObs, setIsEditingObs] = React.useState(false);
-  const [obsBuffer, setObsBuffer] = React.useState('');
+  const [obsBuffer, setObsBuffer] = React.useState(initialObs);
+
+  // Keep in sync if parent reloads observations from cloud
+  React.useEffect(() => {
+    setObservationText(initialObs);
+    setObsBuffer(initialObs);
+  }, [initialObs]);
+
+  const handleSaveObs = (text: string) => {
+    setObservationText(text);
+    setIsEditingObs(false);
+    if (onSaveObservation) onSaveObservation(text);
+  };
+
+  const handleClearObs = () => {
+    setObservationText('');
+    setObsBuffer('');
+    if (onSaveObservation) onSaveObservation('');
+  };
   const mapList = grouped.map.get(projectName);
   if (!mapList) return null;
 
@@ -1636,7 +1659,7 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
                   className="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
                 >Cancelar</button>
                 <button
-                  onClick={() => { setObservationText(obsBuffer); setIsEditingObs(false); }}
+                  onClick={() => handleSaveObs(obsBuffer)}
                   className="text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition-colors flex items-center gap-1"
                 >
                   <CheckCircle2 size={12} /> Guardar nota
@@ -1829,7 +1852,7 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
 
               {observationText && (
                 <button
-                  onClick={() => { setObservationText(''); setObsBuffer(''); }}
+                  onClick={handleClearObs}
                   className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg border border-transparent text-slate-300 hover:text-red-400 hover:border-red-200 hover:bg-red-50 transition-colors"
                   title="Borrar observación"
                 >

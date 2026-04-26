@@ -31,6 +31,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
 
     // Datos globales (Gantt/Proyectos)
     const [globalProjects, setGlobalProjects] = useState<ProjectTask[]>([]);
+    const [projectObservations, setProjectObservations] = useState<Record<string, string>>({});
 
     // Formulario de Delegación
     const [newTaskText, setNewTaskText] = useState("");
@@ -87,6 +88,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
         
         const storedProjects = JSON.parse(localStorage.getItem('v25_global_projects') || '[]');
         setGlobalProjects(storedProjects);
+        const storedObs = JSON.parse(localStorage.getItem('v25_project_observations') || '{}');
+        setProjectObservations(storedObs);
     }, [currentUser]);
 
     // Cargar datos cuando cambia el usuario seleccionado
@@ -335,6 +338,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                         setGlobalProjects(globalData.projects);
                         localStorage.setItem('v25_global_projects', JSON.stringify(globalData.projects));
                     }
+                    if (globalData.projectObservations) {
+                        setProjectObservations(globalData.projectObservations);
+                        localStorage.setItem('v25_project_observations', JSON.stringify(globalData.projectObservations));
+                    }
 
                     if (globalData.users && !Array.isArray(globalData.users)) {
                         Object.keys(globalData.users).forEach(u => {
@@ -531,14 +538,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
         const nextList = globalProjects.filter(p => !idSet.has(p.id));
         setGlobalProjects(nextList);
         localStorage.setItem('v25_global_projects', JSON.stringify(nextList));
-        await syncProjectsCloud(nextList);
+        await syncProjectsCloud(nextList, projectObservations);
     };
-    const syncProjectsCloud = async (newProjects: ProjectTask[]) => {
+
+    const handleUpdateObservation = async (projName: string, text: string) => {
+        const next = { ...projectObservations, [projName]: text };
+        if (!text) delete next[projName];
+        setProjectObservations(next);
+        localStorage.setItem('v25_project_observations', JSON.stringify(next));
+        await syncProjectsCloud(globalProjects, next);
+    };
+    const syncProjectsCloud = async (newProjects: ProjectTask[], newObs?: Record<string, string>) => {
         try {
             const fetchRes = await fetch(`/api/sync/get`);
             if (fetchRes.ok) {
                 const globalData = await fetchRes.json();
                 globalData.projects = newProjects;
+                if (newObs !== undefined) globalData.projectObservations = newObs;
                 globalData.lastUpdate = new Date().toISOString();
                 await fetch(`/api/sync/push`, {
                     method: 'POST',
@@ -971,6 +987,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                         onBulkDeleteProjects={handleBulkDeleteProjects}
                         onBulkAddProjects={handleBulkAddProjects}
                         onBulkUpdateProjects={handleBulkUpdateProjects}
+                        projectObservations={projectObservations}
+                        onUpdateObservation={handleUpdateObservation}
                     />
                 ) : selectedUser ? (
                     <>
