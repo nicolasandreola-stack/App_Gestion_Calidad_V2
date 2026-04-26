@@ -409,7 +409,7 @@ export default function ProjectReportView({ projectName, projects, observationTe
                         <div className="flex-1">
                           <p className={`text-[10px] ${
                             st.completed
-                              ? 'line-through text-slate-400'
+                              ? 'text-slate-400'
                               : 'text-slate-800'
                           }`}>
                             {st.text}
