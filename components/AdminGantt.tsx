@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ProjectTask, ProjectSubtask } from '../types';
 import ProjectReportView from './ProjectReportView';
 import ImportProjectModal from './ImportProjectModal';
-import { Bot, Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronUp, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart, MessageSquare, FileText, Star, BookOpen, Link2 } from 'lucide-react';
+import { Bot, Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronUp, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart, MessageSquare, FileText, Star, BookOpen, Link2, Eye, EyeOff } from 'lucide-react';
 
 interface AdminGanttProps {
   projects: ProjectTask[];
@@ -1434,6 +1434,7 @@ const KpiListModal = ({ mode, projects, grouped, uniqueProjects, hiddenProjects,
 
 
 const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
+  const [showDateRange, setShowDateRange] = React.useState(true);
   const mapList = grouped.map.get(projectName);
   if (!mapList) return null;
 
@@ -1593,20 +1594,43 @@ const ProjectDashboardModal = ({ projectName, grouped, onClose }: any) => {
           </div>
 
           {/* ── DATES BANNER ── */}
-          <div className="bg-white rounded-xl px-5 py-3 shadow-sm border border-slate-100 flex items-center justify-between shrink-0">
+          <div
+            className={`rounded-xl px-5 py-3 shadow-sm border flex items-center justify-between shrink-0 transition-colors ${
+              showDateRange ? 'bg-white border-slate-100' : 'bg-slate-50 border-slate-200 cursor-pointer hover:bg-slate-100'
+            }`}
+            onClick={!showDateRange ? () => setShowDateRange(true) : undefined}
+          >
             <div className="flex items-center gap-2">
               <Calendar size={14} className="text-slate-400" />
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Rango del Proyecto</span>
+              {!showDateRange && (
+                <span className="text-[9px] text-slate-400 italic ml-1">(oculto — clic para mostrar)</span>
+              )}
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm font-bold text-slate-700">{minD}</span>
-              <div className="relative h-1 w-24 bg-slate-100 rounded-full overflow-hidden">
-                <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full" style={{width: `${globalProgress}%`}} />
-              </div>
-              <div>
-                <span className="text-sm font-bold text-slate-700">{maxD}</span>
-                <span className="text-[9px] text-slate-400 font-medium ml-1.5">Fecha de referencia</span>
-              </div>
+              {showDateRange && (
+                <>
+                  <span className="text-sm font-bold text-slate-700">{minD}</span>
+                  <div className="relative h-1 w-24 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full" style={{width: `${globalProgress}%`}} />
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-slate-700">{maxD}</span>
+                    <span className="text-[9px] text-slate-400 font-medium ml-1.5">Fecha de referencia</span>
+                  </div>
+                </>
+              )}
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowDateRange(v => !v); }}
+                className={`p-1 rounded-lg transition-colors ${
+                  showDateRange
+                    ? 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+                    : 'text-blue-500 bg-blue-50 hover:bg-blue-100'
+                }`}
+                title={showDateRange ? 'Ocultar rango del proyecto' : 'Mostrar rango del proyecto'}
+              >
+                {showDateRange ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
             </div>
           </div>
 
