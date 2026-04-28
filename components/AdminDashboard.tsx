@@ -847,29 +847,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                 />
             )}
 
-            {/* ADMIN TOPBAR: User selector + Sync */}
+            {/* ADMIN TOPBAR: User selector (solo en vistas de equipo) + Sync */}
             <div className="h-[50px] bg-white border-b border-borderLight px-4 flex items-center justify-between shrink-0 shadow-sm">
-                <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-textSecondary uppercase tracking-widest">Equipo:</span>
-                    <div className="flex items-center gap-1">
-                        {users.map(u => (
-                            <button
-                                key={u}
-                                onClick={() => { setSelectedUser(u); if (adminViewTab === 'gantt') setAdminViewTab('asignaciones'); }}
-                                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
-                                    (adminViewTab !== 'gantt' && selectedUser === u)
-                                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                                        : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'
-                                }`}
-                            >
-                                <UserCircle size={13} />
-                                <span className="capitalize">{u}</span>
-                                {notifications[u] && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>}
-                            </button>
-                        ))}
-                        {users.length === 0 && <span className="text-xs text-gray-400 italic">Sin usuarios</span>}
+                {adminViewTab !== 'gantt' ? (
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-textSecondary uppercase tracking-widest">Equipo:</span>
+                        <div className="flex items-center gap-1">
+                            {users.map(u => (
+                                <button
+                                    key={u}
+                                    onClick={() => { setSelectedUser(u); if (adminViewTab === 'gantt') setAdminViewTab('asignaciones'); }}
+                                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
+                                        (adminViewTab !== 'gantt' && selectedUser === u)
+                                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                            : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'
+                                    }`}
+                                >
+                                    <UserCircle size={13} />
+                                    <span className="capitalize">{u}</span>
+                                    {notifications[u] && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>}
+                                </button>
+                            ))}
+                            {users.length === 0 && <span className="text-xs text-gray-400 italic">Sin usuarios</span>}
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <div /> /* spacer vacío para mantener el justify-between */
+                )}
                 <div className="flex items-center gap-3">
                     <button onClick={onOpenSearch} className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] bg-slate-800 text-white rounded-full hover:bg-slate-900 transition-all" title="Búsqueda Global (Ctrl+K)">
                         <Search size={13} />
