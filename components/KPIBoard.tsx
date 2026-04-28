@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, CalendarDays, AlertCircle, PauseCircle } from 'lucide-react';
+import { AlertTriangle, CalendarDays, PauseCircle, Activity, CheckCircle2, TrendingDown, Clock } from 'lucide-react';
 
 interface KPIBoardProps {
   routinePercentage: number;
@@ -18,7 +18,6 @@ interface KPIBoardProps {
     high: number;
   };
   standbyCount?: number;
-  // New props for Admin View / Interactivity
   adminAssignedCount?: number;
   onRoutineClick?: () => void;
   onProductivityClick?: () => void;
@@ -27,273 +26,220 @@ interface KPIBoardProps {
   onBottleneckClick?: () => void;
 }
 
-const KPIBoard: React.FC<KPIBoardProps> = ({ 
-    routinePercentage, 
-    tasksDoneToday, 
-    criticalTasksCount, 
-    todayLoad, 
-    overdueCount = 0, 
-    completedBreakdown, 
-    standbyCount = 0,
-    adminAssignedCount,
-    onRoutineClick,
-    onProductivityClick,
-    onOverdueClick,
-    onStandbyClick,
-    onBottleneckClick
+const KPIBoard: React.FC<KPIBoardProps> = ({
+  routinePercentage,
+  tasksDoneToday,
+  criticalTasksCount,
+  todayLoad,
+  overdueCount = 0,
+  completedBreakdown,
+  standbyCount = 0,
+  adminAssignedCount,
+  onRoutineClick,
+  onProductivityClick,
+  onOverdueClick,
+  onStandbyClick,
+  onBottleneckClick,
 }) => {
   const isRoutineComplete = routinePercentage === 100;
-  const isRoutineLow = routinePercentage <= 50; 
-
+  const isRoutineLow = routinePercentage <= 50;
   const isBottleneckWarning = criticalTasksCount >= 5;
   const isOverdueWarning = overdueCount > 0;
   const isStandbyVisible = standbyCount > 0;
-  
-  // LOGICA DE PRODUCTIVIDAD (Gamification)
+
+  // Productivity level
   const prodLowMed = (completedBreakdown?.low || 0) + (completedBreakdown?.med || 0);
   const prodHigh = completedBreakdown?.high || 0;
-
-  // Level Logic
   let level = 0;
   if (prodLowMed >= 2 && prodHigh >= 1) level = 3;
   else if (prodLowMed > 6) level = 2;
   else if (prodLowMed >= 3) level = 1;
 
-  // Clases dinámicas PRODUCTIVIDAD
-  let cardClass = 'bg-white border-borderLight';
-  let titleClass = 'text-textSecondary';
-  let numberClass = 'text-textPrimary';
-  
-  if (level === 1) {
-      cardClass = 'bg-sky-50 border-sky-400';
-      titleClass = 'text-sky-800';
-      numberClass = 'text-sky-700 font-semibold';
-  } else if (level === 2) {
-      cardClass = 'bg-green-50 border-green-600';
-      titleClass = 'text-green-800';
-      numberClass = 'text-green-700 font-semibold';
-  } else if (level === 3) {
-      cardClass = 'bg-green-50 border-green-600 shadow-[0_0_15px_rgba(22,163,74,0.4)] animate-pulse border-2';
-      titleClass = 'text-green-800';
-      numberClass = 'text-green-700 font-bold';
-  }
+  // Routine icon color
+  const routineIconBg = isRoutineComplete
+    ? 'bg-emerald-100 text-emerald-600'
+    : isRoutineLow
+    ? 'bg-orange-100 text-orange-600'
+    : 'bg-indigo-100 text-indigo-600';
 
-  // Clases dinámicas RUTINA
-  let routineCardClass = 'bg-white border-borderLight';
-  let routineProgressColor = 'bg-green-50'; 
-  let routineTextColor = 'text-textPrimary';
+  // Productivity icon color
+  const prodIconBg =
+    level >= 3
+      ? 'bg-emerald-100 text-emerald-600'
+      : level >= 1
+      ? 'bg-sky-100 text-sky-600'
+      : 'bg-emerald-100 text-emerald-600';
 
-  if (isRoutineComplete) {
-      routineCardClass = 'bg-green-50 border-green-600';
-      routineTextColor = 'text-green-700 font-semibold';
-  } else if (isRoutineLow) {
-      routineCardClass = 'bg-orange-50 border-orange-300';
-      routineProgressColor = 'bg-orange-200';
-      routineTextColor = 'text-orange-800 font-semibold';
-  }
+  const renderSubBadge = (label: string, color: string) => (
+    <p className={`text-[9px] font-bold pb-0.5 ${color}`}>{label}</p>
+  );
 
-  const renderChecks = () => {
-      if (level === 0) return null;
-      const checkIcon = (colorClass: string, key: number) => (
-        <svg key={key} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={colorClass}>
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-        </svg>
+  const renderBreakdownDots = () => {
+    const items = [];
+    if ((completedBreakdown?.high || 0) > 0)
+      items.push(
+        <div key="h" className="flex items-center gap-1 text-[9px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded-full border border-rose-100">
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />{completedBreakdown?.high}
+        </div>
       );
-      if (level === 1) return <div className="flex animate-in zoom-in">{checkIcon("text-sky-500", 1)}</div>;
-      if (level === 2) return <div className="flex gap-0.5 animate-in zoom-in">{checkIcon("text-green-600", 1)}{checkIcon("text-green-600", 2)}</div>;
-      if (level === 3) return <div className="flex gap-0.5 animate-in zoom-in">{checkIcon("text-green-600", 1)}{checkIcon("text-green-600", 2)}{checkIcon("text-green-600", 3)}</div>;
-      return null;
+    if ((completedBreakdown?.med || 0) > 0)
+      items.push(
+        <div key="m" className="flex items-center gap-1 text-[9px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-full border border-orange-100">
+          <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />{completedBreakdown?.med}
+        </div>
+      );
+    if ((completedBreakdown?.low || 0) > 0)
+      items.push(
+        <div key="l" className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-100">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />{completedBreakdown?.low}
+        </div>
+      );
+    return items.length > 0 ? <div className="flex items-center gap-1 flex-wrap mt-1">{items}</div> : null;
   };
 
   return (
-    <div className="flex flex-col xl:flex-row gap-6 shrink-0 relative z-10 w-full">
-      <div className="flex gap-4 flex-1">
-        {/* Routine KPI */}
-        <div 
-            onClick={onRoutineClick}
-            className={`flex-1 border rounded-lg p-3 flex flex-col shadow-sm transition-all duration-300 relative overflow-hidden ${routineCardClass} ${onRoutineClick ? 'cursor-pointer hover:shadow-md' : ''}`}
-        >
-            {!isRoutineComplete && (
-                <div 
-                    className={`absolute top-0 left-0 bottom-0 transition-all duration-700 ease-out z-0 ${routineProgressColor}`}
-                    style={{ width: `${routinePercentage}%` }}
-                ></div>
-            )}
+    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 w-full">
 
-            <div className="relative z-10">
-                <div className={`text-[11px] font-bold uppercase mb-0.5 ${isRoutineLow ? 'text-orange-800' : 'text-textSecondary'}`}>
-                    Efectividad Rutina
-                </div>
-                <div className={`text-[26px] font-light leading-tight ${routineTextColor}`}>
-                    {routinePercentage}%
-                </div>
-                <div className={`text-[11px] mt-0.5 ${isRoutineLow ? 'text-orange-700' : 'text-textSecondary'}`}>
-                    Objetivo diario
-                </div>
-            </div>
-            
-            {isRoutineComplete && (
-                <div className="absolute right-3 top-3 text-green-600 animate-in fade-in zoom-in">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                    </svg>
-                </div>
-            )}
-            {!isRoutineComplete && isRoutineLow && (
-                 <div className="absolute right-3 top-3 text-orange-500 animate-pulse">
-                    <AlertCircle size={20} />
-                 </div>
-            )}
+      {/* ── RUTINA ── */}
+      <div
+        onClick={onRoutineClick}
+        className={`bg-white rounded-xl p-4 border shadow-sm flex items-center gap-3 transition-all ${
+          onRoutineClick ? 'cursor-pointer hover:-translate-y-1 hover:shadow-md' : ''
+        } ${isRoutineComplete ? 'border-emerald-300' : isRoutineLow ? 'border-orange-300' : 'border-gray-200'}`}
+      >
+        <div className={`p-3 rounded-lg shrink-0 transition-colors ${routineIconBg}`}>
+          <Activity size={22} />
         </div>
-
-        {/* Productivity KPI */}
-        <div 
-            onClick={onProductivityClick}
-            className={`flex-1 border rounded-lg p-3 flex flex-col shadow-sm transition-all duration-500 relative overflow-hidden ${cardClass} ${onProductivityClick ? 'cursor-pointer hover:shadow-md' : ''}`}
-        >
-            <div className="relative z-10 h-full flex flex-col justify-between">
-                <div>
-                    <div className={`text-[11px] font-bold uppercase mb-0.5 ${titleClass}`}>Productividad</div>
-                    <div className={`text-[26px] font-light leading-tight ${numberClass}`}>
-                    {tasksDoneToday}
-                    </div>
-                    <div className={`text-[11px] mt-0.5 ${level === 1 ? 'text-sky-600' : level >= 2 ? 'text-green-600' : 'text-textSecondary'}`}>
-                        Hechas Hoy
-                    </div>
-                </div>
-
-                <div className="flex flex-col items-start gap-1 mt-1">
-                    <div className="flex items-center gap-1">
-                        {(completedBreakdown?.high || 0) > 0 && (
-                            <div className="flex items-center gap-1 text-[9px] font-bold text-red-600 bg-red-100/80 px-1.5 py-0.5 rounded-full" title="Complejas Hechas">
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span> {completedBreakdown?.high}
-                            </div>
-                        )}
-                        {(completedBreakdown?.med || 0) > 0 && (
-                            <div className="flex items-center gap-1 text-[9px] font-bold text-orange-600 bg-orange-100/80 px-1.5 py-0.5 rounded-full" title="Medias Hechas">
-                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span> {completedBreakdown?.med}
-                            </div>
-                        )}
-                        {(completedBreakdown?.low || 0) > 0 && (
-                            <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-100/80 px-1.5 py-0.5 rounded-full" title="Rápidas Hechas">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {completedBreakdown?.low}
-                            </div>
-                        )}
-                    </div>
-                    
-                    {/* Admin Assigned Counter */}
-                    {adminAssignedCount !== undefined && adminAssignedCount > 0 && (
-                        <div className="text-[9px] bg-gray-200/80 text-gray-700 px-1.5 py-0.5 rounded-full inline-flex items-center w-fit font-bold border border-gray-300">
-                            <span className="w-1.5 h-1.5 rounded-full bg-gray-600 mr-1"></span>
-                            Admin: {adminAssignedCount}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div className="absolute right-3 top-3 z-20">
-                {renderChecks()}
-            </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-bold text-slate-500 uppercase leading-tight">Efectividad Rutina</p>
+          <div className="flex items-end gap-2 mt-0.5">
+            <p className={`text-xl font-black leading-tight ${isRoutineComplete ? 'text-emerald-700' : isRoutineLow ? 'text-orange-700' : 'text-slate-800'}`}>
+              {routinePercentage}%
+            </p>
+          </div>
+          <div className="mt-1.5 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-700 ${isRoutineComplete ? 'bg-emerald-500' : isRoutineLow ? 'bg-orange-400' : 'bg-indigo-500'}`}
+              style={{ width: `${routinePercentage}%` }}
+            />
+          </div>
+          {renderSubBadge('Objetivo diario', isRoutineComplete ? 'text-emerald-600' : isRoutineLow ? 'text-orange-600' : 'text-slate-400')}
         </div>
       </div>
 
-      <div className="flex gap-4 flex-[1.5]">
-         {/* Agenda Hoy KPI */}
-         <div className="flex-[1.3] bg-white border border-borderLight rounded-lg p-3 flex flex-col shadow-sm">
-            <div className="flex justify-between items-start mb-0.5">
-                <div className="text-[11px] text-textSecondary font-bold uppercase">Agenda Hoy</div>
-                <CalendarDays size={20} className="text-accentBlue opacity-60" />
-            </div>
-            <div className="text-[26px] font-light leading-tight text-textPrimary">
-                {todayLoad?.total || 0}
-            </div>
-            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-               {(todayLoad?.high || 0) > 0 && (
-                   <div className="flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full border border-red-100">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span> {todayLoad?.high}
-                   </div>
-               )}
-               {(todayLoad?.med || 0) > 0 && (
-                   <div className="flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-full border border-orange-100">
-                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span> {todayLoad?.med}
-                   </div>
-               )}
-               {(todayLoad?.low || 0) > 0 && (
-                   <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-100">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {todayLoad?.low}
-                   </div>
-               )}
-               {(todayLoad?.total === 0) && <span className="text-[10px] text-gray-400">Sin tareas</span>}
-            </div>
+      {/* ── PRODUCTIVIDAD ── */}
+      <div
+        onClick={onProductivityClick}
+        className={`bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-3 transition-all ${
+          onProductivityClick ? 'cursor-pointer hover:-translate-y-1 hover:shadow-md' : ''
+        } ${level >= 2 ? 'border-emerald-300' : level === 1 ? 'border-sky-300' : 'border-gray-200'}`}
+      >
+        <div className={`p-3 rounded-lg shrink-0 ${prodIconBg}`}>
+          <CheckCircle2 size={22} />
         </div>
-
-         {/* Vencidas KPI */}
-         <div 
-            onClick={onOverdueClick}
-            className={`flex-1 border rounded-lg p-3 flex flex-col shadow-sm transition-all duration-300 ${
-             isOverdueWarning ? 'bg-red-50 border-red-300' : 'bg-white border-borderLight'
-            } ${onOverdueClick ? 'cursor-pointer hover:shadow-md' : ''}`}
-         >
-             <div className="flex justify-between items-start mb-0.5">
-                <div className={`text-[11px] font-bold uppercase ${isOverdueWarning ? 'text-red-800' : 'text-textSecondary'}`}>
-                    Vencidas
-                </div>
-                {isOverdueWarning && <AlertCircle size={20} className="text-red-600 animate-pulse" />}
-             </div>
-             <div className={`text-[26px] font-light leading-tight ${isOverdueWarning ? 'text-red-700 font-semibold' : 'text-textPrimary'}`}>
-                 {overdueCount}
-             </div>
-             <div className="text-[11px] text-textSecondary mt-0.5 truncate">
-                 {isOverdueWarning ? 'Reprogramar' : 'Al día'}
-             </div>
-         </div>
-
-         {/* Standby KPI */}
-         <div 
-            onClick={onStandbyClick}
-            className={`flex-1 border border-borderLight bg-slate-50 rounded-lg p-3 flex flex-col shadow-sm ${onStandbyClick ? 'cursor-pointer hover:shadow-md' : ''}`}
-         >
-             <div className="flex justify-between items-start mb-0.5">
-                <div className="text-[11px] font-bold uppercase text-slate-700">
-                    Standby
-                </div>
-                {isStandbyVisible && <PauseCircle size={20} className="text-slate-400" />}
-             </div>
-             <div className="text-[26px] font-light leading-tight text-slate-700">
-                 {standbyCount}
-             </div>
-             <div className="text-[11px] text-slate-500 mt-0.5 truncate">
-                 En espera
-             </div>
-         </div>
-
-        {/* Bottleneck KPI */}
-        <div 
-            onClick={onBottleneckClick}
-            className={`flex-1 border rounded-lg p-3 flex flex-col shadow-sm transition-all duration-300 ${
-                isBottleneckWarning 
-                    ? 'bg-amber-50 border-amber-300' 
-                    : 'bg-white border-borderLight'
-            } ${onBottleneckClick ? 'cursor-pointer hover:shadow-md' : ''}`}
-        >
-            <div className="flex justify-between items-start mb-0.5">
-                <div className={`text-[11px] font-bold uppercase ${isBottleneckWarning ? 'text-amber-800' : 'text-textSecondary'}`}>
-                    Cuello B.
-                </div>
-                {isBottleneckWarning && <AlertTriangle size={20} className="text-amber-600" />}
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-bold text-slate-500 uppercase leading-tight">Productividad</p>
+          <p className={`text-xl font-black leading-tight mt-0.5 ${level >= 2 ? 'text-emerald-700' : level === 1 ? 'text-sky-700' : 'text-slate-800'}`}>
+            {tasksDoneToday}
+          </p>
+          {renderBreakdownDots()}
+          {!renderBreakdownDots() && renderSubBadge('Hechas Hoy', 'text-slate-400')}
+          {adminAssignedCount !== undefined && adminAssignedCount > 0 && (
+            <div className="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full inline-flex items-center w-fit font-bold border border-slate-200 mt-1">
+              Admin: {adminAssignedCount}
             </div>
-            
-            <div className={`text-[26px] font-light leading-tight ${isBottleneckWarning ? 'text-amber-700 font-semibold' : 'text-textPrimary'}`}>
+          )}
+        </div>
+      </div>
+
+      {/* ── AGENDA HOY ── */}
+      <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-3">
+        <div className="bg-blue-100 text-blue-600 p-3 rounded-lg shrink-0">
+          <CalendarDays size={22} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-bold text-slate-500 uppercase leading-tight">Agenda Hoy</p>
+          <p className="text-xl font-black text-slate-800 leading-tight mt-0.5">{todayLoad?.total || 0}</p>
+          <div className="flex items-center gap-1 flex-wrap mt-1">
+            {(todayLoad?.high || 0) > 0 && (
+              <div className="flex items-center gap-1 text-[9px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded-full border border-rose-100">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />{todayLoad?.high}
+              </div>
+            )}
+            {(todayLoad?.med || 0) > 0 && (
+              <div className="flex items-center gap-1 text-[9px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-full border border-orange-100">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />{todayLoad?.med}
+              </div>
+            )}
+            {(todayLoad?.low || 0) > 0 && (
+              <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-100">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />{todayLoad?.low}
+              </div>
+            )}
+            {(todayLoad?.total === 0) && <span className="text-[9px] text-slate-400 font-medium">Sin tareas</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* ── VENCIDAS ── */}
+      <div
+        onClick={onOverdueClick}
+        className={`bg-white rounded-xl p-4 border shadow-sm flex items-center gap-3 transition-all ${
+          onOverdueClick ? 'cursor-pointer hover:-translate-y-1 hover:shadow-md' : ''
+        } ${isOverdueWarning ? 'border-red-300' : 'border-gray-200'}`}
+      >
+        <div className={`p-3 rounded-lg shrink-0 transition-colors ${isOverdueWarning ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400'}`}>
+          {isOverdueWarning ? <AlertTriangle size={22} /> : <Clock size={22} />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-bold text-slate-500 uppercase leading-tight">Vencidas</p>
+          <p className={`text-xl font-black leading-tight mt-0.5 ${isOverdueWarning ? 'text-red-600' : 'text-slate-800'}`}>
+            {overdueCount}
+          </p>
+          {renderSubBadge(isOverdueWarning ? 'Reprogramar' : 'Al día', isOverdueWarning ? 'text-red-500' : 'text-slate-400')}
+        </div>
+        {isOverdueWarning && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />}
+      </div>
+
+      {/* ── STANDBY ── */}
+      <div
+        onClick={onStandbyClick}
+        className={`bg-white rounded-xl p-4 border shadow-sm flex items-center gap-3 transition-all ${
+          onStandbyClick ? 'cursor-pointer hover:-translate-y-1 hover:shadow-md' : ''
+        } ${isStandbyVisible ? 'border-amber-300' : 'border-gray-200'}`}
+      >
+        <div className={`p-3 rounded-lg shrink-0 ${isStandbyVisible ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>
+          <PauseCircle size={22} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-bold text-slate-500 uppercase leading-tight">Standby</p>
+          <p className={`text-xl font-black leading-tight mt-0.5 ${isStandbyVisible ? 'text-amber-700' : 'text-slate-800'}`}>
+            {standbyCount}
+          </p>
+          {renderSubBadge('En espera', isStandbyVisible ? 'text-amber-500' : 'text-slate-400')}
+        </div>
+      </div>
+
+      {/* ── CUELLO DE BOTELLA ── */}
+      <div
+        onClick={onBottleneckClick}
+        className={`bg-white rounded-xl p-4 border shadow-sm flex items-center gap-3 transition-all ${
+          onBottleneckClick ? 'cursor-pointer hover:-translate-y-1 hover:shadow-md' : ''
+        } ${isBottleneckWarning ? 'border-rose-300' : 'border-gray-200'}`}
+      >
+        <div className={`p-3 rounded-lg shrink-0 ${isBottleneckWarning ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500'}`}>
+          <TrendingDown size={22} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-bold text-slate-500 uppercase leading-tight">Cuello B.</p>
+          <p className={`text-xl font-black leading-tight mt-0.5 ${isBottleneckWarning ? 'text-rose-600' : 'text-slate-800'}`}>
             {criticalTasksCount}
-            </div>
-            
-            <div className="text-[11px] text-textSecondary mt-0.5 truncate">
-                Complejas
-            </div>
+          </p>
+          {renderSubBadge('Complejas', isBottleneckWarning ? 'text-rose-500' : 'text-slate-400')}
         </div>
+        {isBottleneckWarning && <AlertTriangle size={14} className="text-rose-500 shrink-0 animate-pulse" />}
       </div>
+
     </div>
   );
 };

@@ -231,7 +231,6 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
     let badgeClass = '';
     let compText = COMPLEXITY_LABELS[task.comp];
     
-    // Colores suavizados (Pasteles) para complejidad
     if (task.comp === 'low') badgeClass = 'bg-emerald-50 text-emerald-600 border border-emerald-100';
     else if (task.comp === 'med') badgeClass = 'bg-orange-50 text-orange-600 border border-orange-100';
     else badgeClass = 'bg-rose-50 text-rose-600 border border-rose-100';
@@ -254,9 +253,9 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
         onDragLeave={group ? handleDragLeave : undefined}
         onDrop={group ? (e) => handleDrop(e, task.id, group) : undefined}
         onDragEnd={group ? (e) => handleDragEnd(e, task.id) : undefined}
-        className={`border-b border-[#F1F3F4] last:border-0 group transition-all ${isStandby ? 'bg-gray-50' : 'bg-white'} ${isDragging ? 'opacity-50' : ''} ${isDragOver ? 'border-t-2 border-t-accentBlue bg-blue-50/30' : ''}`}
+        className={`border-b border-slate-100 last:border-0 group transition-all ${isStandby ? 'bg-amber-50/40' : 'bg-white'} ${isDragging ? 'opacity-50' : ''} ${isDragOver ? 'border-t-2 border-t-blue-400 bg-blue-50/30' : ''}`}
       >
-        <div className="flex items-center px-4 py-2 hover:bg-[#F8F9FA] transition-colors relative">
+        <div className="flex items-center px-4 py-2 hover:bg-slate-50/80 transition-colors relative">
           {/* Drag Handle */}
           {group && (
             <div className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 mr-2 shrink-0" title="Arrastrar para reordenar">
@@ -302,13 +301,13 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
 
             {/* Date Badge logic */}
             {task.date && (
-                 <span className={`text-[10px] px-1.5 rounded flex items-center gap-1 font-mono shrink-0 ${task.date < todayStr ? 'text-red-500 bg-red-50' : 'text-gray-500 bg-gray-100'}`}>
+                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1 font-mono font-bold shrink-0 border ${task.date < todayStr ? 'text-red-600 bg-red-50 border-red-100' : task.date === todayStr ? 'text-blue-600 bg-blue-50 border-blue-100' : 'text-slate-500 bg-slate-50 border-slate-100'}`}>
                     {task.date === todayStr ? 'HOY' : task.date.slice(5)}
                  </span>
             )}
 
             {task.del && (
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 flex items-center gap-1 shrink-0">
+                <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-100 text-blue-700 border border-blue-200 flex items-center gap-1 shrink-0">
                   <User size={8} /> {task.del}
                 </span>
             )}
@@ -332,7 +331,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
             </span>
             
             {/* Standby Indicator Text */}
-            {isStandby && <span className="text-[9px] text-amber-600 font-bold ml-1 bg-amber-50 px-1 rounded border border-amber-100">PAUSA</span>}
+            {isStandby && <span className="text-[9px] text-amber-700 font-bold ml-1 bg-amber-100 px-1.5 py-0.5 rounded-full border border-amber-200">PAUSA</span>}
 
             {/* Admin Query Badge */}
             {task.del?.toLowerCase() === 'admin' && task.adminComments && onAdminQuery && (
@@ -537,44 +536,40 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
   );
 
   return (
-    <div className="flex-[1.5] flex flex-col bg-white border border-borderLight rounded-lg overflow-hidden h-auto md:h-full transition-all duration-300">
-      {/* Header */}
-      <div className="bg-[#FAFAFA] px-4 py-2.5 border-b border-borderLight flex justify-between items-center shrink-0">
+    <div className="flex-[1.5] flex flex-col bg-white border border-gray-200 rounded-xl overflow-hidden h-auto md:h-full shadow-sm transition-all duration-300">
+      {/* ── HEADER ESTILO GANTT ── */}
+      <div className="bg-slate-800 px-4 py-3 flex justify-between items-center shrink-0">
         <div className="flex items-center gap-2">
-            <span className="text-[13px] font-semibold text-textPrimary uppercase">Gestión de Proyectos</span>
-            {viewMode === 'matrix' && <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100 font-bold">MATRIZ EISENHOWER</span>}
+            <span className="text-[11px] font-bold text-white uppercase tracking-wider">Gestión de Proyectos</span>
+            {viewMode === 'matrix' && <span className="text-[10px] bg-indigo-500 text-white px-2 py-0.5 rounded-full font-bold">EISENHOWER</span>}
         </div>
-        <div className="flex gap-2">
-             {/* View Toggle */}
-             <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-borderLight">
+        <div className="flex gap-1 items-center">
+             <div className="flex items-center bg-white/10 rounded-lg p-0.5">
                 <button 
                     onClick={() => setViewMode('list')}
-                    className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-accentBlue' : 'text-gray-400 hover:text-gray-600'}`}
+                    className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-300 hover:text-white'}`}
                     title="Vista Lista"
                 >
-                    <List size={14} />
+                    <List size={13} />
                 </button>
                 <button 
                     onClick={() => setViewMode('matrix')}
-                    className={`p-1.5 rounded-md transition-all ${viewMode === 'matrix' ? 'bg-white shadow-sm text-accentBlue' : 'text-gray-400 hover:text-gray-600'}`}
+                    className={`p-1.5 rounded-md transition-all ${viewMode === 'matrix' ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-300 hover:text-white'}`}
                     title="Vista Matriz Eisenhower"
                 >
-                    <LayoutDashboard size={14} />
+                    <LayoutDashboard size={13} />
                 </button>
              </div>
-             
-             {/* Completed Registry Button */}
              <button 
                 onClick={onOpenCompletedRegistry}
-                className="text-xs text-textSecondary hover:text-accentBlue px-2 py-1 rounded hover:bg-gray-200 transition-colors border border-transparent hover:border-gray-200 flex items-center gap-1"
+                className="p-1.5 rounded-md hover:bg-white/20 text-slate-300 hover:text-white transition-colors flex items-center gap-1"
                 title="Ver tareas finalizadas"
              >
-                <FolderCheck size={14} /> Archivo
+                <FolderCheck size={13} />
              </button>
-
             <button 
                 onClick={onOpenHistory}
-                className="text-xs text-textSecondary hover:text-textPrimary px-2 py-1 rounded hover:bg-gray-200 transition-colors border border-transparent hover:border-gray-200"
+                className="text-[10px] font-bold text-slate-400 hover:text-white px-2 py-1 rounded hover:bg-white/20 transition-colors"
             >
                 Log
             </button>
@@ -583,31 +578,39 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
 
       {/* TABS SWITCHER (Only in List Mode) */}
       {viewMode === 'list' && (
-        <div className="flex border-b border-borderLight bg-white shrink-0">
+        <div className="flex border-b border-gray-200 bg-white shrink-0">
             <button 
                 onClick={() => setActiveTab('agenda')}
-                className={`flex-1 py-2 text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'agenda' ? 'border-accentBlue text-accentBlue bg-blue-50/50' : 'border-transparent text-textSecondary hover:bg-gray-50'}`}
+                className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 border-b-2 transition-colors ${
+                  activeTab === 'agenda'
+                    ? 'border-blue-500 text-blue-600 bg-blue-50/60'
+                    : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                }`}
             >
-                <Calendar size={14} /> Agenda Planificada
+                <Calendar size={13} /> Agenda Planificada
             </button>
             <button 
                 onClick={() => setActiveTab('backlog')}
-                className={`flex-1 py-2 text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'backlog' ? 'border-accentBlue text-accentBlue bg-blue-50/50' : 'border-transparent text-textSecondary hover:bg-gray-50'}`}
+                className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 border-b-2 transition-colors ${
+                  activeTab === 'backlog'
+                    ? 'border-blue-500 text-blue-600 bg-blue-50/60'
+                    : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                }`}
             >
-                <Inbox size={14} /> Backlog / Caja
+                <Inbox size={13} /> Backlog / Caja
             </button>
         </div>
       )}
 
-      {/* Filter Bar (Visible in both modes for global filtering) */}
-      <div className="px-4 py-2 border-b border-borderLight flex flex-wrap items-center gap-2 md:gap-3 bg-white shrink-0">
-        <span className="text-[11px] font-bold text-gray-400 uppercase flex items-center gap-1">
-          <Filter size={10} /> Filtrar:
+      {/* Filter Bar */}
+      <div className="px-4 py-2 border-b border-gray-100 flex flex-wrap items-center gap-2 bg-slate-50/60 shrink-0">
+        <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
+          <Filter size={9} /> Filtrar:
         </span>
         <select 
           value={filterCat} 
           onChange={(e) => setFilterCat(e.target.value as any)}
-          className="bg-[#F1F3F4] border-none rounded-full px-3 py-0.5 text-[11px] font-medium text-textSecondary cursor-pointer outline-none hover:bg-gray-200"
+          className="bg-white border border-slate-200 rounded-full px-2.5 py-0.5 text-[10px] font-bold text-slate-600 cursor-pointer outline-none hover:border-slate-300 shadow-sm"
         >
           <option value="all">Todas</option>
           <option value="SGI">SGI</option>
@@ -616,11 +619,10 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
           <option value="OEA">OEA</option>
           <option value="Otro">Otro</option>
         </select>
-
         <select 
           value={filterComp} 
           onChange={(e) => setFilterComp(e.target.value as any)}
-          className="bg-[#F1F3F4] border-none rounded-full px-3 py-0.5 text-[11px] font-medium text-textSecondary cursor-pointer outline-none hover:bg-gray-200"
+          className="bg-white border border-slate-200 rounded-full px-2.5 py-0.5 text-[10px] font-bold text-slate-600 cursor-pointer outline-none hover:border-slate-300 shadow-sm"
         >
           <option value="all">Todas</option>
           <option value="low">Rápida</option>
@@ -629,8 +631,8 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
         </select>
       </div>
 
-      {/* Input Form (Grid Layout) - Always Visible to add tasks quickly */}
-      <div className="bg-[#FAFAFA] p-4 border-b border-borderLight flex flex-col gap-2 shrink-0">
+      {/* Input Form */}
+      <div className="bg-slate-50 p-4 border-b border-gray-200 flex flex-col gap-2 shrink-0">
         {/* Row 1 */}
         <div className="flex flex-col md:flex-row gap-2">
           <input 
@@ -759,8 +761,10 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
                     {/* Overdue */}
                     {agendaGroups.overdue.length > 0 && (
                         <div className="mb-0">
-                            <div className="bg-red-50 px-4 py-1.5 text-xs font-bold text-red-700 border-b border-red-100 sticky top-0 z-10">
-                                ⚠ Atrasadas
+                            <div className="bg-red-50 border-y border-red-100 px-4 py-2 flex items-center gap-2 sticky top-0 z-10">
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                              <span className="text-[10px] font-bold text-red-700 uppercase tracking-wide">⚠ Atrasadas</span>
+                              <span className="ml-auto text-[9px] font-bold bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full">{agendaGroups.overdue.length}</span>
                             </div>
                             {agendaGroups.overdue.map(t => renderTaskRow(t, false, 'overdue'))}
                         </div>
@@ -768,12 +772,13 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
 
                     {/* Today */}
                     <div className="mb-0">
-                        <div className="bg-blue-50 px-4 py-1.5 text-xs font-bold text-blue-700 border-b border-blue-100 flex justify-between sticky top-0 z-10">
-                            <span>📅 Hoy ({agendaGroups.today.length})</span>
-                            <span className="font-normal opacity-70">{todayStr}</span>
+                        <div className="bg-blue-50 border-y border-blue-100 px-4 py-2 flex items-center gap-2 sticky top-0 z-10">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                          <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wide">📅 Hoy ({agendaGroups.today.length})</span>
+                          <span className="ml-auto text-[9px] text-slate-400 font-mono">{todayStr}</span>
                         </div>
                         {agendaGroups.today.length === 0 && (
-                            <div className="flex flex-col items-center justify-center py-8 text-gray-400 opacity-60">
+                            <div className="flex flex-col items-center justify-center py-8 text-slate-400 opacity-60">
                                 <Sun size={32} className="mb-2 text-amber-400/70" strokeWidth={1.5} />
                                 <p className="text-[11px] font-medium mt-1">Todo listo por hoy</p>
                             </div>
@@ -783,9 +788,11 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
 
                     {/* Tomorrow */}
                     {agendaGroups.tomorrow.length > 0 && (
-                        <div className="mb-0 border-t border-gray-100">
-                            <div className="bg-gray-50 px-4 py-1.5 text-xs font-bold text-gray-600 border-b border-gray-200 sticky top-0 z-10">
-                                🔜 Mañana
+                        <div className="mb-0">
+                            <div className="bg-slate-100 border-y border-slate-200 px-4 py-2 flex items-center gap-2 sticky top-0 z-10">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                              <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">🔜 Mañana</span>
+                              <span className="ml-auto text-[9px] font-bold bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full">{agendaGroups.tomorrow.length}</span>
                             </div>
                             {agendaGroups.tomorrow.map(t => renderTaskRow(t, false, 'tomorrow'))}
                         </div>
@@ -793,9 +800,11 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
 
                     {/* Upcoming */}
                     {agendaGroups.upcoming.length > 0 && (
-                        <div className="mb-0 border-t border-gray-100">
-                            <div className="bg-gray-50 px-4 py-1.5 text-xs font-bold text-gray-500 border-b border-gray-200 sticky top-0 z-10">
-                                🗓️ Próximos Días
+                        <div className="mb-0">
+                            <div className="bg-slate-50 border-y border-slate-200 px-4 py-2 flex items-center gap-2 sticky top-0 z-10">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">🗓️ Próximos Días</span>
+                              <span className="ml-auto text-[9px] font-bold bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-full">{agendaGroups.upcoming.length}</span>
                             </div>
                             {agendaGroups.upcoming.map(t => renderTaskRow(t, false, 'upcoming'))}
                         </div>
