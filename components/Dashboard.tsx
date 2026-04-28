@@ -6,6 +6,7 @@ import TaskPanel from './TaskPanel';
 import { RoutineModal, TaskModal, HistoryModal, RoutineManagerModal, NoteActionModal, CompletedTasksModal, KPIDetailsModal, AchievementsModal, StatsModal } from './Modals';
 import AsistenteChat from './AsistenteChat';
 import CloudSyncModal from './CloudSyncModal';
+import QuickLinksSidebar from './QuickLinksSidebar';
 import { Task, RoutineItem, RoutineState, HistoryEntry, BackupData, GlobalCloudData, Achievement } from '../types';
 import { Trophy, MessageSquare, Send, Loader2, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -77,6 +78,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
   const [showCompletedRegistry, setShowCompletedRegistry] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showQuickLinks, setShowQuickLinks] = useState(false);
   const [achievementPopup, setAchievementPopup] = useState<Achievement | null>(null);
 
   // Detail Modal State (KPIs)
@@ -804,6 +806,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
         syncStatus={syncStatus}
         autoSyncEnabled={autoSyncEnabled}
         onToggleAutoSync={setAutoSyncEnabled}
+        onOpenQuickLinks={() => setShowQuickLinks(true)}
       />
 
       <span id="kpi-routine-value" className="hidden">{routinePct}%</span>
@@ -855,6 +858,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
           onAdminQuery={(task) => { setAdminQueryModal(task); setReplyText(''); }}
         />
       </main>
+
+      {/* Quick Links Sidebar */}
+      <QuickLinksSidebar
+        isOpen={showQuickLinks}
+        onClose={() => setShowQuickLinks(false)}
+        onOpenAssistant={() => { setShowQuickLinks(false); setShowAssistant(true); }}
+      />
 
       {/* Modals */}
       {actionType === 'complete' && actionTask && (

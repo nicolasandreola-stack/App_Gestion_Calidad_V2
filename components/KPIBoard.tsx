@@ -103,9 +103,9 @@ const KPIBoard: React.FC<KPIBoardProps> = ({
       {/* ── RUTINA ── */}
       <div
         onClick={onRoutineClick}
-        className={`bg-white rounded-xl p-4 border shadow-sm flex items-center gap-3 transition-all ${
+        className={`bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-3 transition-all ${
           onRoutineClick ? 'cursor-pointer hover:-translate-y-1 hover:shadow-md' : ''
-        } ${isRoutineComplete ? 'border-emerald-300' : isRoutineLow ? 'border-orange-300' : 'border-gray-200'}`}
+        }`}
       >
         <div className={`p-3 rounded-lg shrink-0 transition-colors ${routineIconBg}`}>
           <Activity size={22} />
@@ -184,9 +184,9 @@ const KPIBoard: React.FC<KPIBoardProps> = ({
       {/* ── VENCIDAS ── */}
       <div
         onClick={onOverdueClick}
-        className={`bg-white rounded-xl p-4 border shadow-sm flex items-center gap-3 transition-all ${
+        className={`bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-3 transition-all ${
           onOverdueClick ? 'cursor-pointer hover:-translate-y-1 hover:shadow-md' : ''
-        } ${isOverdueWarning ? 'border-red-300' : 'border-gray-200'}`}
+        }`}
       >
         <div className={`p-3 rounded-lg shrink-0 transition-colors ${isOverdueWarning ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400'}`}>
           {isOverdueWarning ? <AlertTriangle size={22} /> : <Clock size={22} />}

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Search, Folder, BarChart3, Bot, Save, Upload, LogOut, UserCircle, Shield, Cloud, Menu, X, ChevronDown, ChevronUp, FileSpreadsheet, FolderOpen, FileText, Table, ExternalLink, Mail, Loader2, CheckCircle2, AlertCircle, Calendar, Trophy, BarChart2 } from 'lucide-react';
+import { Search, Save, Upload, LogOut, UserCircle, Shield, Cloud, Menu, X, Loader2, CheckCircle2, AlertCircle, Trophy, BarChart2, LayoutGrid, Bot } from 'lucide-react';
 
 interface HeaderProps {
   user?: string;
@@ -11,34 +11,19 @@ interface HeaderProps {
   onOpenCloud?: () => void;
   onOpenAchievements?: () => void;
   onOpenStats?: () => void;
+  onOpenQuickLinks?: () => void;
   syncStatus?: 'idle' | 'syncing' | 'saved' | 'error' | 'unsaved';
   autoSyncEnabled?: boolean;
   onToggleAutoSync?: (enabled: boolean) => void;
   onOpenSearch?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, onExport, onImport, onOpenAssistant, onLogout, onSwitchToAdmin, onOpenCloud, onOpenAchievements, onOpenStats, syncStatus = 'idle', autoSyncEnabled = true, onToggleAutoSync, onOpenSearch }) => {
+const Header: React.FC<HeaderProps> = ({ user, onExport, onImport, onOpenAssistant, onLogout, onSwitchToAdmin, onOpenCloud, onOpenAchievements, onOpenStats, onOpenQuickLinks, syncStatus = 'idle', autoSyncEnabled = true, onToggleAutoSync, onOpenSearch }) => {
   const dateStr = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
-  const logoUrl = "https://drive.google.com/thumbnail?id=1BkFrIklMROkiE8ekHz3UpWjw7Yoo58dW&sz=h200"; 
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element;
-      if (!target.closest('.dropdown-trigger') && !target.closest('.dropdown-content')) {
-        setOpenDropdown(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const toggleDropdown = (name: string) => {
-    setOpenDropdown(prev => prev === name ? null : name);
-  };
+  const logoUrl = "https://drive.google.com/thumbnail?id=1BkFrIklMROkiE8ekHz3UpWjw7Yoo58dW&sz=h200";
 
   /* --- HELPER PARA STATUS CLOUD --- */
   const renderCloudStatus = () => {
@@ -57,43 +42,6 @@ const Header: React.FC<HeaderProps> = ({ user, onExport, onImport, onOpenAssista
   };
 
   /* --- DESKTOP COMPONENTS --- */
-  const DropdownButton: React.FC<{ id: string; label: string; icon: React.ReactNode; children: React.ReactNode }> = ({ id, label, icon, children }) => {
-    const isOpen = openDropdown === id;
-    return (
-      <div className="relative inline-block shrink-0">
-        <button 
-          onClick={() => toggleDropdown(id)}
-          className={`dropdown-trigger flex items-center gap-2 px-4 py-1.5 text-[13px] border rounded-full transition-all whitespace-nowrap ${
-            isOpen ? 'bg-gray-100 border-gray-400 text-textPrimary' : 'bg-white text-textPrimary border-borderLight hover:bg-gray-50 hover:border-gray-400'
-          }`}
-        >
-          {icon}
-          <span>{label}</span>
-          <ChevronDown size={12} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-        </button>
-        {isOpen && (
-          <div className="dropdown-content absolute top-full left-0 mt-1 w-60 bg-white border border-borderLight shadow-lg rounded-lg py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
-            {children}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const DropdownLink: React.FC<{ href: string; label: string; icon?: React.ReactNode; onClick?: () => void }> = ({ href, label, icon, onClick }) => (
-    <a 
-      href={href} 
-      target={href === '#' ? undefined : "_blank"} 
-      rel={href === '#' ? undefined : "noopener noreferrer"}
-      onClick={(e) => { 
-        if(onClick) { e.preventDefault(); onClick(); }
-      }}
-      className="flex items-center gap-3 px-4 py-2 text-[13px] text-textPrimary hover:bg-gray-100 transition-colors"
-    >
-      {icon && <span className="text-textSecondary">{icon}</span>}
-      <span>{label}</span>
-    </a>
-  );
 
   return (
     <header className="h-[50px] px-5 bg-white border-b border-borderLight flex justify-between items-center shadow-sm z-20 shrink-0 relative">
@@ -124,41 +72,15 @@ const Header: React.FC<HeaderProps> = ({ user, onExport, onImport, onOpenAssista
           <Search size={14} /> <span className="hidden xl:inline text-[10px] text-slate-300 font-mono tracking-widest pl-1 border-l border-slate-600 ml-1">Ctrl K</span>
         </button>
 
-        <a href="https://mail.google.com/mail/u/0/?tab=rm&ogbl#inbox" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-1.5 text-[13px] bg-white text-textPrimary border border-borderLight rounded-full hover:bg-gray-50 hover:border-gray-400 transition-all whitespace-nowrap" title="Ir a Gmail">
-          <Mail size={14} className="text-red-500" /> <span>Gmail</span>
-        </a>
-
-        <a href="https://calendar.google.com/calendar/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-1.5 text-[13px] bg-white text-textPrimary border border-borderLight rounded-full hover:bg-gray-50 hover:border-gray-400 transition-all whitespace-nowrap" title="Ir a Google Calendar">
-          <Calendar size={14} className="text-blue-500" /> <span>Calendar</span>
-        </a>
-
-        <DropdownButton id="drive" label="Drive" icon={<Folder size={14} />}>
-          <DropdownLink href="https://drive.google.com" label="Mi Unidad" icon={<Folder size={14} />} />
-          <DropdownLink href="https://drive.google.com/drive/u/0/folders/0AOfY-G1iWo0sUk9PVA" label="Unidad Compartida" icon={<FolderOpen size={14} />} />
-          <DropdownLink href="https://drive.google.com/drive/u/0/folders/1CotTzY1cnyunmSyc_EuFx5EtbVD84Cl7" label="SGI Editable" icon={<FileText size={14} />} />
-          <DropdownLink href="https://drive.google.com/drive/u/0/folders/15ak2dn13Q8sU-0mdw29QL3dHlbJEJnZU" label="Proyecto OEA" icon={<Folder size={14} />} />
-        </DropdownButton>
-
-        <DropdownButton id="planillas" label="Planillas" icon={<FileSpreadsheet size={14} />}>
-          <DropdownLink href="https://docs.google.com/spreadsheets/d/1ZiXnwneacTfx2oomicru8Qef13-B_YpEaQgQcjbbuG8/edit?gid=0#gid=0" label="Incidentes Operativos" icon={<Table size={14} />} />
-          <DropdownLink href="https://docs.google.com/spreadsheets/d/1ZiXnwneacTfx2oomicru8Qef13-B_YpEaQgQcjbbuG8/edit?gid=347181817#gid=347181817" label="Desvíos Forms" icon={<Table size={14} />} />
-          <DropdownLink href="https://docs.google.com/spreadsheets/d/1ZiXnwneacTfx2oomicru8Qef13-B_YpEaQgQcjbbuG8/edit?gid=265138253#gid=265138253" label="OM Forms" icon={<Table size={14} />} />
-        </DropdownButton>
-
-        <DropdownButton id="kpis" label="KPIs" icon={<BarChart3 size={14} />}>
-          <DropdownLink href="https://lookerstudio.google.com/u/0/reporting/072e72ce-4622-4813-b7c2-e9d5ee2bb2bd/page/p_pct0u764zd" label="Dashboard General" icon={<BarChart3 size={14} />} />
-          <DropdownLink href="https://lookerstudio.google.com/u/0/reporting/c634ad6a-c311-4989-bfea-983eb6ed8b36/page/p_m452s0ue0d" label="Panel de seguimiento" icon={<Table size={14} />} />
-        </DropdownButton>
-
-        <DropdownButton id="ia" label="IA" icon={<Bot size={14} />}>
-          <DropdownLink href="#" label="Asistente Desvíos" onClick={onOpenAssistant} icon={<Bot size={14} />} />
-          <div className="h-px bg-gray-100 my-1"></div>
-          <DropdownLink href="https://chatgpt.com" label="ChatGPT" icon={<ExternalLink size={14} />} />
-          <DropdownLink href="https://gemini.google.com" label="Gemini" icon={<ExternalLink size={14} />} />
-          <DropdownLink href="https://aistudio.google.com/" label="Google AI Studio" icon={<ExternalLink size={14} />} />
-          <DropdownLink href="https://notebooklm.google.com/" label="Notebook LM" icon={<ExternalLink size={14} />} />
-          <DropdownLink href="https://make.com" label="Make" icon={<ExternalLink size={14} />} />
-        </DropdownButton>
+        {/* Botón panel de accesos rápidos */}
+        <button
+          onClick={onOpenQuickLinks}
+          className="flex items-center gap-2 px-3 py-1.5 text-[13px] bg-white text-textPrimary border border-borderLight rounded-full hover:bg-slate-50 hover:border-slate-400 transition-all whitespace-nowrap"
+          title="Accesos Rápidos"
+        >
+          <LayoutGrid size={14} className="text-slate-500" />
+          <span className="hidden lg:inline">Accesos</span>
+        </button>
 
         <div className="w-px h-5 bg-borderLight mx-1 shrink-0"></div>
 
