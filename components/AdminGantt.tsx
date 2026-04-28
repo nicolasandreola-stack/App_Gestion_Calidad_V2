@@ -383,7 +383,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
           <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
             <Layers className="text-blue-600" /> Diagrama de Gantt Global
           </h2>
-          <p className="text-xs text-slate-500 mt-1">Gestión de Tareas Planificadas, Fases y Líneas de Tiempo.</p>
+          <p className="text-xs text-slate-500 mt-1">Gestión avanzada de Proyectos, Fases y Líneas de Tiempo.</p>
         </div>
         <div className="flex items-center gap-3">
           <button 

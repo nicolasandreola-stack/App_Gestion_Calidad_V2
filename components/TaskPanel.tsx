@@ -540,7 +540,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({
       {/* ── HEADER ESTILO GANTT ── */}
       <div className="bg-slate-800 px-4 py-3 flex justify-between items-center shrink-0">
         <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-white uppercase tracking-wider">Gestión de Proyectos</span>
+            <span className="text-[11px] font-bold text-white uppercase tracking-wider">Planificación de Tareas</span>
             {viewMode === 'matrix' && <span className="text-[10px] bg-indigo-500 text-white px-2 py-0.5 rounded-full font-bold">EISENHOWER</span>}
         </div>
         <div className="flex gap-1 items-center">
