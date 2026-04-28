@@ -46,7 +46,7 @@ const NAV_ITEMS = [
   },
   {
     id: 'gantt' as AppView,
-    label: 'Gestión de Proyectos',
+    label: 'Gestión de Tareas Planificadas',
     icon: <BarChart2 size={18} />,
     adminOnly: true,
     description: 'Diagrama Gantt',
