@@ -13,6 +13,7 @@ function App() {
   const [activeView, setActiveView] = useState<AppView>('tasks');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showAssistant, setShowAssistant] = useState(false);
+  const [showTokenHelp, setShowTokenHelp] = useState(false);
 
   // Escuchar atajo global Ctrl+K o Cmd+K
   useEffect(() => {
@@ -73,6 +74,8 @@ function App() {
         currentUser={currentUser}
         onOpenSearch={() => setIsSearchOpen(true)}
         initialTab="asignaciones"
+        showTokenHelpExternal={showTokenHelp}
+        onCloseTokenHelpExternal={() => setShowTokenHelp(false)}
       />
     );
   } else {
@@ -83,6 +86,8 @@ function App() {
         currentUser={currentUser}
         onOpenSearch={() => setIsSearchOpen(true)}
         initialTab="gantt"
+        showTokenHelpExternal={showTokenHelp}
+        onCloseTokenHelpExternal={() => setShowTokenHelp(false)}
       />
     );
   }
@@ -97,6 +102,7 @@ function App() {
         currentUser={currentUser}
         onLogout={handleLogout}
         onOpenAssistant={() => setShowAssistant(true)}
+        onShowTokenHelp={isSuperUser ? () => setShowTokenHelp(true) : undefined}
       />
 
       {/* Área de contenido principal */}

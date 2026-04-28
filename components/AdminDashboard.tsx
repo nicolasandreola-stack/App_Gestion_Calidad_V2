@@ -11,6 +11,8 @@ interface AdminDashboardProps {
     currentUser: string;
     onOpenSearch?: () => void;
     initialTab?: 'asignaciones' | 'vista_rapida' | 'gantt';
+    showTokenHelpExternal?: boolean;
+    onCloseTokenHelpExternal?: () => void;
 }
 
 // VERSION CONTROL (Synced with Personal Dashboard)
@@ -18,7 +20,7 @@ const LAST_UPDATE = new Date().toLocaleString('es-ES', {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
 });
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, onOpenSearch, initialTab = 'asignaciones' }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, onOpenSearch, initialTab = 'asignaciones', showTokenHelpExternal, onCloseTokenHelpExternal }) => {
     const [users, setUsers] = useState<string[]>([]);
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
 
@@ -65,6 +67,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
     useEffect(() => {
         setAdminViewTab(initialTab);
     }, [initialTab]);
+
+    // Sincronizar token help externo (disparado desde AppSidebar)
+    useEffect(() => {
+        if (showTokenHelpExternal) setShowTokenHelp(true);
+    }, [showTokenHelpExternal]);
+
+    useEffect(() => {
+        if (!showTokenHelp && onCloseTokenHelpExternal) onCloseTokenHelpExternal();
+    }, [showTokenHelp]);
 
     // Modal Details State
     const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -681,149 +692,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
     };
 
     return (
-        <div className="flex h-screen bg-bgBody font-sans overflow-hidden">
-
-            {/* SIDEBAR */}
-            <aside className="w-64 bg-white border-r border-borderLight flex flex-col shrink-0 z-20 shadow-sm overflow-hidden relative">
-                <div className="p-5 border-b border-borderLight flex items-center gap-3 shrink-0">
-                    <img src={logoUrl} className="h-8 w-auto object-contain" referrerPolicy="no-referrer" />
-                    <div>
-                        <h1 className="font-bold text-textPrimary text-sm">ADMINISTRADOR</h1>
-                        <p className="text-[10px] text-textSecondary">Panel de Control</p>
-                    </div>
-                </div>
-
-                {/* Global Search Button */}
-                <div className="p-4 border-b border-borderLight shrink-0 bg-[#F8F9FA]">
-                    <button 
-                        onClick={onOpenSearch} 
-                        className="w-full flex items-center justify-between px-3 py-2 text-sm bg-white border border-gray-200 text-gray-500 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all group"
-                        title="Búsqueda Global en SGI"
-                    >
-                        <div className="flex items-center gap-2">
-                            <Search size={16} className="text-gray-400 group-hover:text-blue-500 transition-colors" /> 
-                            <span className="font-medium text-gray-600 group-hover:text-gray-800">Buscar...</span>
-                        </div>
-                        <span className="text-[10px] font-mono font-bold bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200 text-gray-400 group-hover:text-blue-500 transition-colors">Ctrl K</span>
-                    </button>
-                </div>
-
-                {/* User List & Gantt Toggle */}
-                <div className="p-4 flex-1 overflow-y-auto">
-                    <div className="mb-4">
-                        <h3 className="text-xs font-bold text-textSecondary uppercase mb-2 px-2">Gestión de Proyectos</h3>
-                        <button
-                            onClick={() => setAdminViewTab('gantt')}
-                            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm w-full transition-colors ${adminViewTab === 'gantt' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-slate-700 hover:bg-gray-50'}`}
-                        >
-                            <Layers size={18} />
-                            Diagrama Gantt
-                        </button>
-                    </div>
-
-                    <h3 className="text-xs font-bold text-textSecondary uppercase mb-3 px-2">Equipo ({users.length})</h3>
-                    <div className="flex flex-col gap-1">
-                        {users.length === 0 && <p className="text-xs text-gray-400 px-2">No hay otros usuarios.</p>}
-                        {users.map(u => (
-                            <button
-                                key={u}
-                                onClick={() => { setSelectedUser(u); setAdminViewTab('asignaciones'); }}
-                                className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors w-full ${(adminViewTab !== 'gantt' && selectedUser === u) ? 'bg-blue-50 text-accentBlue font-medium border border-blue-100' : 'text-textPrimary hover:bg-gray-50'}`}
-                            >
-                                <div className="flex items-center gap-3 truncate">
-                                    <UserCircle size={18} />
-                                    <span className="capitalize truncate">{u}</span>
-                                </div>
-                                {notifications[u] && (
-                                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span>
-                                )}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Sync Controls */}
-                <div className="px-4 pb-2 flex flex-col gap-2 shrink-0">
-                    <div className="flex items-center justify-between text-[10px] text-textSecondary px-1">
-                        <span className="flex items-center gap-1"><Clock size={10} /> {lastUpdate || '---'}</span>
-                        <label className="flex items-center gap-1 cursor-pointer">
-                            <input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} className="accent-accentBlue" />
-                            Auto (1m)
-                        </label>
-                    </div>
-                    <button
-                        onClick={() => handleGlobalSync(false)}
-                        disabled={isSyncing}
-                        className="w-full bg-blue-50 text-accentBlue border border-blue-100 hover:bg-blue-100 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-                    >
-                        <RefreshCw size={14} className={isSyncing ? "animate-spin" : ""} />
-                        {isSyncing ? "Sincronizando..." : "Actualizar Todo"}
-                    </button>
-                </div>
-
-                {/* DEVELOPER TOOLS SECTION */}
-                <div className="border-t border-borderLight bg-gray-50 flex flex-col shrink-0">
-                    <button
-                        onClick={() => setIsDevToolsOpen(!isDevToolsOpen)}
-                        className="w-full flex items-center justify-between px-4 py-3 text-[10px] font-bold text-gray-400 uppercase hover:bg-gray-100 transition-colors"
-                    >
-                        <span className="flex items-center gap-1"><Code size={10} /> Configuración App</span>
-                        {isDevToolsOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                    </button>
-
-                    {isDevToolsOpen && (
-                        <div className="px-3 pb-3 overflow-y-auto max-h-[200px] shrink-0 custom-scrollbar animate-in slide-in-from-top-2">
-                            <div className="flex flex-col gap-0.5">
-                                <DevLink
-                                    href="https://aistudio.google.com/apps/drive/1o2S1UoYnTzYmAiU1RuMNs5iyiIPLaOxa?showAssistant=true&showPreview=true"
-                                    icon={<Code size={14} />}
-                                    label="Google AI Studio (Proyecto)"
-                                />
-                                <DevLink
-                                    href="https://aistudio.google.com/app/api-keys?projectFilter=gen-lang-client-0508130572"
-                                    icon={<Key size={14} />}
-                                    label="Google AI Studio (API Key)"
-                                />
-                                <DevLink
-                                    href="https://console.cloud.google.com/auth/clients/270210570235-64gpfb89fi5s39514h6l88osv72hijrp.apps.googleusercontent.com?project=gen-lang-client-0377615287&rapt=AEjHL4PCn5e4kGpigTK6p-NzzDsS2QeVyn55Q4W3hb-VC_Nv8ugvsgOSF7wTD0PhAGxIpESC8q-Gdc15Dd5jcbS8TNAyyywbSsFso_TwZMzohtfhBWenIYk"
-                                    icon={<ShieldAlert size={14} />}
-                                    label="Google Cloud (Origenes)"
-                                />
-                                <DevLink
-                                    onClick={() => setShowTokenHelp(true)}
-                                    icon={<ShieldAlert size={14} className="text-red-500" />}
-                                    label="Generar Token Drive"
-                                    warning="⚠️ IMPORTANTE: LEER AVISO"
-                                />
-                                <div className="h-px bg-gray-200 my-1"></div>
-                                <DevLink
-                                    href="https://github.com/nicolasandreola-stack/app-gestion-proyectos/tree/main"
-                                    icon={<Github size={14} />}
-                                    label="GitHub Repo"
-                                />
-                                <DevLink
-                                    href="https://vercel.com/nicolas-projects-21bdaad2/app-gestion-proyectos/ANTBf1mPoxYf7rFindzf7h7M1aZY"
-                                    icon={<Server size={14} />}
-                                    label="Vercel Project"
-                                />
-                                <DevLink
-                                    href="https://docs.google.com/document/d/1lnlpmdTaTUIAWvMMGN_KX-PI4KvyOwz2xzkKJ2HR0MQ/edit?tab=t.0"
-                                    icon={<FileText size={14} />}
-                                    label="Bitácora Proyecto"
-                                />
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                <div className="p-4 border-t border-borderLight flex flex-col gap-2 shrink-0 bg-white">
-                    <button onClick={onLogout} className="flex items-center gap-2 text-red-500 hover:bg-red-50 px-3 py-2 rounded-lg w-full transition-colors text-sm">
-                        <LogOut size={16} /> Cerrar Sesión
-                    </button>
-                </div>
-            </aside>
-
-            {/* COMMENT / CONSULTA MODAL */}
+        <div className="flex flex-col h-full bg-bgBody font-sans overflow-hidden">
             {commentModalTask && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-purple-100 animate-in zoom-in-95 duration-300">
@@ -977,6 +846,50 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                     onClose={() => setShowCompletedRegistry(false)}
                 />
             )}
+
+            {/* ADMIN TOPBAR: User selector + Sync */}
+            <div className="h-[50px] bg-white border-b border-borderLight px-4 flex items-center justify-between shrink-0 shadow-sm">
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-textSecondary uppercase tracking-widest">Equipo:</span>
+                    <div className="flex items-center gap-1">
+                        {users.map(u => (
+                            <button
+                                key={u}
+                                onClick={() => { setSelectedUser(u); if (adminViewTab === 'gantt') setAdminViewTab('asignaciones'); }}
+                                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
+                                    (adminViewTab !== 'gantt' && selectedUser === u)
+                                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                        : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'
+                                }`}
+                            >
+                                <UserCircle size={13} />
+                                <span className="capitalize">{u}</span>
+                                {notifications[u] && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>}
+                            </button>
+                        ))}
+                        {users.length === 0 && <span className="text-xs text-gray-400 italic">Sin usuarios</span>}
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <button onClick={onOpenSearch} className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] bg-slate-800 text-white rounded-full hover:bg-slate-900 transition-all" title="Búsqueda Global (Ctrl+K)">
+                        <Search size={13} />
+                        <span className="hidden lg:inline text-[10px] text-slate-300 font-mono tracking-widest pl-1 border-l border-slate-600 ml-1">Ctrl K</span>
+                    </button>
+                    <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-500">
+                        <input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} className="accent-accentBlue" />
+                        Auto (1m)
+                    </label>
+                    {lastUpdate && <span className="flex items-center gap-1 text-[10px] text-slate-400"><Clock size={10} />{lastUpdate}</span>}
+                    <button
+                        onClick={() => handleGlobalSync(false)}
+                        disabled={isSyncing}
+                        className="flex items-center gap-1.5 bg-blue-50 text-accentBlue border border-blue-100 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                    >
+                        <RefreshCw size={13} className={isSyncing ? 'animate-spin' : ''} />
+                        {isSyncing ? 'Sincronizando...' : 'Actualizar'}
+                    </button>
+                </div>
+            </div>
 
             {/* MAIN CONTENT */}
             <main className="flex-1 flex flex-col overflow-hidden relative">

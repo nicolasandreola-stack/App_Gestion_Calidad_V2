@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ListTodo, Users, BarChart2, ChevronLeft, ChevronRight,
   Globe, Folder, FolderOpen, FileText, Table, FileSpreadsheet,
   BarChart3, Bot, ExternalLink, ChevronDown, Mail, Calendar,
-  LayoutGrid, LogOut, UserCircle, Shield
+  LogOut, UserCircle, Shield, Settings, Code, Key, ShieldAlert,
+  Github, Server
 } from 'lucide-react';
 
 export type AppView = 'tasks' | 'team' | 'gantt';
@@ -15,6 +16,7 @@ interface AppSidebarProps {
   currentUser: string;
   onLogout: () => void;
   onOpenAssistant: () => void;
+  onShowTokenHelp?: () => void;
 }
 
 interface QuickLinkGroup {
@@ -58,11 +60,14 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
   currentUser,
   onLogout,
   onOpenAssistant,
+  onShowTokenHelp,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
   });
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(isCollapsed));
@@ -72,6 +77,18 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
   useEffect(() => {
     if (isCollapsed) setOpenGroup(null);
   }, [isCollapsed]);
+
+  // Cerrar settings al hacer click fuera
+  useEffect(() => {
+    if (!isSettingsOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+        setIsSettingsOpen(false);
+      }
+    };
+    const t = setTimeout(() => document.addEventListener('mousedown', handler), 50);
+    return () => { clearTimeout(t); document.removeEventListener('mousedown', handler); };
+  }, [isSettingsOpen]);
 
   const quickLinkGroups: QuickLinkGroup[] = [
     {
@@ -304,8 +321,72 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
         )}
       </div>
 
-      {/* ── Footer: Logout ── */}
-      <div className={`border-t border-slate-700/60 shrink-0 ${isCollapsed ? 'flex justify-center p-2' : 'px-3 py-2'}`}>
+      {/* ── Footer: Config (admin) + Logout ── */}
+      <div className={`border-t border-slate-700/60 shrink-0 ${isCollapsed ? 'flex flex-col items-center gap-1 p-2' : 'px-3 py-2 flex flex-col gap-1'}`}>
+        {/* Botón Configuración — solo admins */}
+        {isAdmin && (
+          <div className="relative" ref={settingsRef}>
+            <button
+              onClick={() => setIsSettingsOpen(prev => !prev)}
+              title="Configuración App"
+              className={`flex items-center gap-2.5 rounded-lg transition-colors ${
+                isSettingsOpen ? 'text-white bg-slate-700/60' : 'text-slate-500 hover:text-white hover:bg-slate-700/50'
+              } ${isCollapsed ? 'p-2.5' : 'px-3 py-2 w-full'}`}
+            >
+              <Settings size={15} className="shrink-0" />
+              {!isCollapsed && <span className="text-[12px] font-medium">Configuración</span>}
+            </button>
+
+            {/* Popover de links */}
+            {isSettingsOpen && (
+              <div className={`absolute bottom-full mb-2 z-50 w-64 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-150 ${
+                isCollapsed ? 'left-full ml-2 bottom-0 mb-0' : 'left-0'
+              }`}>
+                <div className="px-3 py-2 border-b border-slate-700">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Configuración App</p>
+                </div>
+                <div className="py-1">
+                  {[
+                    { href: 'https://aistudio.google.com/apps/drive/1o2S1UoYnTzYmAiU1RuMNs5iyiIPLaOxa?showAssistant=true&showPreview=true', icon: <Code size={13} />, label: 'Google AI Studio (Proyecto)' },
+                    { href: 'https://aistudio.google.com/app/api-keys?projectFilter=gen-lang-client-0508130572', icon: <Key size={13} />, label: 'Google AI Studio (API Key)' },
+                    { href: 'https://console.cloud.google.com/auth/clients/270210570235-64gpfb89fi5s39514h6l88osv72hijrp.apps.googleusercontent.com?project=gen-lang-client-0377615287', icon: <ShieldAlert size={13} />, label: 'Google Cloud (Orígenes)' },
+                    { href: '#', icon: <ShieldAlert size={13} className="text-red-400" />, label: 'Generar Token Drive', warning: '⚠️ LEER AVISO', action: onShowTokenHelp },
+                  ].map((item, i) => (
+                    <a key={i}
+                      href={item.href}
+                      target={item.href === '#' ? undefined : '_blank'}
+                      rel={item.href === '#' ? undefined : 'noopener noreferrer'}
+                      onClick={(e) => { if (item.action) { e.preventDefault(); setIsSettingsOpen(false); item.action(); } }}
+                      className="flex items-center gap-2.5 px-3 py-2 text-[11.5px] text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors"
+                    >
+                      <span className="text-slate-500 shrink-0">{item.icon}</span>
+                      <span className="flex-1 truncate">{item.label}</span>
+                      {item.warning && <span className="text-[9px] text-red-400 font-bold shrink-0">{item.warning}</span>}
+                    </a>
+                  ))}
+                  <div className="h-px bg-slate-700 mx-3 my-1" />
+                  {[
+                    { href: 'https://github.com/nicolasandreola-stack/app-gestion-proyectos/tree/main', icon: <Github size={13} />, label: 'GitHub Repo' },
+                    { href: 'https://vercel.com/nicolas-projects-21bdaad2/app-gestion-proyectos/ANTBf1mPoxYf7rFindzf7h7M1aZY', icon: <Server size={13} />, label: 'Vercel Project' },
+                    { href: 'https://docs.google.com/document/d/1lnlpmdTaTUIAWvMMGN_KX-PI4KvyOwz2xzkKJ2HR0MQ/edit?tab=t.0', icon: <FileText size={13} />, label: 'Bitácora Proyecto' },
+                  ].map((item, i) => (
+                    <a key={i}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2.5 px-3 py-2 text-[11.5px] text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors"
+                    >
+                      <span className="text-slate-500 shrink-0">{item.icon}</span>
+                      <span className="flex-1 truncate">{item.label}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Logout */}
         <button
           onClick={onLogout}
           title="Cerrar Sesión"
