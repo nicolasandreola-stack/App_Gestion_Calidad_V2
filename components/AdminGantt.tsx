@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { ProjectTask, ProjectSubtask } from '../types';
 import ProjectReportView from './ProjectReportView';
 import ImportProjectModal from './ImportProjectModal';
-import { Bot, Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronUp, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart, MessageSquare, FileText, Star, BookOpen, Link2, Eye, EyeOff, SlidersHorizontal } from 'lucide-react';
+import { Bot, Plus, Edit2, CheckCircle2, Circle, ChevronDown, ChevronUp, ChevronRight, X, ExternalLink, Calendar, Info, CheckSquare, AlignLeft, Layers, AlertTriangle, User, FolderKanban, TrendingUp, Clock, Activity, PieChart, BarChart, MessageSquare, FileText, Star, BookOpen, Link2, Eye, EyeOff, SlidersHorizontal, Search } from 'lucide-react';
 
 interface AdminGanttProps {
   projects: ProjectTask[];
@@ -140,6 +140,40 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
     } catch (e) {}
     return new Set();
   });
+
+  // ── Búsqueda local de proyectos ──
+  const [isProjectSearchOpen, setIsProjectSearchOpen] = useState(false);
+  const [projectSearchQuery, setProjectSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isProjectSearchOpen) setTimeout(() => searchInputRef.current?.focus(), 50);
+    else setProjectSearchQuery('');
+  }, [isProjectSearchOpen]);
+
+  const projectSearchResults = useMemo(() => {
+    const q = projectSearchQuery.trim().toLowerCase();
+    if (!q) return [];
+    const seen = new Set<string>();
+    const results: { type: 'project' | 'task'; project: string; phase?: string; taskName?: string; assignee?: string; status?: string; id: string }[] = [];
+    projects.forEach(p => {
+      const projectMatch = p.project.toLowerCase().includes(q);
+      const phaseMatch = p.phase.toLowerCase().includes(q);
+      const taskMatch = p.name.toLowerCase().includes(q);
+      const assigneeMatch = (p.assignee || '').toLowerCase().includes(q);
+      const statusMatch = (p.status || '').toLowerCase().includes(q);
+      const subtaskMatch = p.subtasks?.some(s => s.text.toLowerCase().includes(q));
+
+      if (projectMatch && !seen.has(p.project)) {
+        seen.add(p.project);
+        results.push({ type: 'project', project: p.project, id: p.project });
+      }
+      if (phaseMatch || taskMatch || assigneeMatch || statusMatch || subtaskMatch) {
+        results.push({ type: 'task', project: p.project, phase: p.phase, taskName: p.name, assignee: p.assignee, status: p.status, id: p.id });
+      }
+    });
+    return results.slice(0, 20);
+  }, [projectSearchQuery, projects]);
 
   // Grouping
   const grouped = useMemo(() => {
@@ -377,15 +411,100 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
 
   return (
     <div className="flex flex-col h-full bg-slate-50 relative overflow-hidden">
-      {/* Header Info */}
-      <div className="p-5 border-b border-gray-200 bg-white flex justify-between items-center shrink-0">
-        <div>
-          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <Layers className="text-blue-600" /> Diagrama de Gantt Global
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">Gestión avanzada de Proyectos, Fases y Líneas de Tiempo.</p>
+      {/* Búsqueda de Proyectos (modal local) */}
+      {isProjectSearchOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[990] flex items-start justify-center pt-[8vh]" onClick={() => setIsProjectSearchOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
+              <Search size={16} className="text-slate-400 shrink-0" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Buscar en proyectos, fases, tareas, responsables..."
+                value={projectSearchQuery}
+                onChange={e => setProjectSearchQuery(e.target.value)}
+                className="flex-1 text-sm text-slate-800 placeholder:text-slate-400 outline-none bg-transparent"
+              />
+              {projectSearchQuery && (
+                <button onClick={() => setProjectSearchQuery('')} className="text-slate-400 hover:text-slate-600">
+                  <X size={14} />
+                </button>
+              )}
+              <kbd className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-mono">ESC</kbd>
+            </div>
+            <div className="max-h-[400px] overflow-y-auto py-2">
+              {!projectSearchQuery && (
+                <p className="text-center text-slate-400 text-xs py-8">Ingresá un término para buscar en proyectos</p>
+              )}
+              {projectSearchQuery && projectSearchResults.length === 0 && (
+                <p className="text-center text-slate-400 text-xs py-8">Sin resultados para "{projectSearchQuery}"</p>
+              )}
+              {projectSearchResults.map((r, i) => (
+                <div key={i} className="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer border-b border-slate-50 last:border-0"
+                  onClick={() => {
+                    setIsProjectSearchOpen(false);
+                    // Expandir el proyecto correspondiente
+                    setExpandedProjects(prev => { const n = new Set(prev); n.delete(r.project); return n; });
+                  }}
+                >
+                  {r.type === 'project' ? (
+                    <>
+                      <div className="w-5 h-5 rounded bg-slate-800 flex items-center justify-center shrink-0 mt-0.5">
+                        <FolderKanban size={11} className="text-white" />
+                      </div>
+                      <div>
+                        <p className="text-[12px] font-bold text-slate-800">{r.project}</p>
+                        <p className="text-[10px] text-slate-400">Proyecto</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-5 h-5 rounded bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <CheckSquare size={11} className="text-blue-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-semibold text-slate-700 truncate">{r.taskName}</p>
+                        <p className="text-[10px] text-slate-400">{r.project} › {r.phase} {r.assignee ? `• ${r.assignee}` : ''}</p>
+                      </div>
+                      {r.status && (
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                          r.status === 'CERRADO' ? 'bg-emerald-100 text-emerald-700' :
+                          r.status === 'EN PROGRESO' ? 'bg-blue-100 text-blue-700' :
+                          'bg-slate-100 text-slate-500'
+                        }`}>{r.status}</span>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+            {projectSearchResults.length > 0 && (
+              <div className="px-4 py-2 border-t border-slate-100 text-[10px] text-slate-400">
+                {projectSearchResults.length} resultado{projectSearchResults.length !== 1 ? 's' : ''} — Enter en un resultado para ir al proyecto
+              </div>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+      )}
+
+      {/* Header Info */}
+      <div className="p-4 border-b border-gray-200 bg-white flex justify-between items-center shrink-0">
+        <div>
+          <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+            <Layers className="text-blue-600" size={18} /> Diagrama de Gantt Global
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">Gestión avanzada de Proyectos, Fases y Líneas de Tiempo.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Botón Buscar (búsqueda local de proyectos) */}
+          <button
+            onClick={() => setIsProjectSearchOpen(true)}
+            className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border border-slate-200"
+            title="Buscar en proyectos (Ctrl+K)"
+          >
+            <Search size={13} /> Buscar
+          </button>
+
           <button 
             onClick={() => {
               if (uniqueProjects.length === 1) {
@@ -396,18 +515,18 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                 alert("No hay proyectos activos para reportar.");
               }
             }}
-            className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-slate-300"
+            className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border border-slate-200"
             title="Generar Reporte de Alta Dirección..."
           >
-            <FileText size={16} /> Generar Reporte
+            <FileText size={13} /> Reporte
           </button>
           
           <button 
             onClick={() => setShowImportModal(true)}
-            className="bg-violet-100 hover:bg-violet-200 text-violet-700 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors border border-violet-200"
-            title="Importar Proyecto desde IA (NotebookLM)"
+            className="bg-violet-100 hover:bg-violet-200 text-violet-700 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-violet-200"
+            title="Importar Proyecto desde IA"
           >
-            <Bot size={16} /> Importar AI
+            <Bot size={13} /> Importar AI
           </button>
 
           <button 
@@ -416,9 +535,9 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
               startDate: formatDate(new Date()), endDate: formatDate(new Date(new Date().setDate(new Date().getDate() + 5))),
               assignee: '', progress: 0, status: 'PENDIENTE', subtasks: [], details: '', link: ''
             })}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
           >
-            <Plus size={16} /> Nueva Tarea
+            <Plus size={13} /> Nueva Tarea
           </button>
         </div>
       </div>
