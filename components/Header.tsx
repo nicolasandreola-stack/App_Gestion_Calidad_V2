@@ -1,5 +1,5 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Search, Save, Upload, LogOut, UserCircle, Shield, Cloud, Menu, X, Loader2, CheckCircle2, AlertCircle, Trophy, BarChart2, LayoutGrid, Bot } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Search, Save, Upload, LogOut, Cloud, Menu, X, Loader2, CheckCircle2, AlertCircle, Trophy, BarChart2, Bot } from 'lucide-react';
 
 interface HeaderProps {
   user?: string;
@@ -7,18 +7,16 @@ interface HeaderProps {
   onImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onOpenAssistant: () => void;
   onLogout?: () => void;
-  onSwitchToAdmin?: () => void;
   onOpenCloud?: () => void;
   onOpenAchievements?: () => void;
   onOpenStats?: () => void;
-  onOpenQuickLinks?: () => void;
   syncStatus?: 'idle' | 'syncing' | 'saved' | 'error' | 'unsaved';
   autoSyncEnabled?: boolean;
   onToggleAutoSync?: (enabled: boolean) => void;
   onOpenSearch?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, onExport, onImport, onOpenAssistant, onLogout, onSwitchToAdmin, onOpenCloud, onOpenAchievements, onOpenStats, onOpenQuickLinks, syncStatus = 'idle', autoSyncEnabled = true, onToggleAutoSync, onOpenSearch }) => {
+const Header: React.FC<HeaderProps> = ({ user, onExport, onImport, onOpenAssistant, onLogout, onOpenCloud, onOpenAchievements, onOpenStats, syncStatus = 'idle', autoSyncEnabled = true, onToggleAutoSync, onOpenSearch }) => {
   const dateStr = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -55,31 +53,8 @@ const Header: React.FC<HeaderProps> = ({ user, onExport, onImport, onOpenAssista
       </div>
 
       <div className="hidden md:flex items-center gap-3 h-full pl-4">
-        {onSwitchToAdmin && (
-          <button onClick={onSwitchToAdmin} className="flex items-center gap-2 bg-gray-800 text-white px-3 py-1.5 rounded-full text-[12px] font-bold hover:bg-black transition-colors mr-2 shadow-sm animate-in fade-in" title="Ver Panel de Equipo">
-            <Shield size={12} /> ADMIN
-          </button>
-        )}
-
-        {user && (
-          <div className="flex items-center gap-2 mr-2 bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
-            <UserCircle size={16} className="text-accentBlue" />
-            <span className="text-xs font-bold text-textSecondary uppercase">{user}</span>
-          </div>
-        )}
-
-        <button onClick={onOpenSearch} className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] bg-slate-800 text-white rounded-full hover:bg-slate-900 transition-all font-medium mr-2" title="Búsqueda Global (Ctrl+K)">
+        <button onClick={onOpenSearch} className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] bg-slate-800 text-white rounded-full hover:bg-slate-900 transition-all font-medium" title="Búsqueda Global (Ctrl+K)">
           <Search size={14} /> <span className="hidden xl:inline text-[10px] text-slate-300 font-mono tracking-widest pl-1 border-l border-slate-600 ml-1">Ctrl K</span>
-        </button>
-
-        {/* Botón panel de accesos rápidos */}
-        <button
-          onClick={onOpenQuickLinks}
-          className="flex items-center gap-2 px-3 py-1.5 text-[13px] bg-white text-textPrimary border border-borderLight rounded-full hover:bg-slate-50 hover:border-slate-400 transition-all whitespace-nowrap"
-          title="Accesos Rápidos"
-        >
-          <LayoutGrid size={14} className="text-slate-500" />
-          <span className="hidden lg:inline">Accesos</span>
         </button>
 
         <div className="w-px h-5 bg-borderLight mx-1 shrink-0"></div>

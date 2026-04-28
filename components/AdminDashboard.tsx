@@ -8,9 +8,9 @@ import AdminGantt from './AdminGantt';
 
 interface AdminDashboardProps {
     onLogout: () => void;
-    onSwitchToPersonal: () => void;
     currentUser: string;
     onOpenSearch?: () => void;
+    initialTab?: 'asignaciones' | 'vista_rapida' | 'gantt';
 }
 
 // VERSION CONTROL (Synced with Personal Dashboard)
@@ -18,7 +18,7 @@ const LAST_UPDATE = new Date().toLocaleString('es-ES', {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
 });
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPersonal, currentUser, onOpenSearch }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, onOpenSearch, initialTab = 'asignaciones' }) => {
     const [users, setUsers] = useState<string[]>([]);
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
 
@@ -59,7 +59,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
     // UI States
     const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
     const [showTokenHelp, setShowTokenHelp] = useState(false);
-    const [adminViewTab, setAdminViewTab] = useState<'asignaciones' | 'vista_rapida' | 'gantt'>('asignaciones');
+    const [adminViewTab, setAdminViewTab] = useState<'asignaciones' | 'vista_rapida' | 'gantt'>(initialTab);
+
+    // Sincronizar si el prop initialTab cambia (nav desde el sidebar)
+    useEffect(() => {
+        setAdminViewTab(initialTab);
+    }, [initialTab]);
 
     // Modal Details State
     const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -812,9 +817,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSwitchToPer
                 </div>
 
                 <div className="p-4 border-t border-borderLight flex flex-col gap-2 shrink-0 bg-white">
-                    <button onClick={onSwitchToPersonal} className="flex items-center gap-2 text-textPrimary hover:bg-gray-100 px-3 py-2 rounded-lg w-full transition-colors text-sm font-medium">
-                        <LayoutDashboard size={16} /> Mi Tablero Personal
-                    </button>
                     <button onClick={onLogout} className="flex items-center gap-2 text-red-500 hover:bg-red-50 px-3 py-2 rounded-lg w-full transition-colors text-sm">
                         <LogOut size={16} /> Cerrar Sesión
                     </button>

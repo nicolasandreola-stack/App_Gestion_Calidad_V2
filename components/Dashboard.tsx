@@ -15,7 +15,9 @@ import { toast } from 'sonner';
 interface DashboardProps {
   user: string;
   onLogout: () => void;
-  onSwitchToAdmin?: () => void;
+  onOpenSearch?: () => void;
+  showAssistant?: boolean;
+  onCloseAssistant?: () => void;
 }
 
 // VERSION CONTROL
@@ -23,7 +25,7 @@ const LAST_UPDATE = new Date().toLocaleString('es-ES', {
   day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
 });
 
-const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onOpenSearch, showAssistant: showAssistantProp = false, onCloseAssistant }) => {
   // Helper to prefix keys with username
   const getUserKey = (key: string) => `v25_user_${user}_${key}`;
 
@@ -72,14 +74,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
   const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showHistory, setShowHistory] = useState(false);
-  const [showAssistant, setShowAssistant] = useState(false);
+  const [showAssistant, setShowAssistant] = useState(showAssistantProp);
   const [showCloudSync, setShowCloudSync] = useState(false);
   const [showRoutineManager, setShowRoutineManager] = useState(false);
   const [showCompletedRegistry, setShowCompletedRegistry] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showStats, setShowStats] = useState(false);
-  const [showQuickLinks, setShowQuickLinks] = useState(false);
   const [achievementPopup, setAchievementPopup] = useState<Achievement | null>(null);
+
+  // Sincronizar con prop externo del sidebar
+  useEffect(() => {
+    if (showAssistantProp) setShowAssistant(true);
+  }, [showAssistantProp]);
 
   // Detail Modal State (KPIs)
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -802,11 +808,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
         onOpenAchievements={() => setShowAchievements(true)}
         onOpenStats={() => setShowStats(true)}
         onLogout={onLogout}
-        onSwitchToAdmin={onSwitchToAdmin}
         syncStatus={syncStatus}
         autoSyncEnabled={autoSyncEnabled}
         onToggleAutoSync={setAutoSyncEnabled}
-        onOpenQuickLinks={() => setShowQuickLinks(true)}
+        onOpenSearch={onOpenSearch}
       />
 
       <span id="kpi-routine-value" className="hidden">{routinePct}%</span>
@@ -858,13 +863,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToAdmin }
           onAdminQuery={(task) => { setAdminQueryModal(task); setReplyText(''); }}
         />
       </main>
-
-      {/* Quick Links Sidebar */}
-      <QuickLinksSidebar
-        isOpen={showQuickLinks}
-        onClose={() => setShowQuickLinks(false)}
-        onOpenAssistant={() => { setShowQuickLinks(false); setShowAssistant(true); }}
-      />
 
       {/* Modals */}
       {actionType === 'complete' && actionTask && (
