@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Loader2, Link as LinkIcon, User, AlertCircle, FileText, Activity } from 'lucide-react';
-import { toast } from 'sonner';
-import { GlobalCloudData, BackupData, Task, CATEGORY_COLORS, COMPLEXITY_LABELS } from '../types';
+import { Search, X, Loader2, User, AlertCircle, FileText } from 'lucide-react';
+import { GlobalCloudData, BackupData, Task } from '../types';
 
 interface GlobalSearchModalProps {
   isOpen: boolean;
@@ -19,6 +18,7 @@ interface SearchResult {
 const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, isAdmin, currentUser }) => {
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const [globalData, setGlobalData] = useState<GlobalCloudData | null>(null);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -39,9 +39,10 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
           if (!res.ok) throw new Error('Error de red');
           const data: GlobalCloudData = await res.json();
           setGlobalData(data);
+          setFetchError(false);
         } catch (error) {
           console.error("Error fetching data for search:", error);
-          toast.error("No se pudo conectar con la base de datos.");
+          setFetchError(true);
         } finally {
           setIsLoading(false);
         }
@@ -77,9 +78,9 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
           setSelectedIndex(prev => (prev > 0 ? prev - 1 : 0));
         } else if (e.key === 'Enter') {
           e.preventDefault();
-          // To do: Quick action when pressing enter on a task.
-          toast.info("Función de enlace rápido en desarrollo.");
-          onClose(); // Optional
+          // Quick action: cerrar el modal al presionar Enter en un resultado
+          console.log('Quick link - en desarrollo');
+          onClose();
         }
       }
     };
@@ -176,6 +177,14 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
           </span>
         </div>
 
+        {/* Error banner */}
+        {fetchError && (
+          <div className="flex items-center gap-2 px-4 py-2 bg-red-50 border-b border-red-100 text-xs text-red-600">
+            <AlertCircle size={13} className="shrink-0" />
+            No se pudo conectar con la base de datos. Verificá tu conexión.
+          </div>
+        )}
+
         {/* Results Area */}
         {query && results.length > 0 && (
           <div className="flex-1 overflow-y-auto custom-scrollbar p-2 bg-[#F8F9FA]">
@@ -187,7 +196,7 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
                   className={`flex flex-col p-3.5 rounded-xl mb-1.5 transition-all cursor-pointer border ${isSelected ? 'bg-white border-blue-400 shadow-sm ml-1' : 'border-transparent hover:bg-white hover:border-gray-200'}`}
                   onMouseEnter={() => setSelectedIndex(i)}
                   onClick={() => {
-                     toast.info("Enlace rápido en desarrollo.");
+                     console.log('Quick link - en desarrollo');
                      onClose();
                   }}
                 >

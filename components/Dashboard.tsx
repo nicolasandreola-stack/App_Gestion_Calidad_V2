@@ -10,7 +10,6 @@ import QuickLinksSidebar from './QuickLinksSidebar';
 import { Task, RoutineItem, RoutineState, HistoryEntry, BackupData, GlobalCloudData, Achievement } from '../types';
 import { Trophy, MessageSquare, Send, Loader2, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { toast } from 'sonner';
 
 interface DashboardProps {
   user: string;
@@ -536,9 +535,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onOpenSearch, sho
     
     if (isCritical) {
       confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#10b981', '#fbbf24', '#f59e0b'] });
-      toast.success("✨ ¡Excelente! Tarea crítica superada.");
+      showToast("✅ ¡Excelente! Tarea crítica superada.");
     } else {
-      toast.success("Tarea archivada correctamente.");
+      showToast("✅ Tarea archivada correctamente.");
     }
   };
 
@@ -654,7 +653,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onOpenSearch, sho
         if (data.rtH) setRoutineHistory(data.rtH);
         showToast("✅ Datos restaurados correctamente");
       } catch (err) {
-        toast.error("Error: El archivo de respaldo no es válido.");
+        showToast("❌ Error: El archivo de respaldo no es válido.");
       }
       e.target.value = '';
     };

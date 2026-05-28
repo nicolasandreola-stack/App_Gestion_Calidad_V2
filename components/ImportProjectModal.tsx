@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { ProjectTask, ProjectSubtask } from '../types';
 import { Bot, FileJson, X, CheckCircle2, AlertTriangle, Loader2, ChevronDown, ChevronUp, Copy, Sparkles } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface ImportProjectModalProps {
   onClose: () => void;
@@ -14,7 +13,7 @@ const ImportProjectModal: React.FC<ImportProjectModalProps> = ({ onClose, onImpo
   const [isImporting, setIsImporting] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
 
-  const PROMPT_TEMPLATE = `Necesito que armes el cronograma operativo de mi proyecto en formato JSON estricto para importarlo a mi sistema de gestión.
+  const PROMPT_TEMPLATE = `Necesito que armes el cronograma operativo de mi proyecto en formato JSON estricto para importarlo a mi sistema de gestiÃ³n.
 
 El JSON debe ser un array (lista) con objetos que representen cada TAREA PRINCIPAL del proyecto. Cada objeto debe tener esta estructura exacta:
 
@@ -25,12 +24,12 @@ El JSON debe ser un array (lista) con objetos que representen cada TAREA PRINCIP
     "name": "Nombre de la Tarea Principal",
     "startDate": "DD/MM/AAAA",
     "endDate": "DD/MM/AAAA",
-    "assignee": "Área o persona responsable",
-    "details": "Descripción breve de la tarea y su objetivo.",
+    "assignee": "Ãrea o persona responsable",
+    "details": "DescripciÃ³n breve de la tarea y su objetivo.",
     "subtasks": [
       {
-        "text": "Descripción concreta de la acción a realizar",
-        "assignee": "Responsable específico (opcional)",
+        "text": "DescripciÃ³n concreta de la acciÃ³n a realizar",
+        "assignee": "Responsable especÃ­fico (opcional)",
         "observation": "Detalle adicional, contexto, normativa relacionada, etc. (opcional)"
       }
     ]
@@ -42,12 +41,12 @@ REGLAS IMPORTANTES:
 - Las fechas deben estar en formato DD/MM/AAAA.
 - Las subtareas son las acciones concretas dentro de cada tarea.
 - No agregar campos extra fuera de la estructura indicada.
-- El output debe ser SOLO el JSON, sin texto adicional antes ni después.`;
+- El output debe ser SOLO el JSON, sin texto adicional antes ni despuÃ©s.`;
 
 
   const handleImport = async () => {
     if (!jsonText.trim()) {
-      toast.error('Pega el JSON primero.');
+      console.error('Pega el JSON primero.');
       return;
     }
 
@@ -56,13 +55,13 @@ REGLAS IMPORTANTES:
     try {
       parsed = JSON.parse(jsonText);
     } catch (e) {
-      toast.error('Error de sintaxis: El texto no es un JSON válido.');
+      console.error('Error de sintaxis: El texto no es un JSON vÃ¡lido.');
       setIsValidating(false);
       return;
     }
 
     if (!Array.isArray(parsed)) {
-      toast.error('El JSON debe ser un array (lista) de tareas principales.');
+      console.error('El JSON debe ser un array (lista) de tareas principales.');
       setIsValidating(false);
       return;
     }
@@ -111,23 +110,23 @@ REGLAS IMPORTANTES:
     setIsValidating(false);
 
     if (newTasks.length === 0) {
-       toast.error('No se encontraron tareas válidas en el JSON. Revisa la estructura requerida.');
+       console.error('No se encontraron tareas vÃ¡lidas en el JSON. Revisa la estructura requerida.');
        return;
     }
 
     if (invalidCount > 0) {
-       toast.error(`Se omitieron ${invalidCount} tareas por faltar campos clave (project, phase o name).`);
+       console.error(`Se omitieron ${invalidCount} tareas por faltar campos clave (project, phase o name).`);
        // Continue even with warnings
     }
 
     setIsImporting(true);
     try {
       await onImport(newTasks);
-      toast.success(`${newTasks.length} tareas importadas con éxito.`);
+      console.log(`${newTasks.length} tareas importadas con Ã©xito.`);
       onClose();
     } catch (error) {
       console.error(error);
-      toast.error('Hubo un error al inyectar las tareas a la base global.');
+      console.error('Hubo un error al inyectar las tareas a la base global.');
     } finally {
       setIsImporting(false);
     }
@@ -158,8 +157,8 @@ REGLAS IMPORTANTES:
            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3 text-sm text-blue-800">
                <AlertTriangle size={18} className="shrink-0 text-blue-600 mt-0.5" />
                <p>
-                 Pega debajo exactamente el código JSON (con los corchetes <code>[ ]</code> incluidos) que te generó la Inteligencia Artificial.
-                 El sistema validará la estructura, asignará IDs únicos y los inyectará automáticamente en la nube.
+                 Pega debajo exactamente el cÃ³digo JSON (con los corchetes <code>[ ]</code> incluidos) que te generÃ³ la Inteligencia Artificial.
+                 El sistema validarÃ¡ la estructura, asignarÃ¡ IDs Ãºnicos y los inyectarÃ¡ automÃ¡ticamente en la nube.
                </p>
            </div>
 
@@ -171,24 +170,24 @@ REGLAS IMPORTANTES:
              >
                <div className="flex items-center gap-2">
                  <Sparkles size={14} className="text-violet-500" />
-                 <span className="text-xs font-bold text-violet-700">¿Cómo pedirle el JSON a NotebookLM o tu IA?</span>
+                 <span className="text-xs font-bold text-violet-700">Â¿CÃ³mo pedirle el JSON a NotebookLM o tu IA?</span>
                  <span className="bg-violet-200 text-violet-700 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase">Prompt</span>
                </div>
                {showPrompt ? <ChevronUp size={14} className="text-violet-500" /> : <ChevronDown size={14} className="text-violet-500" />}
              </button>
              {showPrompt && (
                <div className="p-4 bg-white border-t border-violet-100">
-                 <p className="text-[10px] text-slate-500 mb-2">Copiá este prompt y pegalo en NotebookLM (o cualquier IA con contexto de tu proyecto) para obtener el JSON listo para importar:</p>
+                 <p className="text-[10px] text-slate-500 mb-2">CopiÃ¡ este prompt y pegalo en NotebookLM (o cualquier IA con contexto de tu proyecto) para obtener el JSON listo para importar:</p>
                  <div className="relative">
                    <pre className="bg-slate-900 text-green-300 text-[10px] p-4 rounded-lg overflow-x-auto whitespace-pre-wrap leading-relaxed font-mono max-h-48 overflow-y-auto custom-scrollbar">{PROMPT_TEMPLATE}</pre>
                    <button
-                     onClick={() => { navigator.clipboard.writeText(PROMPT_TEMPLATE); toast.success('¡Prompt copiado al portapapeles!'); }}
+                     onClick={() => { navigator.clipboard.writeText(PROMPT_TEMPLATE); console.log('Â¡Prompt copiado al portapapeles!'); }}
                      className="absolute top-2 right-2 flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white text-[9px] font-bold px-2 py-1 rounded-md shadow transition-colors"
                    >
                      <Copy size={10} /> Copiar
                    </button>
                  </div>
-                 <p className="text-[10px] text-slate-400 mt-2 italic">💡 Tip: Pegá este prompt <span className="font-bold">al final</span> de tu sesión de NotebookLM, después de haber consultado toda la documentación del proyecto.</p>
+                 <p className="text-[10px] text-slate-400 mt-2 italic">ðŸ’¡ Tip: PegÃ¡ este prompt <span className="font-bold">al final</span> de tu sesiÃ³n de NotebookLM, despuÃ©s de haber consultado toda la documentaciÃ³n del proyecto.</p>
                </div>
              )}
            </div>
@@ -231,3 +230,4 @@ REGLAS IMPORTANTES:
 };
 
 export default ImportProjectModal;
+

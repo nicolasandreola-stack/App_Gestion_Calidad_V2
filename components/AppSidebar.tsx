@@ -4,10 +4,10 @@ import {
   Globe, Folder, FolderOpen, FileText, Table, FileSpreadsheet,
   BarChart3, Bot, ExternalLink, ChevronDown, Mail, Calendar,
   LogOut, UserCircle, Shield, Settings, Code, Key, ShieldAlert,
-  Github, Server
+  Github, Server, AlertTriangle
 } from 'lucide-react';
 
-export type AppView = 'tasks' | 'team' | 'gantt';
+export type AppView = 'tasks' | 'team' | 'gantt' | 'desvios';
 
 interface AppSidebarProps {
   activeView: AppView;
@@ -50,6 +50,13 @@ const NAV_ITEMS = [
     icon: <BarChart2 size={18} />,
     adminOnly: true,
     description: 'Diagrama Gantt',
+  },
+  {
+    id: 'desvios' as AppView,
+    label: 'Desvíos y OM',
+    icon: <AlertTriangle size={18} />,
+    adminOnly: false,
+    description: 'Dashboards embebidos',
   },
 ];
 
