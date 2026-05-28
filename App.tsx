@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import LoginScreen from './components/LoginScreen';
 import Dashboard from './components/Dashboard';
 import AdminDashboard from './components/AdminDashboard';
+import DesviosDashboard from './components/DesviosDashboard';
 import GlobalSearchModal from './components/GlobalSearchModal';
 import AppSidebar, { AppView } from './components/AppSidebar';
 
@@ -78,8 +79,7 @@ function App() {
         onCloseTokenHelpExternal={() => setShowTokenHelp(false)}
       />
     );
-  } else {
-    // gantt
+  } else if (safeView === 'gantt') {
     mainContent = (
       <AdminDashboard
         onLogout={handleLogout}
@@ -90,6 +90,8 @@ function App() {
         onCloseTokenHelpExternal={() => setShowTokenHelp(false)}
       />
     );
+  } else if (safeView === 'desvios') {
+    mainContent = <DesviosDashboard />;
   }
 
   return (
