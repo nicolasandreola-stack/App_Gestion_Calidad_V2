@@ -121,16 +121,23 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onOpenSearch, sho
     localStorage.setItem(getUserKey("hist"), JSON.stringify(history));
     localStorage.setItem(getUserKey("achievements"), JSON.stringify(achievements));
     localStorage.setItem(getUserKey("routine_history"), JSON.stringify(routineHistory));
+  }, [routineMaster, routineState, tasks, completedTasks, deletedTasks, history, achievements, routineHistory, user]);
 
-    // Update Ref
-    currentStateRef.current = { rtM: routineMaster, rtS: routineState, tks: tasks, h: history, cTks: completedTasks, dTks: deletedTasks, ach: achievements, rtH: routineHistory };
+  // --- SYNC TO REF (Crucial for interval save) ---
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    
+    // Only flag as dirty if we actually have tasks initialized
+    if (tasks.length > 0 || Object.keys(routineMaster).length > 0 || history.length > 0) {
+      // Update Ref
+      currentStateRef.current = { rtM: routineMaster, rtS: routineState, tks: tasks, h: history, cTks: completedTasks, dTks: deletedTasks, ach: achievements, rtH: routineHistory };
 
-    // Mark as unsaved (Dirty) if not first render
-    if (!isFirstRender.current) {
       setHasUnsavedChanges(true);
       setSyncStatus('unsaved');
     }
-    isFirstRender.current = false;
   }, [routineMaster, routineState, tasks, completedTasks, history, achievements, routineHistory, user]);
 
   // --- AUTO-SAVE INTERVAL (Every 5 seconds if dirty) ---
