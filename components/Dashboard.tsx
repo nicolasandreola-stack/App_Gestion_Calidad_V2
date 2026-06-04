@@ -159,10 +159,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onOpenSearch, sho
             if (myData && myData.tks) {
                 const cloudTasks = myData.tks;
                 const localTasks = currentStateRef.current.tks;
-                const currentIds = new Set(localTasks.map(t => t.id));
+                const allLocalIds = new Set([
+                    ...localTasks.map(t => t.id),
+                    ...(currentStateRef.current.cTks || []).map(t => t.id),
+                    ...(currentStateRef.current.dTks || []).map(t => t.id)
+                ]);
                 
-                // 1. Detectar tareas nuevas
-                const newTasks = cloudTasks.filter(t => t.del === 'Admin' && !currentIds.has(t.id));
+                // 1. Detectar tareas nuevas (de Admin o de otro dispositivo propio)
+                const newAdminTasks = cloudTasks.filter(t => t.del === 'Admin' && !allLocalIds.has(t.id));
+                const otherNewTasks = cloudTasks.filter(t => t.del !== 'Admin' && !allLocalIds.has(t.id));
+                const newTasks = [...newAdminTasks, ...otherNewTasks];
                 
                 // 2. Detectar nuevas consultas en tareas existentes
                 const tasksWithNewComments = cloudTasks.filter(t => {
@@ -172,15 +178,19 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onOpenSearch, sho
 
                 let hasChanges = false;
                 
-                if (newTasks.length > 0) {
-                    setNewAssignmentModal({ count: newTasks.length, tasks: newTasks });
+                if (newAdminTasks.length > 0) {
+                    setNewAssignmentModal({ count: newAdminTasks.length, tasks: newAdminTasks });
                     playNotificationSound();
                     hasChanges = true;
                 }
 
+                if (otherNewTasks.length > 0) {
+                    hasChanges = true; // Se agregaron desde otro dispositivo
+                }
+
                 if (tasksWithNewComments.length > 0) {
                     setNewQueryNotifications(tasksWithNewComments);
-                    if (newTasks.length === 0) playNotificationSound();
+                    if (newAdminTasks.length === 0) playNotificationSound();
                     hasChanges = true;
                 }
 
@@ -259,6 +269,28 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onOpenSearch, sho
 
     if (!globalData.users || Array.isArray(globalData.users)) {
       globalData.users = {};
+    }
+    
+    if (!globalData.users[user]) {
+        globalData.users[user] = { tks: [], cTks: [], dTks: [], rtM: [], rtS: {}, h: [], ach: [], rtH: {} };
+    }
+
+    // --- SMART MERGE: Prevent data loss if tasks were created on another device ---
+    const cloudUser = globalData.users[user];
+    const allLocalIds = new Set([
+      ...(localData.tks || []).map(t => t.id),
+      ...(localData.cTks || []).map(t => t.id),
+      ...(localData.dTks || []).map(t => t.id)
+    ]);
+
+    const newCloudTasks = (cloudUser.tks || []).filter(t => !allLocalIds.has(t.id));
+    if (newCloudTasks.length > 0) {
+      localData.tks = [...newCloudTasks, ...(localData.tks || [])];
+    }
+    
+    const newCloudCompleted = (cloudUser.cTks || []).filter(t => !allLocalIds.has(t.id));
+    if (newCloudCompleted.length > 0) {
+      localData.cTks = [...newCloudCompleted, ...(localData.cTks || [])];
     }
 
     // 2. MERGE: Update ONLY current user data
