@@ -133,13 +133,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onOpenSearch, sho
     isFirstRender.current = false;
   }, [routineMaster, routineState, tasks, completedTasks, history, achievements, routineHistory, user]);
 
-  // --- AUTO-SAVE INTERVAL (Every 30 seconds if dirty) ---
+  // --- AUTO-SAVE INTERVAL (Every 5 seconds if dirty) ---
   useEffect(() => {
     const interval = setInterval(() => {
       if (hasUnsavedChanges && autoSyncEnabled) {
         triggerAutoSave();
       }
-    }, 30000); // 30 segundos
+    }, 5000); // 5 segundos
     return () => clearInterval(interval);
   }, [hasUnsavedChanges, autoSyncEnabled]);
 
@@ -265,6 +265,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onOpenSearch, sho
       if (result.users && !Array.isArray(result.users)) {
         globalData = result;
       }
+    } else {
+      throw new Error("No se pudo obtener la información de la nube para fusionar. Abortando para no perder datos.");
     }
 
     if (!globalData.users || Array.isArray(globalData.users)) {
