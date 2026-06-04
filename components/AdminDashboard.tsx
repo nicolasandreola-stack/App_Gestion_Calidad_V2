@@ -133,7 +133,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
         if (autoRefresh) {
             refreshIntervalRef.current = window.setInterval(() => {
                 handleGlobalSync(true); // Silent sync
-            }, 60000); // 60 segundos
+            }, 15000); // 15 segundos
         } else {
             if (refreshIntervalRef.current) clearInterval(refreshIntervalRef.current);
         }
@@ -884,7 +884,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                     </button>
                     <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-500">
                         <input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} className="accent-accentBlue" />
-                        Auto (1m)
+                        Auto (15s)
                     </label>
                     {lastUpdate && <span className="flex items-center gap-1 text-[10px] text-slate-400"><Clock size={10} />{lastUpdate}</span>}
                     <button

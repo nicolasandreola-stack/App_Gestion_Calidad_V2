@@ -233,7 +233,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onOpenSearch, sho
               if (!hasUnsavedChanges && syncStatus !== 'syncing') {
                  checkForNewTasks();
               }
-          }, 60000); // 1 minuto
+          }, 15000); // 15 segundos
           return () => clearInterval(interval);
       }
   }, [autoSyncEnabled, hasUnsavedChanges, syncStatus]);
