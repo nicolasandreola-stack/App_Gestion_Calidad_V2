@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, Users, BarChart3, CheckSquare, AlertTriangle, ArrowRight, Plus, UserCircle, LogOut, Trash2, LayoutDashboard, RefreshCw, Clock, Code, Key, ShieldAlert, Globe, Github, Server, FileText, ExternalLink, Sun, Calendar, ChevronDown, ChevronUp, X, Info, Link as LinkIcon, Loader2, Cloud, AlertCircle, PauseCircle, CalendarDays, CheckCircle2, Circle, Archive, ClipboardList, MessageSquare, Send, Layers } from 'lucide-react';
 import { Task, RoutineItem, RoutineState, Category, Complexity, GlobalCloudData, TIME_BLOCKS, COMPLEXITY_LABELS, CATEGORY_COLORS, ProjectTask } from '../types';
 import { KPIDetailsModal, CompletedTasksModal } from './Modals';
@@ -121,6 +121,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
             });
         }
     }, [selectedUser]);
+
+    // Cargar datos iniciales desde el backend
+    useEffect(() => {
+        handleGlobalSync(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // AUTO-REFRESH LOGIC
     useEffect(() => {
