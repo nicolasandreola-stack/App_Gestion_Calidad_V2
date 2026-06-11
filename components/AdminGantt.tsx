@@ -12,6 +12,7 @@ interface AdminGanttProps {
   onBulkDeleteProjects?: (ids: string[]) => void;
   onBulkAddProjects?: (projects: ProjectTask[]) => void;
   onBulkUpsertProjects?: (projects: ProjectTask[]) => void;
+  onBulkReplacePhases?: (projects: ProjectTask[]) => void;
   onBulkUpdateProjects?: (projects: ProjectTask[]) => void;
   onReorderProjects?: (projects: ProjectTask[]) => void;
   projectObservations?: Record<string, string>;
@@ -117,7 +118,7 @@ const SubtaskRowLink = ({ link, closingNote, onSave }: { link: string, closingNo
   );
 };
 
-export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject, onBulkDeleteProjects, onBulkAddProjects, onBulkUpsertProjects, onBulkUpdateProjects, onReorderProjects, projectObservations = {}, onUpdateObservation }: AdminGanttProps) {
+export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject, onBulkDeleteProjects, onBulkAddProjects, onBulkUpsertProjects, onBulkReplacePhases, onBulkUpdateProjects, onReorderProjects, projectObservations = {}, onUpdateObservation }: AdminGanttProps) {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
@@ -636,8 +637,12 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
       {showImportModal && (
         <ImportProjectModal
           onClose={() => setShowImportModal(false)}
-          onImport={async (newProj) => {
-            if (onBulkUpsertProjects) await onBulkUpsertProjects(newProj);
+          onImport={async (newProj, isReplaceMode) => {
+            if (isReplaceMode && onBulkReplacePhases) {
+               await onBulkReplacePhases(newProj);
+            } else if (onBulkUpsertProjects) {
+               await onBulkUpsertProjects(newProj);
+            }
           }}
         />
       )}

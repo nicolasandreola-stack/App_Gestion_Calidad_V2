@@ -553,6 +553,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
         await syncProjectsCloud(nextList);
     };
 
+    const handleBulkReplacePhases = async (newList: ProjectTask[]) => {
+        // Encontrar todos los pares únicos Proyecto + Fase que vienen en la importación
+        const affectedPairs = new Set(newList.map(p => `${p.project}||${p.phase}`));
+        
+        // Filtramos el gantt actual y quitamos todas las tareas que pertenezcan a esas fases
+        const preservedProjects = globalProjects.filter(p => !affectedPairs.has(`${p.project}||${p.phase}`));
+        
+        // Unimos lo preservado con la lista importada
+        const nextList = [...preservedProjects, ...newList];
+        setGlobalProjects(nextList);
+        localStorage.setItem('v25_global_projects', JSON.stringify(nextList));
+        await syncProjectsCloud(nextList);
+    };
+
     const handleBulkUpdateProjects = async (updatedProjects: ProjectTask[]) => {
         const nextList = globalProjects.map(p => {
             const match = updatedProjects.find(up => up.id === p.id);
@@ -931,6 +945,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                         onBulkDeleteProjects={handleBulkDeleteProjects}
                         onBulkAddProjects={handleBulkAddProjects}
                         onBulkUpsertProjects={handleBulkUpsertProjects}
+                        onBulkReplacePhases={handleBulkReplacePhases}
                         onBulkUpdateProjects={handleBulkUpdateProjects}
                         onReorderProjects={handleReorderProjects}
                         projectObservations={projectObservations}

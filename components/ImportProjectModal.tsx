@@ -4,7 +4,7 @@ import { Bot, FileJson, X, CheckCircle2, AlertTriangle, Loader2, ChevronDown, Ch
 
 interface ImportProjectModalProps {
   onClose: () => void;
-  onImport: (newProjects: ProjectTask[]) => Promise<void>;
+  onImport: (newProjects: ProjectTask[], isReplaceMode: boolean) => Promise<void>;
 }
 
 const ImportProjectModal: React.FC<ImportProjectModalProps> = ({ onClose, onImport }) => {
@@ -12,12 +12,15 @@ const ImportProjectModal: React.FC<ImportProjectModalProps> = ({ onClose, onImpo
   const [isValidating, setIsValidating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [isReplaceMode, setIsReplaceMode] = useState(false);
 
   const PROMPT_TEMPLATE = `Necesito que armes o modifiques el cronograma operativo del proyecto en formato JSON estricto.
 
 Si te paso el JSON actual del cronograma, DEBES mantener EXACTAMENTE el campo "id" de las tareas principales y de las subtareas ("id": "PROJ-...", "id": "STAI-..."). 
 NO modifiques los IDs bajo ninguna circunstancia de lo que ya existe. 
 Si agregas tareas o subtareas nuevas desde cero, simplemente NO les pongas campo "id" (el sistema lo generará automÃ¡ticamente).
+
+SI EL USUARIO TE PIDE "REEMPLAZAR" UNA FASE ENTERA: Devuélvele TODAS las tareas que deben quedar en esa fase (si quitas alguna tarea del JSON, el sistema la borrará de esa fase en el modo reemplazo).
 
 El JSON debe ser un array (lista) con objetos que representen cada TAREA PRINCIPAL. Estructura requerida:
 
@@ -127,7 +130,7 @@ REGLAS IMPORTANTES:
 
     setIsImporting(true);
     try {
-      await onImport(newTasks);
+      await onImport(newTasks, isReplaceMode);
       console.log(`${newTasks.length} tareas importadas con Ã©xito.`);
       onClose();
     } catch (error) {
@@ -166,6 +169,31 @@ REGLAS IMPORTANTES:
                  Pega debajo exactamente el cÃ³digo JSON (con los corchetes <code>[ ]</code> incluidos) que te generÃ³ la Inteligencia Artificial.
                  El sistema validarÃ¡ la estructura, asignarÃ¡ IDs Ãºnicos y los inyectarÃ¡ automÃ¡ticamente en la nube.
                </p>
+           </div>
+
+           {/* Modo de Importacion */}
+           <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-3">
+              <h4 className="font-bold text-slate-700 text-sm">Modo de ImportaciÃ³n</h4>
+              
+              <label className={\`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors \${!isReplaceMode ? 'bg-violet-50 border-violet-300' : 'bg-white border-slate-200 hover:bg-slate-50'}\`}>
+                 <div className="pt-0.5">
+                    <input type="radio" name="importMode" checked={!isReplaceMode} onChange={() => setIsReplaceMode(false)} className="accent-violet-600 w-4 h-4" />
+                 </div>
+                 <div>
+                    <p className="text-sm font-bold text-slate-800">Actualizar / Agregar (Seguro)</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Mantiene las tareas existentes intactas. Solo actualiza textos/fechas si pasaste los IDs, y agrega las tareas nuevas. Nunca borra nada.</p>
+                 </div>
+              </label>
+
+              <label className={\`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors \${isReplaceMode ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200 hover:bg-slate-50'}\`}>
+                 <div className="pt-0.5">
+                    <input type="radio" name="importMode" checked={isReplaceMode} onChange={() => setIsReplaceMode(true)} className="accent-red-600 w-4 h-4" />
+                 </div>
+                 <div>
+                    <p className="text-sm font-bold text-slate-800">Reemplazar Fase</p>
+                    <p className="text-xs text-slate-500 mt-0.5">BorrarÃ¡ <b>todas</b> las tareas de las fases que estÃ©n en el JSON, y las reemplazarÃ¡ por las nuevas. Usa esto si le pediste a la IA que quite tareas de una fase.</p>
+                 </div>
+              </label>
            </div>
 
            {/* Prompt Helper */}
