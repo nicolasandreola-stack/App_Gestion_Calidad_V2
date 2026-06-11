@@ -940,7 +940,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
             </div>
           </div>
 
-          <div className="relative flex-1 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iMTAwJSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48bGluZSB4MT0iMzAiIHkxPSIwIiB4Mj0iMzAiIHkyPSIxMDAlIiBzdHJva2U9IiNlMmU4ZjAiIHN0cm9rZS1kYXNoYXJyYXk9IjIgMiIgLz48L3N2Zz4=')] pb-10 w-max min-w-full min-h-max">
+          <div className="relative flex-1 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iMzAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGxpbmUgeDE9IjMwIiB5MT0iMCIgeDI9IjMwIiB5Mj0iMzAiIHN0cm9rZT0iI2UyZThmMCIgc3Ryb2tlLWRhc2hhcnJheT0iMiAyIiAvPjwvc3ZnPg==')] pb-10 w-max min-w-full min-h-max">
             {grouped.daysArr.map((d, i) => {
                if (i > 0 && dayDiff(grouped.daysArr[i-1], d) > 1) {
                  return <div key={`wk_sep_${i}`} className="absolute top-0 bottom-0 w-[2px] bg-slate-200/80 pointer-events-none z-0" style={{ left: i * 30 }}></div>;
