@@ -916,7 +916,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
         </div>
 
         {/* RIGHT PANEL - Timeline Grid */}
-        <div className="flex-1 flex flex-col bg-slate-50 relative min-w-max">
+        <div className="flex-1 flex flex-col bg-slate-50 relative min-w-max h-max">
           <div className="sticky top-0 z-[30] bg-slate-50/95 backdrop-blur border-b border-gray-200">
             <div className="flex border-b border-gray-200 h-8">
               {grouped.months.map((m, i) => {
