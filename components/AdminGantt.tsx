@@ -718,7 +718,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
               <div key={projName} className="mb-0">
                 {pIdx > 0 && <div className="h-6 w-full bg-slate-50/50 border-t border-white border-b border-gray-200 shadow-sm relative z-10 w-full"></div>}
                 <div 
-                  className={`px-4 py-3 flex items-center gap-2 cursor-pointer select-none sticky top-16 z-20 group transition-colors shadow-sm ${isPriority ? 'bg-[#1e293b] text-white hover:bg-slate-700' : 'bg-slate-800 text-white hover:bg-slate-700'}`}
+                  className={`h-[44px] px-4 flex items-center gap-2 cursor-pointer select-none sticky top-16 z-20 group transition-colors shadow-sm ${isPriority ? 'bg-[#1e293b] text-white hover:bg-slate-700' : 'bg-slate-800 text-white hover:bg-slate-700'}`}
                   onClick={() => toggleProject(projName)}
                 >
                   {expandedProjects.has(projName) ? <ChevronRight size={14} className="text-slate-400 group-hover:text-white shrink-0" /> : <ChevronDown size={14} className="text-white shrink-0" />}
@@ -780,11 +780,11 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                 {!expandedProjects.has(projName) && Array.from(phases.entries()).map(([phaseName, tasks]) => (
                   <div key={phaseName}>
                     <div 
-                      className="bg-slate-100 border-y border-slate-200 px-4 py-2 pl-8 flex items-center gap-2 cursor-pointer hover:bg-slate-200 select-none group/phase"
+                      className="h-[37px] bg-slate-100 border-y border-slate-200 px-4 pl-8 flex items-center gap-2 cursor-pointer hover:bg-slate-200 select-none group/phase"
                       onClick={() => togglePhase(projName + phaseName)}
                     >
-                      {expandedPhases.has(projName + phaseName) ? <ChevronRight size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-700" />}
-                      <span className="font-bold text-xs text-slate-700">{phaseName}</span>
+                      {expandedPhases.has(projName + phaseName) ? <ChevronRight size={14} className="text-slate-500 shrink-0" /> : <ChevronDown size={14} className="text-slate-700 shrink-0" />}
+                      <span className="font-bold text-xs text-slate-700 truncate">{phaseName}</span>
                       
                       <div className="ml-auto flex gap-2 items-center">
                          {!expandedPhases.has(projName + phaseName) && tasks.some(t => t.subtasks && t.subtasks.length > 0) && (
