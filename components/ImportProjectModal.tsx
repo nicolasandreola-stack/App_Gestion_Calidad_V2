@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { ProjectTask, ProjectSubtask } from '../types';
 import { Bot, FileJson, X, CheckCircle2, AlertTriangle, Loader2, ChevronDown, ChevronUp, Copy, Sparkles } from 'lucide-react';
 
@@ -13,34 +13,38 @@ const ImportProjectModal: React.FC<ImportProjectModalProps> = ({ onClose, onImpo
   const [isImporting, setIsImporting] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
 
-  const PROMPT_TEMPLATE = `Necesito que armes el cronograma operativo de mi proyecto en formato JSON estricto para importarlo a mi sistema de gestiÃ³n.
+  const PROMPT_TEMPLATE = `Necesito que armes o modifiques el cronograma operativo del proyecto en formato JSON estricto.
 
-El JSON debe ser un array (lista) con objetos que representen cada TAREA PRINCIPAL del proyecto. Cada objeto debe tener esta estructura exacta:
+Si te paso el JSON actual del cronograma, DEBES mantener EXACTAMENTE el campo "id" de las tareas principales y de las subtareas ("id": "PROJ-...", "id": "STAI-..."). 
+NO modifiques los IDs bajo ninguna circunstancia de lo que ya existe. 
+Si agregas tareas o subtareas nuevas desde cero, simplemente NO les pongas campo "id" (el sistema lo generará automÃ¡ticamente).
+
+El JSON debe ser un array (lista) con objetos que representen cada TAREA PRINCIPAL. Estructura requerida:
 
 [
   {
+    "id": "PROJ-...", // SOLO SI YA EXISTÃA
     "project": "NOMBRE DEL PROYECTO",
     "phase": "NOMBRE DE LA FASE O ETAPA",
     "name": "Nombre de la Tarea Principal",
     "startDate": "DD/MM/AAAA",
     "endDate": "DD/MM/AAAA",
     "assignee": "Ãrea o persona responsable",
-    "details": "DescripciÃ³n breve de la tarea y su objetivo.",
+    "details": "DescripciÃ³n breve",
     "subtasks": [
       {
-        "text": "DescripciÃ³n concreta de la acciÃ³n a realizar",
-        "assignee": "Responsable especÃ­fico (opcional)",
-        "observation": "Detalle adicional, contexto, normativa relacionada, etc. (opcional)"
+        "id": "STAI-...", // SOLO SI YA EXISTÃA
+        "text": "DescripciÃ³n concreta de la acciÃ³n",
+        "assignee": "Responsable especÃ­fico",
+        "observation": "Detalle adicional"
       }
     ]
   }
 ]
 
 REGLAS IMPORTANTES:
-- Agrupar las tareas por FASES (field "phase"). Cada fase puede tener varias tareas.
+- Agrupar las tareas por FASES (field "phase").
 - Las fechas deben estar en formato DD/MM/AAAA.
-- Las subtareas son las acciones concretas dentro de cada tarea.
-- No agregar campos extra fuera de la estructura indicada.
 - El output debe ser SOLO el JSON, sin texto adicional antes ni despuÃ©s.`;
 
 
@@ -83,25 +87,27 @@ REGLAS IMPORTANTES:
        let subtasks: ProjectSubtask[] = [];
        if (Array.isArray(row.subtasks)) {
          subtasks = row.subtasks.map((st: any, idx: number) => ({
-           id: `STAI-${timestampId}-${i}-${idx}`,
+           id: st.id || `STAI-${timestampId}-${i}-${idx}`,
            text: st.text || 'Subtarea sin nombre',
-           completed: false, // Force false initially
+           completed: st.completed || false, // Preserve completed state if present
            observation: st.observation || '',
            assignee: st.assignee || ''
          }));
        }
 
        const newTask: ProjectTask = {
-          id: `PROJ-AI-${timestampId}-${i}`,
+          id: row.id || `PROJ-AI-${timestampId}-${i}`,
           project: row.project,
           phase: row.phase,
           name: row.name,
           startDate: row.startDate || '',
           endDate: row.endDate || '',
           assignee: row.assignee || '',
-          progress: 0,
-          status: 'PENDIENTE',
+          progress: row.progress || 0,
+          status: row.status || 'PENDIENTE',
           details: row.details || '',
+          link: row.link || '',
+          closingNote: row.closingNote || '',
           subtasks
        };
        newTasks.push(newTask);

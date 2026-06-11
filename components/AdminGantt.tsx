@@ -11,6 +11,7 @@ interface AdminGanttProps {
   onDeleteProject: (id: string) => void;
   onBulkDeleteProjects?: (ids: string[]) => void;
   onBulkAddProjects?: (projects: ProjectTask[]) => void;
+  onBulkUpsertProjects?: (projects: ProjectTask[]) => void;
   onBulkUpdateProjects?: (projects: ProjectTask[]) => void;
   onReorderProjects?: (projects: ProjectTask[]) => void;
   projectObservations?: Record<string, string>;
@@ -116,7 +117,7 @@ const SubtaskRowLink = ({ link, closingNote, onSave }: { link: string, closingNo
   );
 };
 
-export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject, onBulkDeleteProjects, onBulkAddProjects, onBulkUpdateProjects, onReorderProjects, projectObservations = {}, onUpdateObservation }: AdminGanttProps) {
+export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject, onBulkDeleteProjects, onBulkAddProjects, onBulkUpsertProjects, onBulkUpdateProjects, onReorderProjects, projectObservations = {}, onUpdateObservation }: AdminGanttProps) {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
@@ -566,6 +567,17 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
           </button>
           
           <button 
+            onClick={() => {
+              navigator.clipboard.writeText(JSON.stringify(projects, null, 2));
+              alert('Gantt copiado al portapapeles en formato JSON.');
+            }}
+            className="bg-violet-50 hover:bg-violet-100 text-violet-600 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-violet-200"
+            title="Exportar Gantt actual a JSON"
+          >
+            <FileJson size={13} /> Exportar JSON
+          </button>
+
+          <button 
             onClick={() => setShowImportModal(true)}
             className="bg-violet-100 hover:bg-violet-200 text-violet-700 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-violet-200"
             title="Importar Proyecto desde IA"
@@ -625,7 +637,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
         <ImportProjectModal
           onClose={() => setShowImportModal(false)}
           onImport={async (newProj) => {
-            if (onBulkAddProjects) await onBulkAddProjects(newProj);
+            if (onBulkUpsertProjects) await onBulkUpsertProjects(newProj);
           }}
         />
       )}
