@@ -12,6 +12,7 @@ interface AdminGanttProps {
   onBulkDeleteProjects?: (ids: string[]) => void;
   onBulkAddProjects?: (projects: ProjectTask[]) => void;
   onBulkUpdateProjects?: (projects: ProjectTask[]) => void;
+  onReorderProjects?: (projects: ProjectTask[]) => void;
   projectObservations?: Record<string, string>;
   onUpdateObservation?: (projName: string, text: string) => void;
 }
@@ -115,7 +116,7 @@ const SubtaskRowLink = ({ link, closingNote, onSave }: { link: string, closingNo
   );
 };
 
-export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject, onBulkDeleteProjects, onBulkAddProjects, onBulkUpdateProjects, projectObservations = {}, onUpdateObservation }: AdminGanttProps) {
+export default function AdminGantt({ projects, onUpdateProject, onAddProject, onDeleteProject, onBulkDeleteProjects, onBulkAddProjects, onBulkUpdateProjects, onReorderProjects, projectObservations = {}, onUpdateObservation }: AdminGanttProps) {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
@@ -140,6 +141,49 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
     } catch (e) {}
     return new Set();
   });
+
+  // ── Drag & Drop State ──
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [dragOverTaskId, setDragOverTaskId] = useState<string | null>(null);
+
+  const handleDrop = (targetTaskId: string, phaseName: string, projName: string) => {
+    if (!draggedTaskId || draggedTaskId === targetTaskId || !onReorderProjects) {
+      setDraggedTaskId(null);
+      setDragOverTaskId(null);
+      return;
+    }
+
+    const draggedTask = projects.find(p => p.id === draggedTaskId);
+    const targetTask = projects.find(p => p.id === targetTaskId);
+
+    if (!draggedTask || !targetTask) return;
+
+    // Solo permitimos reordenar dentro de la misma fase y proyecto
+    if (draggedTask.project !== projName || draggedTask.phase !== phaseName || targetTask.project !== projName || targetTask.phase !== phaseName) {
+      setDraggedTaskId(null);
+      setDragOverTaskId(null);
+      return;
+    }
+
+    const newProjects = [...projects];
+    const draggedIndex = newProjects.findIndex(p => p.id === draggedTaskId);
+    if (draggedIndex === -1) return;
+    
+    // Removemos la tarea arrastrada
+    const [removed] = newProjects.splice(draggedIndex, 1);
+    
+    // Buscamos el nuevo indice objetivo
+    const targetIndex = newProjects.findIndex(p => p.id === targetTaskId);
+    
+    // Insertamos la tarea arrastrada en la nueva posicion (antes de la objetivo)
+    if (targetIndex !== -1) {
+      newProjects.splice(targetIndex, 0, removed);
+      onReorderProjects(newProjects);
+    }
+    
+    setDraggedTaskId(null);
+    setDragOverTaskId(null);
+  };
 
   // ── Búsqueda local de proyectos ──
   const [isProjectSearchOpen, setIsProjectSearchOpen] = useState(false);
@@ -784,7 +828,24 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                       return (
                       <React.Fragment key={t.id}>
                         <div 
-                          className="group grid grid-cols-[1fr_50px_70px] items-center px-4 py-3 border-b border-slate-100 bg-white hover:bg-blue-50/50 cursor-pointer h-12 transition-colors relative flex-1"
+                          draggable
+                          onDragStart={(e) => {
+                            setDraggedTaskId(t.id);
+                            e.dataTransfer.effectAllowed = 'move';
+                            e.dataTransfer.setData('text/plain', t.id);
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            setDragOverTaskId(t.id);
+                          }}
+                          onDragLeave={() => {
+                            if (dragOverTaskId === t.id) setDragOverTaskId(null);
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            handleDrop(t.id, phaseName, projName);
+                          }}
+                          className={`group grid grid-cols-[1fr_50px_70px] items-center px-4 py-3 border-b bg-white hover:bg-blue-50/50 cursor-pointer h-12 transition-colors relative flex-1 ${dragOverTaskId === t.id ? 'border-t-2 border-t-blue-500 bg-blue-50' : 'border-slate-100'}`}
                           onClick={() => setViewTask(t)}
                         >
                           <div className="pl-6 truncate flex items-center gap-2">
