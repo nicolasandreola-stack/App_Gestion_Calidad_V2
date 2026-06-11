@@ -832,6 +832,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                           onDragStart={(e) => {
                             setDraggedTaskId(t.id);
                             e.dataTransfer.effectAllowed = 'move';
+                            e.dataTransfer.setData('text/plain', t.id);
                           }}
                           onDragOver={(e) => {
                             e.preventDefault();
