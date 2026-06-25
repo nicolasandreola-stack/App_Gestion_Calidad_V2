@@ -133,6 +133,9 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
   const [showReportSelector, setShowReportSelector] = useState(false);
   const [reportProjectName, setReportProjectName] = useState<string | null>(null);
 
+  // States for export
+  const [showExportSelector, setShowExportSelector] = useState(false);
+
   // Stats for import modal
   const [showImportModal, setShowImportModal] = useState(false);
 
@@ -568,10 +571,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
           </button>
           
           <button 
-            onClick={() => {
-              navigator.clipboard.writeText(JSON.stringify(projects, null, 2));
-              alert('Gantt copiado al portapapeles en formato JSON.');
-            }}
+            onClick={() => setShowExportSelector(true)}
             className="bg-violet-50 hover:bg-violet-100 text-violet-600 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-violet-200"
             title="Exportar Gantt actual a JSON"
           >
@@ -619,6 +619,55 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
               ))}
             </div>
             <button onClick={() => setShowReportSelector(false)} className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors">Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {/* Export Selector Modal */}
+      {showExportSelector && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[990] flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-[450px]">
+            <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2">
+              <FileJson size={20} className="text-violet-500" /> Opciones de Exportación JSON
+            </h3>
+            <div className="space-y-4 mb-6">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(JSON.stringify(projects, null, 2));
+                  alert('Todo el Gantt copiado al portapapeles en formato JSON.');
+                  setShowExportSelector(false);
+                }}
+                className="w-full text-left px-4 py-3 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg transition-colors font-medium text-violet-700 flex items-center justify-between"
+              >
+                <span>Exportar Todo el Gantt</span> <FileJson size={16} />
+              </button>
+              
+              <div className="border-t pt-4">
+                <p className="text-sm font-semibold text-slate-700 mb-2">O exportar una fase específica:</p>
+                <div className="max-h-[250px] overflow-y-auto space-y-1">
+                  {Array.from(grouped.map.entries()).map(([projName, phasesMap]) => (
+                    <div key={projName} className="mb-2">
+                      <div className="text-xs font-bold text-slate-500 mb-1 px-1 truncate">{projName}</div>
+                      {Array.from(phasesMap.keys()).map(phaseName => (
+                        <button
+                          key={phaseName}
+                          onClick={() => {
+                            const phaseTasks = projects.filter(p => p.project === projName && p.phase === phaseName);
+                            navigator.clipboard.writeText(JSON.stringify(phaseTasks, null, 2));
+                            alert(`Fase "${phaseName}" copiada al portapapeles en formato JSON.`);
+                            setShowExportSelector(false);
+                          }}
+                          className="w-full text-left px-3 py-2 bg-slate-50 hover:bg-blue-50 border border-slate-200 rounded-md hover:border-blue-300 transition-colors text-sm font-medium text-slate-600 hover:text-blue-700 flex items-center justify-between mb-1"
+                        >
+                          <span className="truncate">{phaseName}</span> <FileJson size={14} className="opacity-50" />
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <button onClick={() => setShowExportSelector(false)} className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors">Cancelar</button>
           </div>
         </div>
       )}

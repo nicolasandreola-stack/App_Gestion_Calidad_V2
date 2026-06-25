@@ -175,7 +175,7 @@ REGLAS IMPORTANTES:
            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-3">
               <h4 className="font-bold text-slate-700 text-sm">Modo de ImportaciÃ³n</h4>
               
-              <label className={\`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors \${!isReplaceMode ? 'bg-violet-50 border-violet-300' : 'bg-white border-slate-200 hover:bg-slate-50'}\`}>
+              <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${!isReplaceMode ? 'bg-violet-50 border-violet-300' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
                  <div className="pt-0.5">
                     <input type="radio" name="importMode" checked={!isReplaceMode} onChange={() => setIsReplaceMode(false)} className="accent-violet-600 w-4 h-4" />
                  </div>
@@ -185,7 +185,7 @@ REGLAS IMPORTANTES:
                  </div>
               </label>
 
-              <label className={\`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors \${isReplaceMode ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200 hover:bg-slate-50'}\`}>
+              <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${isReplaceMode ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
                  <div className="pt-0.5">
                     <input type="radio" name="importMode" checked={isReplaceMode} onChange={() => setIsReplaceMode(true)} className="accent-red-600 w-4 h-4" />
                  </div>
