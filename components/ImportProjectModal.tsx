@@ -18,27 +18,27 @@ const ImportProjectModal: React.FC<ImportProjectModalProps> = ({ onClose, onImpo
 
 Si te paso el JSON actual del cronograma, DEBES mantener EXACTAMENTE el campo "id" de las tareas principales y de las subtareas ("id": "PROJ-...", "id": "STAI-..."). 
 NO modifiques los IDs bajo ninguna circunstancia de lo que ya existe. 
-Si agregas tareas o subtareas nuevas desde cero, simplemente NO les pongas campo "id" (el sistema lo generará automÃ¡ticamente).
+Si agregas tareas o subtareas nuevas desde cero, simplemente NO les pongas campo "id" (el sistema lo generar� automáticamente).
 
-SI EL USUARIO TE PIDE "REEMPLAZAR" UNA FASE ENTERA: Devuélvele TODAS las tareas que deben quedar en esa fase (si quitas alguna tarea del JSON, el sistema la borrará de esa fase en el modo reemplazo).
+SI EL USUARIO TE PIDE "REEMPLAZAR" UNA FASE ENTERA: Devu�lvele TODAS las tareas que deben quedar en esa fase (si quitas alguna tarea del JSON, el sistema la borrar� de esa fase en el modo reemplazo).
 
 El JSON debe ser un array (lista) con objetos que representen cada TAREA PRINCIPAL. Estructura requerida:
 
 [
   {
-    "id": "PROJ-...", // SOLO SI YA EXISTÃA
+    "id": "PROJ-...", // SOLO SI YA EXISTÍA
     "project": "NOMBRE DEL PROYECTO",
     "phase": "NOMBRE DE LA FASE O ETAPA",
     "name": "Nombre de la Tarea Principal",
     "startDate": "DD/MM/AAAA",
     "endDate": "DD/MM/AAAA",
-    "assignee": "Ãrea o persona responsable",
-    "details": "DescripciÃ³n breve",
+    "assignee": "Área o persona responsable",
+    "details": "Descripción breve",
     "subtasks": [
       {
-        "id": "STAI-...", // SOLO SI YA EXISTÃA
-        "text": "DescripciÃ³n concreta de la acciÃ³n",
-        "assignee": "Responsable especÃ­fico",
+        "id": "STAI-...", // SOLO SI YA EXISTÍA
+        "text": "Descripción concreta de la acción",
+        "assignee": "Responsable específico",
         "observation": "Detalle adicional"
       }
     ]
@@ -48,7 +48,7 @@ El JSON debe ser un array (lista) con objetos que representen cada TAREA PRINCIP
 REGLAS IMPORTANTES:
 - Agrupar las tareas por FASES (field "phase").
 - Las fechas deben estar en formato DD/MM/AAAA.
-- El output debe ser SOLO el JSON, sin texto adicional antes ni despuÃ©s.`;
+- El output debe ser SOLO el JSON, sin texto adicional antes ni después.`;
 
 
   const handleImport = async () => {
@@ -62,7 +62,7 @@ REGLAS IMPORTANTES:
     try {
       parsed = JSON.parse(jsonText);
     } catch (e) {
-      console.error('Error de sintaxis: El texto no es un JSON vÃ¡lido.');
+      console.error('Error de sintaxis: El texto no es un JSON válido.');
       setIsValidating(false);
       return;
     }
@@ -119,7 +119,7 @@ REGLAS IMPORTANTES:
     setIsValidating(false);
 
     if (newTasks.length === 0) {
-       console.error('No se encontraron tareas vÃ¡lidas en el JSON. Revisa la estructura requerida.');
+       console.error('No se encontraron tareas válidas en el JSON. Revisa la estructura requerida.');
        return;
     }
 
@@ -131,7 +131,7 @@ REGLAS IMPORTANTES:
     setIsImporting(true);
     try {
       await onImport(newTasks, isReplaceMode);
-      console.log(`${newTasks.length} tareas importadas con Ã©xito.`);
+      console.log(`${newTasks.length} tareas importadas con éxito.`);
       onClose();
     } catch (error) {
       console.error(error);
@@ -166,14 +166,14 @@ REGLAS IMPORTANTES:
            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3 text-sm text-blue-800">
                <AlertTriangle size={18} className="shrink-0 text-blue-600 mt-0.5" />
                <p>
-                 Pega debajo exactamente el cÃ³digo JSON (con los corchetes <code>[ ]</code> incluidos) que te generÃ³ la Inteligencia Artificial.
-                 El sistema validarÃ¡ la estructura, asignarÃ¡ IDs Ãºnicos y los inyectarÃ¡ automÃ¡ticamente en la nube.
+                 Pega debajo exactamente el código JSON (con los corchetes <code>[ ]</code> incluidos) que te generó la Inteligencia Artificial.
+                 El sistema validará la estructura, asignará IDs únicos y los inyectará automáticamente en la nube.
                </p>
            </div>
 
            {/* Modo de Importacion */}
            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-3">
-              <h4 className="font-bold text-slate-700 text-sm">Modo de ImportaciÃ³n</h4>
+              <h4 className="font-bold text-slate-700 text-sm">Modo de Importación</h4>
               
               <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${!isReplaceMode ? 'bg-violet-50 border-violet-300' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
                  <div className="pt-0.5">
@@ -191,7 +191,7 @@ REGLAS IMPORTANTES:
                  </div>
                  <div>
                     <p className="text-sm font-bold text-slate-800">Reemplazar Fase</p>
-                    <p className="text-xs text-slate-500 mt-0.5">BorrarÃ¡ <b>todas</b> las tareas de las fases que estÃ©n en el JSON, y las reemplazarÃ¡ por las nuevas. Usa esto si le pediste a la IA que quite tareas de una fase.</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Borrará <b>todas</b> las tareas de las fases que estén en el JSON, y las reemplazará por las nuevas. Usa esto si le pediste a la IA que quite tareas de una fase.</p>
                  </div>
               </label>
            </div>
@@ -204,24 +204,24 @@ REGLAS IMPORTANTES:
              >
                <div className="flex items-center gap-2">
                  <Sparkles size={14} className="text-violet-500" />
-                 <span className="text-xs font-bold text-violet-700">Â¿CÃ³mo pedirle el JSON a NotebookLM o tu IA?</span>
+                 <span className="text-xs font-bold text-violet-700">¿Cómo pedirle el JSON a NotebookLM o tu IA?</span>
                  <span className="bg-violet-200 text-violet-700 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase">Prompt</span>
                </div>
                {showPrompt ? <ChevronUp size={14} className="text-violet-500" /> : <ChevronDown size={14} className="text-violet-500" />}
              </button>
              {showPrompt && (
                <div className="p-4 bg-white border-t border-violet-100">
-                 <p className="text-[10px] text-slate-500 mb-2">CopiÃ¡ este prompt y pegalo en NotebookLM (o cualquier IA con contexto de tu proyecto) para obtener el JSON listo para importar:</p>
+                 <p className="text-[10px] text-slate-500 mb-2">Copiá este prompt y pegalo en NotebookLM (o cualquier IA con contexto de tu proyecto) para obtener el JSON listo para importar:</p>
                  <div className="relative">
                    <pre className="bg-slate-900 text-green-300 text-[10px] p-4 rounded-lg overflow-x-auto whitespace-pre-wrap leading-relaxed font-mono max-h-48 overflow-y-auto custom-scrollbar">{PROMPT_TEMPLATE}</pre>
                    <button
-                     onClick={() => { navigator.clipboard.writeText(PROMPT_TEMPLATE); console.log('Â¡Prompt copiado al portapapeles!'); }}
+                     onClick={() => { navigator.clipboard.writeText(PROMPT_TEMPLATE); console.log('¡Prompt copiado al portapapeles!'); }}
                      className="absolute top-2 right-2 flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white text-[9px] font-bold px-2 py-1 rounded-md shadow transition-colors"
                    >
                      <Copy size={10} /> Copiar
                    </button>
                  </div>
-                 <p className="text-[10px] text-slate-400 mt-2 italic">ðŸ’¡ Tip: PegÃ¡ este prompt <span className="font-bold">al final</span> de tu sesiÃ³n de NotebookLM, despuÃ©s de haber consultado toda la documentaciÃ³n del proyecto.</p>
+                 <p className="text-[10px] text-slate-400 mt-2 italic">�x� Tip: Pegá este prompt <span className="font-bold">al final</span> de tu sesión de NotebookLM, después de haber consultado toda la documentación del proyecto.</p>
                </div>
              )}
            </div>

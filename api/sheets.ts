@@ -67,8 +67,11 @@ export async function fetchFromSheets(): Promise<GlobalCloudData> {
             range: "Tareas!A2:U", // Columna U = userComments
         });
         tareasRows = tareasRes.data.values || [];
-    } catch (e) {
+    } catch (e: any) {
         console.error("Error leyendo Tareas", e);
+        if (e.code !== 400 && !e.message?.includes("parse range")) {
+            throw e;
+        }
     }
 
     // Parse Tareas
@@ -123,8 +126,11 @@ export async function fetchFromSheets(): Promise<GlobalCloudData> {
             range: "Rutinas!A2:P",
         });
         rutinasRows = rutinasRes.data.values || [];
-    } catch (e) {
+    } catch (e: any) {
         console.error("Error leyendo Rutinas", e);
+        if (e.code !== 400 && !e.message?.includes("parse range")) {
+            throw e;
+        }
     }
 
     // Parse Rutinas (ID, Usuario, Nombre, Bloque, Notas, Lunes, Martes, Miercoles, Jueves, Viernes, Link1, Nombre1, Link2, Nombre2, Link3, Nombre3)
@@ -171,8 +177,11 @@ export async function fetchFromSheets(): Promise<GlobalCloudData> {
             range: "Proyectos!A2:L",
         });
         proyectosRows = proyectosRes.data.values || [];
-    } catch (e) {
+    } catch (e: any) {
         console.error("Error leyendo Proyectos", e);
+        if (e.code !== 400 && !e.message?.includes("parse range")) {
+            throw e;
+        }
     }
 
     proyectosRows.forEach(row => {
@@ -292,12 +301,17 @@ export async function pushToSheets(globalData: GlobalCloudData) {
 
     try {
         // Clear old rows first (starting from row 2)
-        await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Tareas!A2:U" });
-        await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Rutinas!A2:P" });
-        try {
-            await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Proyectos!A2:L" });
-        } catch (e) {
-            console.warn("Could not clear Proyectos sheet, maybe it doesn't exist yet");
+        if (globalData.users) {
+            await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Tareas!A2:U" });
+            await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Rutinas!A2:P" });
+        }
+        
+        if (globalData.projects !== undefined) {
+            try {
+                await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Proyectos!A2:L" });
+            } catch (e) {
+                console.warn("Could not clear Proyectos sheet, maybe it doesn't exist yet");
+            }
         }
 
         // Batch upload

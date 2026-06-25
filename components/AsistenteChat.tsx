@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+�import React, { useState, useEffect, useRef } from 'react';
 import { Send, X, Bot, FileText, Loader2, Lock, AlertTriangle, CheckCircle2, XCircle, ExternalLink, Clock, Copy, Check, Key, Paperclip, File as FileIcon, Trash2, Settings, Save, RefreshCw, Cpu, Minus, Maximize2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -16,20 +16,20 @@ interface AsistenteChatProps {
 
 const QUICK_ACTIONS = [
   {
-    label: "ðŸ” DesvÃ­os para revisar esta semana",
-    prompt: "Quiero saber los desvÃ­os para revisar esta semana. Por favor, busca en el 'DOC Maestro DINAMICO - GEM (Desvios)' los registros de la semana pasada (semana vencida) y hazme un resumen."
+    label: "�x� Desvíos para revisar esta semana",
+    prompt: "Quiero saber los desvíos para revisar esta semana. Por favor, busca en el 'DOC Maestro DINAMICO - GEM (Desvios)' los registros de la semana pasada (semana vencida) y hazme un resumen."
   },
   {
-    label: "ðŸ” Incidentes operativos para revisar esta semana",
+    label: "�x� Incidentes operativos para revisar esta semana",
     prompt: "Quiero saber los incidentes operativos para revisar esta semana. Por favor, busca en el 'DOC Maestro DINAMICO - GEM (Operaciones)' los registros de la semana pasada (semana vencida) y hazme un resumen."
   },
   {
-    label: "ðŸ“… Pendientes de desvÃ­os del 2026",
-    prompt: "Quiero saber cÃ³mo venimos con los pendientes de desvÃ­os de este aÃ±o 2026. Busca en el 'DOC Maestro DINAMICO - GEM (Desvios)' todos los pendientes del 2026, excluyendo los de la semana actual, y hazme un resumen."
+    label: "�x& Pendientes de desvíos del 2026",
+    prompt: "Quiero saber cómo venimos con los pendientes de desvíos de este año 2026. Busca en el 'DOC Maestro DINAMICO - GEM (Desvios)' todos los pendientes del 2026, excluyendo los de la semana actual, y hazme un resumen."
   },
   {
-    label: "ðŸ“… Pendientes de incidentes operativos del 2026",
-    prompt: "Quiero saber cÃ³mo venimos con los pendientes de incidentes operativos de este aÃ±o 2026. Busca en el 'DOC Maestro DINAMICO - GEM (Operaciones)' todos los pendientes del 2026, excluyendo los de la semana actual, y hazme un resumen."
+    label: "�x& Pendientes de incidentes operativos del 2026",
+    prompt: "Quiero saber cómo venimos con los pendientes de incidentes operativos de este año 2026. Busca en el 'DOC Maestro DINAMICO - GEM (Operaciones)' todos los pendientes del 2026, excluyendo los de la semana actual, y hazme un resumen."
   }
 ];
 
@@ -43,18 +43,18 @@ const getWeekNumber = (d: Date) => {
 
 const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'model', text: 'Hola, soy tu Asistente de DesvÃ­os e Incidentes. Â¿QuÃ© quisieras consultar hoy?\n\nPuedes elegir una de las opciones rÃ¡pidas o escribirme lo que necesites.' }
+    { role: 'model', text: 'Hola, soy tu Asistente de Desvíos e Incidentes. ¿Qué quisieras consultar hoy?\n\nPuedes elegir una de las opciones rápidas o escribirme lo que necesites.' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   
-  // --- ESTADOS DE DIAGNÃ“STICO ---
-  const [isServiceAccountConnected, setIsServiceAccountConnected] = useState<boolean>(true); // Asumimos true por defecto, fallarÃ¡ si el fetch falla
+  // --- ESTADOS DE DIAGN�STICO ---
+  const [isServiceAccountConnected, setIsServiceAccountConnected] = useState<boolean>(true); // Asumimos true por defecto, fallará si el fetch falla
   const [authError, setAuthError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // --- CONFIGURACIÃ“N MANUAL (SETTINGS) ---
+  // --- CONFIGURACI�N MANUAL (SETTINGS) ---
   const [showSettings, setShowSettings] = useState(false);
   
   // Clave Gemini Personalizada (Persistente)
@@ -71,7 +71,7 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
   const [inputGeminiKey, setInputGeminiKey] = useState("");
   const [savedGeminiSuccess, setSavedGeminiSuccess] = useState(false);
 
-  // --- CACHÃ‰ DE CONTEXTO ---
+  // --- CACH�0 DE CONTEXTO ---
   const [cachedDriveContext, setCachedDriveContext] = useState<string | null>(null);
   const [useFullContext, setUseFullContext] = useState(() => localStorage.getItem("v25_full_context") === "true");
   const [useHistoricalContext, setUseHistoricalContext] = useState(false);
@@ -97,7 +97,7 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
     }
   }, [showSettings, customGeminiKey]);
 
-  // NotificaciÃ³n de RestauraciÃ³n de Credenciales
+  // Notificación de Restauración de Credenciales
   useEffect(() => {
     if (customGeminiKey) {
         setTimeout(() => {
@@ -105,7 +105,7 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
                 ...prev, 
                 { 
                     role: 'model', 
-                    text: `âš™ï¸ **SesiÃ³n Restaurada:**\nâ€¢ ðŸ”‘ Clave API Personal cargada` 
+                    text: `�a"️ **Sesión Restaurada:**\n⬢ �x Clave API Personal cargada` 
                 }
             ]);
         }, 500);
@@ -120,7 +120,7 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
     setTimeout(() => setSavedGeminiSuccess(false), 2000);
     
     if (trimmed) {
-      setMessages(prev => [...prev, { role: 'model', text: `ðŸ”‘ Clave actualizada. Usando: ...${trimmed.slice(-4)}` }]);
+      setMessages(prev => [...prev, { role: 'model', text: `�x Clave actualizada. Usando: ...${trimmed.slice(-4)}` }]);
     }
   };
 
@@ -141,13 +141,13 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
     const isChecked = e.target.checked;
     setUseFullContext(isChecked);
     localStorage.setItem("v25_full_context", isChecked.toString());
-    // Limpiar cachÃ© para forzar nueva lectura con o sin truncamiento
+    // Limpiar caché para forzar nueva lectura con o sin truncamiento
     setCachedDriveContext(null);
   };
 
   const handleHistoricalContextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUseHistoricalContext(e.target.checked);
-    // Limpiar cachÃ© para forzar nueva lectura de la carpeta correcta
+    // Limpiar caché para forzar nueva lectura de la carpeta correcta
     setCachedDriveContext(null);
   };
 
@@ -156,27 +156,27 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
     try {
       console.log("Solicitando contexto de Drive al servidor...");
       
-      // Siempre pedimos la carpeta principal (donde estÃ¡n los pendientes y los desvÃ­os)
+      // Siempre pedimos la carpeta principal (donde están los pendientes y los desvíos)
       const mainResponse = await fetch(`/api/drive/files?full=${useFullContext}`);
       if (!mainResponse.ok) {
         const errData = await mainResponse.json().catch(() => ({}));
-        throw new Error(errData.error || `Error ${mainResponse.status}: La respuesta no es un JSON vÃ¡lido.`);
+        throw new Error(errData.error || `Error ${mainResponse.status}: La respuesta no es un JSON válido.`);
       }
       const mainData = await mainResponse.json();
-      let combinedContext = mainData.context || "[Carpeta principal vacÃ­a]";
+      let combinedContext = mainData.context || "[Carpeta principal vacía]";
 
-      // Si el usuario activÃ³ el histÃ³rico, pedimos TAMBIÃ‰N la subcarpeta histÃ³rica y la sumamos
+      // Si el usuario activó el histórico, pedimos TAMBI�0N la subcarpeta histórica y la sumamos
       if (useHistoricalContext) {
-        console.log("Solicitando contexto histÃ³rico adicional...");
+        console.log("Solicitando contexto histórico adicional...");
         const historicalFolderId = '1E_uJaarACpoBETw8YpYSYleh4ANUT1Ru';
         const histResponse = await fetch(`/api/drive/files?full=${useFullContext}&folderId=${historicalFolderId}`);
         
         if (histResponse.ok) {
           const histData = await histResponse.json();
-          combinedContext += `\n\n=== INICIO CONTEXTO HISTÃ“RICO (2024-2025) ===\n${histData.context || "[Carpeta histÃ³rica vacÃ­a]"}\n=== FIN CONTEXTO HISTÃ“RICO ===\n`;
+          combinedContext += `\n\n=== INICIO CONTEXTO HIST�RICO (2024-2025) ===\n${histData.context || "[Carpeta histórica vacía]"}\n=== FIN CONTEXTO HIST�RICO ===\n`;
         } else {
-          console.warn("No se pudo obtener la carpeta histÃ³rica");
-          combinedContext += "\n\n[ADVERTENCIA: No se pudo cargar la carpeta histÃ³rica]";
+          console.warn("No se pudo obtener la carpeta histórica");
+          combinedContext += "\n\n[ADVERTENCIA: No se pudo cargar la carpeta histórica]";
         }
       }
 
@@ -256,7 +256,7 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
     const effectiveApiKey = customGeminiKey || process.env.API_KEY || API_KEY;
     
     if (!effectiveApiKey) {
-      console.error("Falta la API Key de Gemini. Por favor configÃºrala en el icono de engranaje.");
+      console.error("Falta la API Key de Gemini. Por favor configúrala en el icono de engranaje.");
       setShowSettings(true);
       return;
     }
@@ -270,14 +270,14 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
     let displayMsg = userMsg;
     if (currentFiles.length > 0) {
       const fileNames = currentFiles.map(f => f.name).join(', ');
-      displayMsg = `${userMsg ? userMsg + '\n\n' : ''}ðŸ“Ž Adjuntos (${currentFiles.length}): ${fileNames}`;
+      displayMsg = `${userMsg ? userMsg + '\n\n' : ''}�x} Adjuntos (${currentFiles.length}): ${fileNames}`;
     }
       
     setMessages(prev => [...prev, { role: 'user', text: displayMsg }]);
     setIsLoading(true);
 
     try {
-      // 1. Obtener Contexto de Drive (Service Account) con CachÃ©
+      // 1. Obtener Contexto de Drive (Service Account) con Caché
       let contextDocs = cachedDriveContext;
       if (!contextDocs) {
         try {
@@ -295,21 +295,21 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
       const currentWeek = getWeekNumber(now);
       const currentYear = now.getFullYear();
 
-      const systemInstruction = `Eres un Ingeniero de Calidad experto en anÃ¡lisis de desvÃ­os e incidentes operativos para la empresa GEMEZ S.A.
-      Hoy es ${now.toLocaleDateString('es-AR')} (Semana ${currentWeek} del aÃ±o ${currentYear}).
+      const systemInstruction = `Eres un Ingeniero de Calidad experto en análisis de desvíos e incidentes operativos para la empresa GEMEZ S.A.
+      Hoy es ${now.toLocaleDateString('es-AR')} (Semana ${currentWeek} del año ${currentYear}).
       La "semana vencida" o "semana pasada" corresponde a la Semana ${currentWeek - 1}.
       
-      CONTEXTO DE DRIVE (Obtenido vÃ­a Service Account):
+      CONTEXTO DE DRIVE (Obtenido vía Service Account):
       ${contextDocs}
       
       INSTRUCCIONES:
-      Analiza la informaciÃ³n proporcionada (archivos adjuntos y contexto de Drive) y responde a la consulta del usuario con precisiÃ³n tÃ©cnica.
-      Si el contexto de Drive indica error, avisa al usuario que revise la configuraciÃ³n del servidor (Service Account).
+      Analiza la información proporcionada (archivos adjuntos y contexto de Drive) y responde a la consulta del usuario con precisión técnica.
+      Si el contexto de Drive indica error, avisa al usuario que revise la configuración del servidor (Service Account).
       
       REGLAS ESPECIALES:
-      1. Si te piden "DesvÃ­os para revisar esta semana" o "Incidentes para revisar esta semana", debes buscar estrictamente los registros de la semana pasada (Semana ${currentWeek - 1}) en el documento correspondiente.
-      2. Si te piden "Pendientes de este aÃ±o", debes buscar todos los pendientes del aÃ±o ${currentYear}, pero EXCLUIR los de la semana actual (Semana ${currentWeek}).
-      Si la informaciÃ³n solicitada no estÃ¡ en el contexto, indÃ­calo claramente.`;
+      1. Si te piden "Desvíos para revisar esta semana" o "Incidentes para revisar esta semana", debes buscar estrictamente los registros de la semana pasada (Semana ${currentWeek - 1}) en el documento correspondiente.
+      2. Si te piden "Pendientes de este año", debes buscar todos los pendientes del año ${currentYear}, pero EXCLUIR los de la semana actual (Semana ${currentWeek}).
+      Si la información solicitada no está en el contexto, indícalo claramente.`;
 
       // 2. Construir partes del mensaje (Texto + Archivos)
       const parts: any[] = [];
@@ -320,7 +320,7 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
           parts.push(...fileParts);
         } catch (e) {
           console.error("Error procesando archivos adjuntos:", e);
-          setMessages(prev => [...prev, { role: 'model', text: "Error leyendo los archivos adjuntos. AsegÃºrate de que no estÃ©n corruptos." }]);
+          setMessages(prev => [...prev, { role: 'model', text: "Error leyendo los archivos adjuntos. Asegúrate de que no estén corruptos." }]);
           setIsLoading(false);
           return;
         }
@@ -345,27 +345,27 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
       setMessages(prev => [...prev, { role: 'model', text: response.text || "Sin respuesta del modelo." }]);
     } catch (error: any) {
       console.error("Error Gemini:", error);
-      let errMsg = "OcurriÃ³ un error al procesar.";
+      let errMsg = "Ocurrió un error al procesar.";
       
       // Parsear error robustamente
       const errStr = typeof error === 'string' ? error : (error.message || JSON.stringify(error));
 
-      // MANEJO ESPECÃFICO DE ERROR 429 (QUOTA EXCEEDED)
+      // MANEJO ESPECÍFICO DE ERROR 429 (QUOTA EXCEEDED)
       if (errStr.includes('429') || error.status === 429) {
         if (customGeminiKey) {
-             errMsg = `â³ **Error de Cuota o ConfiguraciÃ³n (429).**\n\nGoogle indica que se excediÃ³ el lÃ­mite o el acceso no estÃ¡ configurado.\n\n**Posibles Causas (Clave Nueva):**\n1. **API no habilitada:** Busca "Google Generative Language API" en Google Cloud Console y habilÃ­tala.\n2. **FacturaciÃ³n:** Algunos proyectos requieren cuenta de facturaciÃ³n activa (aunque uses el plan gratuito).\n3. **Restricciones:** Si restringiste la API Key por IP o HTTP, intenta dejarla sin restricciones momentÃ¡neamente para probar.`;
+             errMsg = `⏳ **Error de Cuota o Configuración (429).**\n\nGoogle indica que se excedió el límite o el acceso no está configurado.\n\n**Posibles Causas (Clave Nueva):**\n1. **API no habilitada:** Busca "Google Generative Language API" en Google Cloud Console y habilítala.\n2. **Facturación:** Algunos proyectos requieren cuenta de facturación activa (aunque uses el plan gratuito).\n3. **Restricciones:** Si restringiste la API Key por IP o HTTP, intenta dejarla sin restricciones momentáneamente para probar.`;
         } else {
-             errMsg = "â›” CUOTA DE LA APP AGOTADA (429).\n\nLa clave por defecto alcanzÃ³ su lÃ­mite. Por favor ingresa TU PROPIA clave en ConfiguraciÃ³n.";
+             errMsg = "�: CUOTA DE LA APP AGOTADA (429).\n\nLa clave por defecto alcanzó su límite. Por favor ingresa TU PROPIA clave en Configuración.";
         }
-        setShowSettings(true); // Abrir ajustes automÃ¡ticamente
+        setShowSettings(true); // Abrir ajustes automáticamente
       }
       // MANEJO DE ERROR 404 (MODEL NOT FOUND)
       else if (errStr.includes('404') || error.status === 404) {
-          errMsg = `âŒ **Modelo No Encontrado (404).**\n\nEl modelo seleccionado (${selectedModel}) ya no estÃ¡ disponible o el nombre es incorrecto para esta versiÃ³n de la API.\n\nðŸ‘‰ **SoluciÃ³n:** Abre ConfiguraciÃ³n y selecciona otro modelo (ej: Gemini 3.0 Flash).`;
+          errMsg = `�R **Modelo No Encontrado (404).**\n\nEl modelo seleccionado (${selectedModel}) ya no está disponible o el nombre es incorrecto para esta versión de la API.\n\n�x0 **Solución:** Abre Configuración y selecciona otro modelo (ej: Gemini 3.0 Flash).`;
           setShowSettings(true);
       }
       else if (errStr.includes('400')) {
-         errMsg += " Solicitud invÃ¡lida (Â¿archivo demasiado grande o formato incorrecto?).";
+         errMsg += " Solicitud inválida (¿archivo demasiado grande o formato incorrecto?).";
       }
       else if (errStr.includes('403')) {
          errMsg += " Error de permisos o cuota.";
@@ -417,11 +417,11 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
               <Bot size={18} />
             </div>
             <div>
-              <h3 className="font-bold text-textPrimary text-sm">Asistente de DesvÃ­os</h3>
+              <h3 className="font-bold text-textPrimary text-sm">Asistente de Desvíos</h3>
               <div className="flex items-center gap-1.5">
                 <span className={`w-1.5 h-1.5 rounded-full ${isServiceAccountConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
                 <span className="text-[10px] text-textSecondary">
-                  {isServiceAccountConnected ? 'Drive Conectado (Server)' : 'Sin conexiÃ³n a Drive'}
+                  {isServiceAccountConnected ? 'Drive Conectado (Server)' : 'Sin conexión a Drive'}
                 </span>
               </div>
             </div>
@@ -430,7 +430,7 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
             <button 
               onClick={() => setShowSettings(!showSettings)} 
               className={`p-1.5 rounded-full transition-colors ${showSettings ? 'bg-blue-100 text-accentBlue' : 'hover:bg-gray-100 text-textSecondary'}`}
-              title="ConfiguraciÃ³n"
+              title="Configuración"
             >
               <Settings size={16} />
             </button>
@@ -443,17 +443,17 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
           </div>
         </div>
 
-        {/* Panel de ConfiguraciÃ³n (Overlay) */}
+        {/* Panel de Configuración (Overlay) */}
         {showSettings && (
           <div className="absolute top-[60px] left-0 right-0 bottom-0 bg-white/95 backdrop-blur-sm p-4 z-20 overflow-y-auto animate-in fade-in">
              <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
                 <h4 className="text-sm font-bold text-textPrimary flex items-center gap-2">
-                  <Settings size={14} /> ConfiguraciÃ³n Avanzada
+                  <Settings size={14} /> Configuración Avanzada
                 </h4>
                 <button onClick={() => setShowSettings(false)} className="text-xs text-blue-600 hover:underline">Volver al chat</button>
              </div>
 
-             {/* ConfiguraciÃ³n GEMINI */}
+             {/* Configuración GEMINI */}
              <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
                 <div className="flex justify-between items-start mb-1">
                     <label className="block text-xs font-bold text-blue-800">
@@ -471,7 +471,7 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
                       type="password" 
                       value={inputGeminiKey}
                       onChange={(e) => setInputGeminiKey(e.target.value)}
-                      placeholder={customGeminiKey ? "â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" : "Pegar API Key"}
+                      placeholder={customGeminiKey ? "⬢⬢⬢⬢⬢⬢⬢⬢⬢⬢⬢⬢⬢⬢⬢⬢" : "Pegar API Key"}
                       className="flex-1 text-xs border border-blue-200 rounded px-2 py-1.5 focus:border-blue-500 outline-none font-mono"
                    />
                    <button 
@@ -515,7 +515,7 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
                      Enviar Documento Completo (Sin truncar)
                    </label>
                    <p className="text-[9px] text-blue-600 mt-1 leading-tight mb-3">
-                     Activa esto solo si usas tu propia API Key con facturaciÃ³n habilitada. Si usas la clave gratuita, podrÃ­as recibir Error 429.
+                     Activa esto solo si usas tu propia API Key con facturación habilitada. Si usas la clave gratuita, podrías recibir Error 429.
                    </p>
 
                    <label className="flex items-center gap-2 text-xs font-bold text-blue-800 cursor-pointer mt-2">
@@ -525,19 +525,19 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
                        onChange={handleHistoricalContextChange}
                        className="rounded border-blue-300 text-blue-600 focus:ring-blue-500"
                      />
-                     Buscar en carpeta "HistÃ³rico 2024 - 2025"
+                     Buscar en carpeta "Histórico 2024 - 2025"
                    </label>
                    <p className="text-[9px] text-blue-600 mt-1 leading-tight">
-                     Activa esto para que el asistente busque en los documentos de aÃ±os anteriores en lugar de los actuales.
+                     Activa esto para que el asistente busque en los documentos de años anteriores en lugar de los actuales.
                    </p>
                 </div>
              </div>
 
-             {/* Panel de DiagnÃ³stico Simplificado */}
+             {/* Panel de Diagnóstico Simplificado */}
              <div className="mt-4 bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
                  <div className="flex justify-between items-center mb-2">
                      <h4 className="text-xs font-bold text-textPrimary uppercase flex items-center gap-2">
-                     <AlertTriangle size={12} className="text-amber-500" /> Estado ConexiÃ³n
+                     <AlertTriangle size={12} className="text-amber-500" /> Estado Conexión
                      </h4>
                  </div>
                  
