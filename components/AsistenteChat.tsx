@@ -2,9 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, X, Bot, FileText, Loader2, Lock, AlertTriangle, CheckCircle2, XCircle, ExternalLink, Clock, Copy, Check, Key, Paperclip, File as FileIcon, Trash2, Settings, Save, RefreshCw, Cpu, Minus, Maximize2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
-// @ts-ignore
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || ''; 
-
 interface Message {
   role: 'user' | 'model';
   text: string;
@@ -252,8 +249,8 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
     
     if ((!textToSend.trim() && attachedFiles.length === 0) || isLoading) return;
 
-    // PRIORIDAD: Key Personalizada > Variable de Entorno > Hardcoded
-    const effectiveApiKey = customGeminiKey || process.env.API_KEY || API_KEY;
+    // PRIORIDAD: Key Personalizada > Variable de Entorno
+    const effectiveApiKey = customGeminiKey || process.env.API_KEY;
     
     if (!effectiveApiKey) {
       console.error("Falta la API Key de Gemini. Por favor configúrala en el icono de engranaje.");
