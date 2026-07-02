@@ -126,7 +126,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
   // Modals state
   const [editTask, setEditTask] = useState<ProjectTask | null>(null);
   const [viewTask, setViewTask] = useState<ProjectTask | null>(null);
-  const [activeKpiModal, setActiveKpiModal] = useState<'proyectos' | 'completadas' | 'atrasadas' | null>(null);
+  const [activeKpiModal, setActiveKpiModal] = useState<'proyectos' | 'completadas' | 'atrasadas' | 'subtareas' | null>(null);
   const [activeProjectDashboard, setActiveProjectDashboard] = useState<string | null>(null);
   
   // States for reporting
@@ -925,7 +925,7 @@ export default function AdminGantt({ projects, onUpdateProject, onAddProject, on
                             ) : (
                               <div className="w-6 shrink-0"></div>
                             )}
-                            {overdue && <AlertTriangle size={12} className="text-red-500 shrink-0" title="Tarea Vencida" />}
+                            {overdue && <span title="Tarea Vencida" className="shrink-0"><AlertTriangle size={12} className="text-red-500" /></span>}
                             <div className="flex flex-col truncate">
                               <span title={t.name} className={`text-xs font-medium truncate flex items-center gap-1.5 transition-colors group-hover:text-blue-700 ${overdue ? 'text-red-600' : 'text-slate-700'}`}>
                                  {t.link ? (

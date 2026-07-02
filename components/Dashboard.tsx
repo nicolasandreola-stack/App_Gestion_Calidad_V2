@@ -10,6 +10,7 @@ import QuickLinksSidebar from './QuickLinksSidebar';
 import { Task, RoutineItem, RoutineState, HistoryEntry, BackupData, GlobalCloudData, Achievement } from '../types';
 import { Trophy, MessageSquare, Send, Loader2, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { toast } from 'sonner';
 
 interface DashboardProps {
   user: string;

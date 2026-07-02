@@ -5,6 +5,7 @@ import AdminDashboard from './components/AdminDashboard';
 import DesviosDashboard from './components/DesviosDashboard';
 import GlobalSearchModal from './components/GlobalSearchModal';
 import AppSidebar, { AppView } from './components/AppSidebar';
+import { Toaster } from 'sonner';
 
 function App() {
   const [currentUser, setCurrentUser] = useState<string | null>(() => {
@@ -45,7 +46,12 @@ function App() {
 
   // If no user is logged in, show login screen
   if (!currentUser) {
-    return <LoginScreen onLogin={handleLogin} />;
+    return (
+      <>
+        <Toaster richColors position="top-right" />
+        <LoginScreen onLogin={handleLogin} />
+      </>
+    );
   }
 
   const isSuperUser = ADMIN_USERS.includes(currentUser.toLowerCase());
@@ -96,6 +102,7 @@ function App() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-bgBody">
+      <Toaster richColors position="top-right" />
       {/* Sidebar de navegación global */}
       <AppSidebar
         activeView={safeView}

@@ -110,7 +110,6 @@ REGLAS IMPORTANTES:
           status: row.status || 'PENDIENTE',
           details: row.details || '',
           link: row.link || '',
-          closingNote: row.closingNote || '',
           subtasks
        };
        newTasks.push(newTask);
