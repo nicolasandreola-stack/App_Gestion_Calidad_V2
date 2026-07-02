@@ -34,7 +34,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
     const [globalProjects, setGlobalProjects] = useState<ProjectTask[]>([]);
     const [projectObservations, setProjectObservations] = useState<Record<string, string>>({});
 
-    // Formulario de DelegaciÃ³n
+    // Formulario de Delegación
     const [newTaskText, setNewTaskText] = useState("");
     const [newTaskNote, setNewTaskNote] = useState("");
     const [newTaskL1, setNewTaskL1] = useState("");
@@ -112,7 +112,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
         if (!selectedUser) return;
         loadUserData(selectedUser);
         
-        // Limpiar notificaciÃ³n del usuario al seleccionarlo
+        // Limpiar notificación del usuario al seleccionarlo
         if (notifications[selectedUser]) {
             setNotifications(prev => {
                 const next = { ...prev };
@@ -200,15 +200,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
             l2: newTaskL2, n2: newTaskN2,
             del: 'Admin',
             prio: newTaskPrio,
-            note: newTaskNote || 'Asignado por AdministraciÃ³n'
+            note: newTaskNote || 'Asignado por Administración'
         };
 
-        // 2. ActualizaciÃ³n Optimista (Local)
+        // 2. Actualización Optimista (Local)
         const updatedTasks = [...userTasks, newTask];
         localStorage.setItem(getUserKey(selectedUser, "tasks"), JSON.stringify(updatedTasks));
         setUserTasks(updatedTasks);
 
-        // 3. INTENTO DE SINCRONIZACIÃ“N CLOUD (Push directo a Sheets)
+        // 3. INTENTO DE SINCRONIZACIÓN CLOUD (Push directo a Sheets)
         setIsAssigning(true);
         try {
             // A. Traer datos frescos de la nube (para no sobrescribir)
@@ -222,7 +222,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                     globalData.users[selectedUser] = { tks: [], rtM: [], rtS: {}, h: [], cTks: [] };
                 }
 
-                // FUSIONAR: Mantener lo que hay en la nube, pero aÃ±adir nuestra nueva tarea
+                // FUSIONAR: Mantener lo que hay en la nube, pero añadir nuestra nueva tarea
                 const cloudTasks = globalData.users[selectedUser].tks || [];
                 const finalTasks = [...cloudTasks, newTask];
                 
@@ -324,7 +324,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
 
     const handleDeleteUser = () => {
         if (!selectedUser) return;
-        if (confirm(`Â¿EstÃ¡s seguro de ELIMINAR al usuario ${selectedUser} y todos sus datos? Esta acciÃ³n no se puede deshacer.`)) {
+        if (confirm(`¿Estás seguro de ELIMINAR al usuario ${selectedUser} y todos sus datos? Esta acción no se puede deshacer.`)) {
             localStorage.removeItem(getUserKey(selectedUser, "tasks"));
             localStorage.removeItem(getUserKey(selectedUser, "rt_master"));
             localStorage.removeItem(getUserKey(selectedUser, "rt_state"));
@@ -391,17 +391,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                     setNotifications(newNotifications);
                     if (hasNewFeedback) {
                         playAdminNotificationSound();
-                        console.log("Â¡Nueva respuesta de un usuario recibida!", { icon: "ðŸ’¬" });
+                        console.log("¡Nueva respuesta de un usuario recibida!", { icon: "💬" });
                     }
 
                     if (selectedUser) loadUserData(selectedUser);
                     setLastUpdate(new Date().toLocaleTimeString());
-                    if (!silent) console.log("SincronizaciÃ³n global completada.");
+                    if (!silent) console.log("Sincronización global completada.");
                 }
             }
         } catch (e) {
             console.error(e);
-            if (!silent) console.error("Error de conexiÃ³n al sincronizar.");
+            if (!silent) console.error("Error de conexión al sincronizar.");
         } finally {
             setIsSyncing(false);
         }
@@ -620,7 +620,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                 console.log('Proyectos sincronizados con Sheets.');
             }
         } catch (e) {
-            console.error('Gantt guardado localmente. FallÃ³ sincronizaciÃ³n.');
+            console.error('Gantt guardado localmente. Falló sincronización.');
         }
     };
 
@@ -648,7 +648,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
             >
                 <div className="flex justify-between items-start mb-1">
                     <div className="flex gap-1">
-                        {t.prio && <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1 rounded font-bold">â˜… PRIO</span>}
+                        {t.prio && <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1 rounded font-bold">★ PRIO</span>}
                         {getComplexityBadge(t.comp)}
                     </div>
                     <span className="text-[9px] text-gray-400 font-mono">{t.date || 'S/F'}</span>
@@ -767,7 +767,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                             ) : (
                                 <div className="text-center py-6 text-gray-400">
                                     <MessageSquare size={28} className="mx-auto mb-2 text-gray-200" strokeWidth={1.5} />
-                                    <p className="text-[11px]">Sin consultas previas. SÃ© el primero en preguntar.</p>
+                                    <p className="text-[11px]">Sin consultas previas. Sé el primero en preguntar.</p>
                                 </div>
                             )}
 
@@ -775,7 +775,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                             {commentModalTask.userComments && (
                                 <div className="mt-2">
                                     <p className="text-[10px] font-bold text-green-600 uppercase tracking-wide mb-2 flex items-center gap-1">
-                                        ðŸ’¬ Respuestas de {commentModalTask.del === 'Admin' ? selectedUser : commentModalTask.del}
+                                        💬 Respuestas de {commentModalTask.del === 'Admin' ? selectedUser : commentModalTask.del}
                                     </p>
                                     {commentModalTask.userComments.split('\n').filter(Boolean).map((line, i) => (
                                         <div key={i} className="bg-green-50 border border-green-100 rounded-lg px-3 py-2 mb-1.5 text-[11px] text-green-900 leading-relaxed">
@@ -792,7 +792,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                             <textarea
                                 value={commentText}
                                 onChange={e => setCommentText(e.target.value)}
-                                placeholder="Ej: Â¿En quÃ© quedÃ³ esto? Â¿CÃ³mo venimos?"
+                                placeholder="Ej: ¿En qué quedó esto? ¿Cómo venimos?"
                                 className="w-full p-3 border border-borderLight rounded-lg text-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none bg-white text-gray-900 min-h-[72px] resize-none transition-all"
                                 onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) handleSendComment(); }}
                             />
@@ -824,7 +824,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                         </div>
                         <div className="p-6 space-y-4">
                             <p className="text-sm text-textPrimary leading-relaxed">
-                                Para que el asistente pueda leer archivos, debes generar el token con un permiso especÃ­fico ("Scope") que no estÃ¡ marcado por defecto.
+                                Para que el asistente pueda leer archivos, debes generar el token con un permiso específico ("Scope") que no está marcado por defecto.
                             </p>
 
                             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs space-y-2 font-medium text-gray-700">
@@ -834,7 +834,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                                 </div>
                                 <div className="flex gap-2">
                                     <span className="bg-red-100 text-red-700 w-5 h-5 rounded-full flex items-center justify-center shrink-0 font-bold border border-red-200">2</span>
-                                    <span>Selecciona ÃšNICAMENTE: <br /><code className="bg-white px-1 rounded border border-gray-300 text-red-600 break-all">https://www.googleapis.com/auth/drive.readonly</code></span>
+                                    <span>Selecciona ÚNICAMENTE: <br /><code className="bg-white px-1 rounded border border-gray-300 text-red-600 break-all">https://www.googleapis.com/auth/drive.readonly</code></span>
                                 </div>
                                 <div className="flex gap-2">
                                     <span className="bg-gray-200 w-5 h-5 rounded-full flex items-center justify-center shrink-0 font-bold">3</span>
@@ -846,7 +846,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                                 </div>
                                 <div className="flex gap-2">
                                     <span className="bg-gray-200 w-5 h-5 rounded-full flex items-center justify-center shrink-0 font-bold">5</span>
-                                    <span>Copia el <b>Access token</b> y pÃ©galo en la configuraciÃ³n de la App.</span>
+                                    <span>Copia el <b>Access token</b> y pégalo en la configuración de la App.</span>
                                 </div>
                             </div>
 
@@ -913,7 +913,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button onClick={onOpenSearch} className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] bg-slate-800 text-white rounded-full hover:bg-slate-900 transition-all" title="BÃºsqueda Global (Ctrl+K)">
+                    <button onClick={onOpenSearch} className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] bg-slate-800 text-white rounded-full hover:bg-slate-900 transition-all" title="Búsqueda Global (Ctrl+K)">
                         <Search size={13} />
                         <span className="hidden lg:inline text-[10px] text-slate-300 font-mono tracking-widest pl-1 border-l border-slate-600 ml-1">Ctrl K</span>
                     </button>
@@ -1000,13 +1000,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                                     onClick={() => setAdminViewTab('asignaciones')}
                                     className={`pb-3 -mb-px px-2 text-sm font-bold transition-all border-b-2 ${adminViewTab === 'asignaciones' ? 'text-accentBlue border-accentBlue' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
                                 >
-                                    Asignaciones y DelegaciÃ³n
+                                    Asignaciones y Delegación
                                 </button>
                                 <button
                                     onClick={() => setAdminViewTab('vista_rapida')}
                                     className={`pb-3 -mb-px px-2 text-sm font-bold transition-all border-b-2 ${adminViewTab === 'vista_rapida' ? 'text-accentBlue border-accentBlue' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
                                 >
-                                    Vista RÃ¡pida del Usuario
+                                    Vista Rápida del Usuario
                                 </button>
                             </div>
 
@@ -1040,7 +1040,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                                             <div className="grid grid-cols-3 gap-2">
                                                 {(['low', 'med', 'high'] as Complexity[]).map(c => {
                                                     const cfg = {
-                                                        low:  { label: 'RÃ¡pida',  colors: newTaskComplexity === 'low'  ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50' },
+                                                        low:  { label: 'Rápida',  colors: newTaskComplexity === 'low'  ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50' },
                                                         med:  { label: 'Media',   colors: newTaskComplexity === 'med'  ? 'bg-orange-400 text-white border-orange-400'  : 'bg-white text-orange-500 border-orange-200 hover:bg-orange-50' },
                                                         high: { label: 'Compleja',colors: newTaskComplexity === 'high' ? 'bg-rose-500 text-white border-rose-500'       : 'bg-white text-rose-600 border-rose-200 hover:bg-rose-50' },
                                                     }[c];
@@ -1067,7 +1067,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                                                 onChange={e => setNewTaskCategory(e.target.value as Category)}
                                                 className="p-2.5 border border-borderLight rounded-lg text-xs bg-white text-gray-900 outline-none focus:border-accentBlue focus:ring-1 focus:ring-accentBlue/20 w-full"
                                             >
-                                                <option value="">CategorÃ­a (Auto: Otro)</option>
+                                                <option value="">Categoría (Auto: Otro)</option>
                                                 {Object.keys(CATEGORY_COLORS).map(cat => (
                                                     <option key={cat} value={cat}>{cat}</option>
                                                 ))}
@@ -1111,7 +1111,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                                                     onChange={e => setNewTaskPrio(e.target.checked)}
                                                     className="accent-accentYellow w-4 h-4 cursor-pointer"
                                                 />
-                                                <span className={`${newTaskPrio ? 'font-bold text-yellow-700' : ''}`}>Marcar como CrÃ­tica</span>
+                                                <span className={`${newTaskPrio ? 'font-bold text-yellow-700' : ''}`}>Marcar como Crítica</span>
                                             </label>
                                             <button
                                                 onClick={handleDelegateTask}
@@ -1141,7 +1141,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                                             return (
                                                 <div className="flex flex-col items-center justify-center w-full h-full text-gray-400 opacity-60 absolute inset-0">
                                                     <Circle size={48} className="mb-2 text-slate-200" strokeWidth={1} />
-                                                    <span className="text-[10px] uppercase font-bold tracking-widest text-slate-300">VacÃ­o</span>
+                                                    <span className="text-[10px] uppercase font-bold tracking-widest text-slate-300">Vacío</span>
                                                 </div>
                                             );
                                         }
@@ -1229,7 +1229,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                                         {assignedHistory.length === 0 && (
                                             <div className="flex flex-col items-center justify-center py-12 text-gray-400 opacity-60">
                                                 <ClipboardList size={36} className="mb-2 text-slate-300" strokeWidth={1.5} />
-                                                <p className="text-[11px] font-medium mt-1">Sin historial de delegaciÃ³n</p>
+                                                <p className="text-[11px] font-medium mt-1">Sin historial de delegación</p>
                                             </div>
                                         )}
                                         {assignedHistory.map(t => {
@@ -1258,7 +1258,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                                                         </span>
                                                         {t.prio && (
                                                             <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-yellow-100 text-yellow-800 flex items-center gap-1 shadow-sm" title="Alta Prioridad">
-                                                                <AlertTriangle size={10} /> CRÃTICA
+                                                                <AlertTriangle size={10} /> CRÍTICA
                                                             </span>
                                                         )}
                                                         {t.cat && t.cat !== 'Otro' && (
@@ -1269,11 +1269,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                                                     </div>
                                                     <div className="flex flex-col items-end gap-1 shrink-0">
                                                         <span className="text-[9px] text-gray-400 font-mono">{new Date(t.id).toLocaleDateString()}</span>
-                                                        {/* Acknowledgment badge â€” only for active tasks */}
+                                                        {/* Acknowledgment badge — only for active tasks */}
                                                         {t.status === 'active' && (
                                                             t.acknowledged
-                                                                ? <span className="text-[9px] bg-green-50 text-green-600 border border-green-200 px-1.5 py-0.5 rounded-full font-bold" title="El usuario confirmÃ³ recepciÃ³n">âœ… Recibido</span>
-                                                                : <span className="text-[9px] bg-amber-50 text-amber-600 border border-amber-200 px-1.5 py-0.5 rounded-full font-bold" title="Esperando confirmaciÃ³n del usuario">â³ Pendiente</span>
+                                                                ? <span className="text-[9px] bg-green-50 text-green-600 border border-green-200 px-1.5 py-0.5 rounded-full font-bold" title="El usuario confirmó recepción">✅ Recibido</span>
+                                                                : <span className="text-[9px] bg-amber-50 text-amber-600 border border-amber-200 px-1.5 py-0.5 rounded-full font-bold" title="Esperando confirmación del usuario">⏳ Pendiente</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -1283,11 +1283,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                                                 {/* Meta & Notes Action */}
                                                 <div className="mt-1.5 pt-1.5 border-t border-gray-200/60 w-full">
                                                     {t.status === 'completed' && t.closingNote && (
-                                                        <div className="text-[10px] text-green-700 italic truncate mb-1.5">âœ… CerrÃ³ con: {t.closingNote}</div>
+                                                        <div className="text-[10px] text-green-700 italic truncate mb-1.5">✅ Cerró con: {t.closingNote}</div>
                                                     )}
                                                     <div className="flex justify-between items-center w-full">
                                                         <div className="flex gap-2 items-center">
-                                                            {t.date && <span className="text-[9px] text-gray-500 font-medium">ðŸ“… Vence: {t.date}</span>}
+                                                            {t.date && <span className="text-[9px] text-gray-500 font-medium">📅 Vence: {t.date}</span>}
                                                         </div>
                                                         <div className="flex items-center gap-2">
                                                             {/* Boton consultar - solo tareas activas/standby */}
@@ -1322,7 +1322,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                                                     {/* Preview de comentarios del usuario si los hay */}
                                                     {t.userComments && isExpanded && (
                                                         <div className="mt-2 bg-green-50 border border-green-100 rounded-lg p-2">
-                                                            <p className="text-[9px] font-bold text-green-700 mb-1 uppercase tracking-wide">ðŸ’¬ Respuestas del usuario</p>
+                                                            <p className="text-[9px] font-bold text-green-700 mb-1 uppercase tracking-wide">💬 Respuestas del usuario</p>
                                                             <p className="text-[10px] text-green-800 whitespace-pre-wrap leading-relaxed">{t.userComments}</p>
                                                         </div>
                                                     )}
@@ -1339,7 +1339,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                             {adminViewTab === 'vista_rapida' && (
                                 <div key="vista_rapida" className="bg-white border border-borderLight rounded-xl p-5 shadow-sm flex flex-col mb-4 animate-in fade-in slide-in-from-left-4 duration-500 ease-out">
                                 <h3 className="font-bold text-textPrimary mb-4 flex items-center gap-2 text-sm uppercase">
-                                    <Users size={16} className="text-gray-400" /> Vista RÃ¡pida del Usuario
+                                    <Users size={16} className="text-gray-400" /> Vista Rápida del Usuario
                                 </h3>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1353,7 +1353,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                                             {groupedTasks.overdue.length === 0 && (
                                                 <div className="flex flex-col items-center justify-center py-10 text-gray-400 opacity-60">
                                                     <CheckCircle2 size={32} className="mb-2 text-green-400/70" strokeWidth={1.5} />
-                                                    <p className="text-[11px] font-medium mt-1">Bandeja al dÃ­a</p>
+                                                    <p className="text-[11px] font-medium mt-1">Bandeja al día</p>
                                                 </div>
                                             )}
                                             {groupedTasks.overdue.map(t => renderTaskWithDetails(t))}
@@ -1380,14 +1380,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                                     {/* BACKLOG (Col 3) */}
                                     <div className="flex flex-col h-full bg-gray-50/50 rounded-lg p-3 border border-gray-100">
                                         <h4 className="text-[11px] font-bold text-gray-600 uppercase mb-3 flex justify-between items-center pb-2 border-b border-gray-200">
-                                            <span className="flex items-center gap-1.5">ðŸ“¥ Bandeja Backlog</span>
+                                            <span className="flex items-center gap-1.5">📥 Bandeja Backlog</span>
                                             <span className="bg-gray-200 text-gray-800 px-2 rounded-full shadow-inner">{groupedTasks.backlog.length}</span>
                                         </h4>
                                         <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
                                             {groupedTasks.backlog.length === 0 && (
                                                 <div className="flex flex-col items-center justify-center py-10 text-gray-400 opacity-60">
                                                     <Archive size={32} className="mb-2 text-slate-300" strokeWidth={1.5} />
-                                                    <p className="text-[11px] font-medium mt-1">Bandeja vacÃ­a</p>
+                                                    <p className="text-[11px] font-medium mt-1">Bandeja vacía</p>
                                                 </div>
                                             )}
                                             {groupedTasks.backlog.map(t => renderTaskWithDetails(t))}
@@ -1401,13 +1401,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-textSecondary">
                         <Users size={48} className="mb-4 opacity-20" />
-                        <p>Selecciona un miembro del equipo para ver sus mÃ©tricas.</p>
+                        <p>Selecciona un miembro del equipo para ver sus métricas.</p>
                     </div>
                 )}
 
                 <div className="fixed bottom-2 right-4 text-[10px] text-gray-500 font-mono pointer-events-none select-none z-[40] text-right leading-tight">
                     <div>APP Gestor de tareas (creada por Nicolas Andreola)</div>
-                    <div>Ãšltima modificaciÃ³n: {LAST_UPDATE}</div>
+                    <div>Última modificación: {LAST_UPDATE}</div>
                 </div>
             </main>
         </div>
