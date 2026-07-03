@@ -13,6 +13,46 @@ function formatDate(date: Date): string {
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
 const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID || "1yRf1a_wtB0ZM9Q5o0HO0ARQVd5bHBCoGjEiZdfuxlfs";
 
+// Reserved cell for the optimistic-concurrency version counter. Column W sits two
+// columns past the last real Tareas column (U), row 1 is the header row — so this
+// never overlaps real data. (Drive's file-level `modifiedTime` looked like a free
+// version marker, but it turned out not to update promptly after Sheets API writes
+// — still unchanged 16+ seconds after a write in testing — so it's unusable here.)
+const VERSION_CELL = "Tareas!W1";
+
+// Thrown by pushToSheets when the sheet changed since the caller's fetch.
+export class SyncConflictError extends Error {
+    constructor() {
+        super("La hoja fue modificada por otra persona mientras guardabas. Reintentando con los datos más recientes.");
+        this.name = "SyncConflictError";
+    }
+}
+
+// Version strings look like "10:a3f9e1c2" — a counter (for human-readable ordering)
+// plus a random token. The token is what actually makes a claim distinguishable:
+// two racers reading counter "9" both compute counter "10", so the counter alone
+// can't tell whose write landed last. Comparing the full string can.
+function nextVersionToken(currentVersion: string): string {
+    const counter = (parseInt(currentVersion, 10) || 0) + 1;
+    const token = Math.random().toString(36).slice(2, 10);
+    return `${counter}:${token}`;
+}
+
+async function getSheetVersion(sheets: any): Promise<string> {
+    const res = await sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: VERSION_CELL });
+    const value = res.data.values?.[0]?.[0];
+    return value ? String(value) : "0";
+}
+
+async function bumpSheetVersion(sheets: any, newVersion: string): Promise<void> {
+    await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: VERSION_CELL,
+        valueInputOption: "RAW",
+        requestBody: { values: [[newVersion]] }
+    });
+}
+
 let authClient: any = null;
 
 async function getAuthClient() {
@@ -56,8 +96,9 @@ async function getAuthClient() {
 export async function fetchFromSheets(): Promise<GlobalCloudData> {
     const auth = await getAuthClient();
     const sheets = google.sheets({ version: "v4", auth });
+    const version = await getSheetVersion(sheets);
 
-    const globalData: GlobalCloudData = { users: {}, projects: [], lastUpdate: new Date().toISOString() };
+    const globalData: GlobalCloudData = { users: {}, projects: [], lastUpdate: new Date().toISOString(), version };
 
     // Fetch Tareas
     let tareasRows: any[][] = [];
@@ -214,9 +255,29 @@ export async function fetchFromSheets(): Promise<GlobalCloudData> {
     return globalData;
 }
 
-export async function pushToSheets(globalData: GlobalCloudData) {
+export async function pushToSheets(globalData: GlobalCloudData, expectedVersion?: string) {
     const auth = await getAuthClient();
     const sheets = google.sheets({ version: "v4", auth });
+
+    // OPTIMISTIC CONCURRENCY CHECK — "claim, then verify":
+    // A plain "read version, then write data later" check has a gap: two pushes that
+    // read the same version within milliseconds of each other can BOTH pass the check
+    // before either has bumped it, and then both write, each blind to the other. To
+    // close that gap, claim the next version immediately after checking, then read it
+    // straight back — if it's not our claim anymore, someone else's write landed in
+    // that same instant and won the race, so we back off instead of writing data too.
+    if (expectedVersion) {
+        const currentVersion = await getSheetVersion(sheets);
+        if (currentVersion !== expectedVersion) {
+            throw new SyncConflictError();
+        }
+        const myClaim = nextVersionToken(expectedVersion);
+        await bumpSheetVersion(sheets, myClaim);
+        const landedVersion = await getSheetVersion(sheets);
+        if (landedVersion !== myClaim) {
+            throw new SyncConflictError();
+        }
+    }
 
     const tareasRows: any[][] = [];
     const rutinasRows: any[][] = [];
@@ -343,6 +404,13 @@ export async function pushToSheets(globalData: GlobalCloudData) {
             });
         } else {
             console.warn("[pushToSheets] Proyectos payload vacío: se omite para no borrar la hoja.");
+        }
+
+        // If no expectedVersion was given (caller isn't doing the OCC dance), still
+        // bump the counter so it stays meaningful for the next OCC-aware caller.
+        if (!expectedVersion) {
+            const current = await getSheetVersion(sheets);
+            await bumpSheetVersion(sheets, nextVersionToken(current));
         }
 
     } catch (e) {

@@ -4,6 +4,7 @@ import { Task, RoutineItem, RoutineState, Category, Complexity, GlobalCloudData,
 import { KPIDetailsModal, CompletedTasksModal } from './Modals';
 import KPIBoard from './KPIBoard';
 import AdminGantt from './AdminGantt';
+import { fetchMergePush } from '../syncClient';
 
 interface AdminDashboardProps {
     onLogout: () => void;
@@ -208,43 +209,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
         localStorage.setItem(getUserKey(selectedUser, "tasks"), JSON.stringify(updatedTasks));
         setUserTasks(updatedTasks);
 
-        // 3. INTENTO DE SINCRONIZACIÓN CLOUD (Push directo a Sheets)
+        // 3. INTENTO DE SINCRONIZACIÓN CLOUD (fetch-merge-push, con reintento si hay conflicto)
         setIsAssigning(true);
         try {
-            // A. Traer datos frescos de la nube (para no sobrescribir)
-            const fetchRes = await fetch(`/api/sync/get`);
-
-            if (fetchRes.ok) {
-                const result = await fetchRes.json();
-                let globalData = result as GlobalCloudData;
-
+            let finalTasks: Task[] = [];
+            await fetchMergePush((globalData) => {
                 if (!globalData.users[selectedUser]) {
                     globalData.users[selectedUser] = { tks: [], rtM: [], rtS: {}, h: [], cTks: [] };
                 }
 
                 // FUSIONAR: Mantener lo que hay en la nube, pero añadir nuestra nueva tarea
                 const cloudTasks = globalData.users[selectedUser].tks || [];
-                const finalTasks = [...cloudTasks, newTask];
-                
+                finalTasks = [...cloudTasks, newTask];
                 globalData.users[selectedUser].tks = finalTasks;
-                globalData.lastUpdate = new Date().toISOString();
+                return globalData;
+            });
 
-                // C. Subir (Push) los datos actualizados
-                await fetch(`/api/sync/push`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(globalData)
-                });
-                
-                // Actualizar localmente con lo que subimos
-                setUserTasks(finalTasks);
-                localStorage.setItem(getUserKey(selectedUser, "tasks"), JSON.stringify(finalTasks));
+            // Actualizar localmente con lo que subimos
+            setUserTasks(finalTasks);
+            localStorage.setItem(getUserKey(selectedUser, "tasks"), JSON.stringify(finalTasks));
 
-
-                console.log(`Tarea asignada a ${selectedUser.toUpperCase()} y sincronizada en Sheets.`);
-            } else {
-                throw new Error("Error fetching latest data from backend");
-            }
+            console.log(`Tarea asignada a ${selectedUser.toUpperCase()} y sincronizada en Sheets.`);
         } catch (e) {
             console.error(e);
             console.error("Tarea guardada LOCALMENTE. Error al subir a Google Sheets.");
@@ -283,37 +268,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
         setCommentModalTask(updatedTask as Task & { status: string });
         setCommentText('');
 
-        // Sincronizar con Sheets
+        // Sincronizar con Sheets (fetch-merge-push, con reintento si hay conflicto)
         try {
-            const fetchRes = await fetch(`/api/sync/get`);
-            if (fetchRes.ok) {
-                const result = await fetchRes.json();
-                let globalData = result as GlobalCloudData;
-                if (!globalData.users) globalData.users = {};
+            let finalTasks: Task[] = [];
+            await fetchMergePush((globalData) => {
                 if (!globalData.users[selectedUser]) {
                     globalData.users[selectedUser] = { tks: [], rtM: [], rtS: {}, h: [], cTks: [] };
                 }
-                
+
                 // FUSIONAR: Buscar la tarea en la nube y actualizar solo su adminComments
                 const cloudTasks = globalData.users[selectedUser].tks || [];
-                const finalTasks = cloudTasks.map(t => 
+                finalTasks = cloudTasks.map(t =>
                     t.id === commentModalTask.id ? { ...t, adminComments: updatedComments } : t
                 );
-
                 globalData.users[selectedUser].tks = finalTasks;
-                globalData.lastUpdate = new Date().toISOString();
+                return globalData;
+            });
 
-                await fetch(`/api/sync/push`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(globalData)
-                });
-
-                // Actualizar localmente
-                setUserTasks(finalTasks);
-                localStorage.setItem(getUserKey(selectedUser, 'tasks'), JSON.stringify(finalTasks));
-                console.log('Consulta enviada y guardada en Sheets.');
-            }
+            // Actualizar localmente
+            setUserTasks(finalTasks);
+            localStorage.setItem(getUserKey(selectedUser, 'tasks'), JSON.stringify(finalTasks));
+            console.log('Consulta enviada y guardada en Sheets.');
         } catch (e) {
             console.error(e);
             console.error('Consulta guardada localmente. Error al sincronizar con Sheets.');
@@ -606,19 +581,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
     };
     const syncProjectsCloud = async (newProjects: ProjectTask[], newObs?: Record<string, string>) => {
         try {
-            const fetchRes = await fetch(`/api/sync/get`);
-            if (fetchRes.ok) {
-                const globalData = await fetchRes.json();
+            await fetchMergePush((globalData) => {
                 globalData.projects = newProjects;
                 if (newObs !== undefined) globalData.projectObservations = newObs;
-                globalData.lastUpdate = new Date().toISOString();
-                await fetch(`/api/sync/push`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(globalData)
-                });
-                console.log('Proyectos sincronizados con Sheets.');
-            }
+                return globalData;
+            });
+            console.log('Proyectos sincronizados con Sheets.');
         } catch (e) {
             console.error('Gantt guardado localmente. Falló sincronización.');
         }

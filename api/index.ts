@@ -3,7 +3,7 @@ import express from "express";
 import { google } from "googleapis";
 import { GoogleAuth } from "google-auth-library";
 import dotenv from "dotenv";
-import { fetchFromSheets, pushToSheets } from "./sheets.js";
+import { fetchFromSheets, pushToSheets, SyncConflictError } from "./sheets.js";
 
 dotenv.config();
 
@@ -130,9 +130,13 @@ const TARGET_FOLDER_ID = '1iniK-YPZ8BYac8YeK_Uu5_EWxcC0UPH6'; // Hardcoded folde
          }
       }
       
-      await pushToSheets(globalData);
+      await pushToSheets(globalData, globalData?.version);
       res.json({ success: true });
     } catch (e: any) {
+      if (e instanceof SyncConflictError) {
+        res.status(409).json({ error: "CONFLICT", message: e.message });
+        return;
+      }
       console.error(e);
       res.status(500).json({ error: e.message });
     }

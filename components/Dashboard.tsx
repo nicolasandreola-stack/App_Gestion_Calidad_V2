@@ -11,6 +11,7 @@ import { Task, RoutineItem, RoutineState, HistoryEntry, BackupData, GlobalCloudD
 import { Trophy, MessageSquare, Send, Loader2, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
+import { fetchMergePush } from '../syncClient';
 
 interface DashboardProps {
   user: string;
@@ -261,62 +262,35 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onOpenSearch, sho
   };
 
   // --- CORE CLOUD LOGIC (Concurrency Safe) ---
+  // Fetches the latest cloud state, merges this user's local changes into it, and
+  // pushes the result — retrying against a fresh fetch if someone else saved (or the
+  // sheet was edited manually) in between, instead of overwriting them. `localData`
+  // is only ever read here, never mutated, so a retry re-merges cleanly.
   const performFetchMergePush = async (localData: BackupData) => {
-    // 1. FETCH LATEST (Critical for concurrency)
-    const fetchRes = await fetch(`/api/sync/get`);
-
-    let globalData: GlobalCloudData = { users: {}, lastUpdate: "" };
-
-    if (fetchRes.ok) {
-      const result = await fetchRes.json();
-      // Verify structure
-      if (result.users && !Array.isArray(result.users)) {
-        globalData = result;
-      }
-    } else {
-      throw new Error("No se pudo obtener la información de la nube para fusionar. Abortando para no perder datos.");
-    }
-
-    if (!globalData.users || Array.isArray(globalData.users)) {
-      globalData.users = {};
-    }
-    
-    if (!globalData.users[user]) {
+    await fetchMergePush((globalData) => {
+      if (!globalData.users[user]) {
         globalData.users[user] = { tks: [], cTks: [], dTks: [], rtM: [], rtS: {}, h: [], ach: [], rtH: {} };
-    }
+      }
 
-    // --- SMART MERGE: Prevent data loss if tasks were created on another device ---
-    const cloudUser = globalData.users[user];
-    const allLocalIds = new Set([
-      ...(localData.tks || []).map(t => t.id),
-      ...(localData.cTks || []).map(t => t.id),
-      ...(localData.dTks || []).map(t => t.id)
-    ]);
+      // --- SMART MERGE: Prevent data loss if tasks were created on another device ---
+      const cloudUser = globalData.users[user];
+      const allLocalIds = new Set([
+        ...(localData.tks || []).map(t => t.id),
+        ...(localData.cTks || []).map(t => t.id),
+        ...(localData.dTks || []).map(t => t.id)
+      ]);
 
-    const newCloudTasks = (cloudUser.tks || []).filter(t => !allLocalIds.has(t.id));
-    if (newCloudTasks.length > 0) {
-      localData.tks = [...newCloudTasks, ...(localData.tks || [])];
-    }
-    
-    const newCloudCompleted = (cloudUser.cTks || []).filter(t => !allLocalIds.has(t.id));
-    if (newCloudCompleted.length > 0) {
-      localData.cTks = [...newCloudCompleted, ...(localData.cTks || [])];
-    }
+      const newCloudTasks = (cloudUser.tks || []).filter(t => !allLocalIds.has(t.id));
+      const newCloudCompleted = (cloudUser.cTks || []).filter(t => !allLocalIds.has(t.id));
 
-    // 2. MERGE: Update ONLY current user data
-    globalData.users[user] = localData;
-    globalData.lastUpdate = new Date().toISOString();
+      globalData.users[user] = {
+        ...localData,
+        tks: newCloudTasks.length > 0 ? [...newCloudTasks, ...(localData.tks || [])] : localData.tks,
+        cTks: newCloudCompleted.length > 0 ? [...newCloudCompleted, ...(localData.cTks || [])] : localData.cTks,
+      };
 
-    // 3. PUSH
-    const saveRes = await fetch(`/api/sync/push`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(globalData)
+      return globalData;
     });
-
-    if (!saveRes.ok) throw new Error("Upload Failed");
   };
 
   // --- MANUAL CLOUD HANDLERS (From Modal) ---

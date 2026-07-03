@@ -132,6 +132,10 @@ export interface GlobalCloudData {
   projects?: ProjectTask[];
   projectObservations?: Record<string, string>; // projectName → observation text
   lastUpdate: string;
+  // Google Drive's modifiedTime for the spreadsheet at fetch time. Used as an
+  // optimistic-concurrency check: a push must send back the version it fetched,
+  // and gets rejected (409) if the sheet changed since then.
+  version?: string;
 }
 
 // Colores suavizados a escala de grises/neutros para reducir ruido visual
