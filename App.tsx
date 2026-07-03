@@ -1,11 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import LoginScreen from './components/LoginScreen';
-import Dashboard from './components/Dashboard';
-import AdminDashboard from './components/AdminDashboard';
-import DesviosDashboard from './components/DesviosDashboard';
-import GlobalSearchModal from './components/GlobalSearchModal';
 import AppSidebar, { AppView } from './components/AppSidebar';
 import { Toaster } from 'sonner';
+
+// Code-split per view: a regular team member never downloads the Admin/Gantt
+// bundle (the biggest chunk in the app), and vice versa for an admin who
+// never visits the plain task dashboard.
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const DesviosDashboard = lazy(() => import('./components/DesviosDashboard'));
+const GlobalSearchModal = lazy(() => import('./components/GlobalSearchModal'));
+
+const ViewLoadingFallback = () => (
+  <div className="flex-1 flex items-center justify-center text-textSecondary text-sm">
+    Cargando...
+  </div>
+);
 
 function App() {
   const [currentUser, setCurrentUser] = useState<string | null>(() => {
@@ -116,13 +126,17 @@ function App() {
 
       {/* Área de contenido principal */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <GlobalSearchModal
-          isOpen={isSearchOpen}
-          onClose={() => setIsSearchOpen(false)}
-          isAdmin={isSuperUser}
-          currentUser={currentUser}
-        />
-        {mainContent}
+        <Suspense fallback={<ViewLoadingFallback />}>
+          {isSearchOpen && (
+            <GlobalSearchModal
+              isOpen={isSearchOpen}
+              onClose={() => setIsSearchOpen(false)}
+              isAdmin={isSuperUser}
+              currentUser={currentUser}
+            />
+          )}
+          {mainContent}
+        </Suspense>
       </div>
     </div>
   );

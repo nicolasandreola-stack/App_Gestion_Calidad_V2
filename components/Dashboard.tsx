@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import Header from './Header';
 import KPIBoard from './KPIBoard';
 import RoutinePanel from './RoutinePanel';
 import TaskPanel from './TaskPanel';
 import { RoutineModal, TaskModal, HistoryModal, RoutineManagerModal, NoteActionModal, CompletedTasksModal, KPIDetailsModal, AchievementsModal, StatsModal } from './Modals';
-import AsistenteChat from './AsistenteChat';
 import CloudSyncModal from './CloudSyncModal';
 import QuickLinksSidebar from './QuickLinksSidebar';
 import { Task, RoutineItem, RoutineState, HistoryEntry, BackupData, GlobalCloudData, Achievement } from '../types';
@@ -20,6 +19,9 @@ interface DashboardProps {
   showAssistant?: boolean;
   onCloseAssistant?: () => void;
 }
+
+// Only downloaded once the user actually opens the assistant, not on every dashboard load.
+const AsistenteChat = lazy(() => import('./AsistenteChat'));
 
 // VERSION CONTROL
 const LAST_UPDATE = new Date().toLocaleString('es-ES', {
@@ -956,7 +958,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onOpenSearch, sho
       )}
 
       {showAssistant && (
-        <AsistenteChat onClose={() => setShowAssistant(false)} />
+        <Suspense fallback={null}>
+          <AsistenteChat onClose={() => setShowAssistant(false)} />
+        </Suspense>
       )}
 
       {showCloudSync && (
