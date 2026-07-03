@@ -299,47 +299,50 @@ export async function pushToSheets(globalData: GlobalCloudData) {
         });
     }
 
+    // SAFETY NET: never let a sheet be wiped because this push's payload happened to
+    // be empty for that section (e.g. a silently-swallowed read error upstream, or a
+    // stale/partial snapshot). A real write only ever clears+rewrites a sheet when it
+    // actually has rows to put back — an empty result just leaves that sheet untouched
+    // instead of nuking it for everyone.
     try {
-        // Clear old rows first (starting from row 2)
-        if (globalData.users) {
-            await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Tareas!A2:U" });
-            await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Rutinas!A2:P" });
-        }
-        
-        if (globalData.projects !== undefined) {
-            try {
-                await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Proyectos!A2:L" });
-            } catch (e) {
-                console.warn("Could not clear Proyectos sheet, maybe it doesn't exist yet");
-            }
-        }
-
-        // Batch upload
         if (tareasRows.length > 0) {
+            await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Tareas!A2:U" });
             await sheets.spreadsheets.values.update({
                 spreadsheetId: SPREADSHEET_ID,
                 range: "Tareas!A2:U",
                 valueInputOption: "RAW",
                 requestBody: { values: tareasRows }
             });
+        } else {
+            console.warn("[pushToSheets] Tareas payload vacío: se omite para no borrar la hoja.");
         }
 
         if (rutinasRows.length > 0) {
+            await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Rutinas!A2:P" });
             await sheets.spreadsheets.values.update({
                 spreadsheetId: SPREADSHEET_ID,
                 range: "Rutinas!A2:P",
                 valueInputOption: "RAW",
                 requestBody: { values: rutinasRows }
             });
+        } else {
+            console.warn("[pushToSheets] Rutinas payload vacío: se omite para no borrar la hoja.");
         }
 
         if (proyectosRows.length > 0) {
+            try {
+                await sheets.spreadsheets.values.clear({ spreadsheetId: SPREADSHEET_ID, range: "Proyectos!A2:L" });
+            } catch (e) {
+                console.warn("Could not clear Proyectos sheet, maybe it doesn't exist yet");
+            }
             await sheets.spreadsheets.values.update({
                 spreadsheetId: SPREADSHEET_ID,
                 range: "Proyectos!A2:L",
                 valueInputOption: "RAW",
                 requestBody: { values: proyectosRows }
             });
+        } else {
+            console.warn("[pushToSheets] Proyectos payload vacío: se omite para no borrar la hoja.");
         }
 
     } catch (e) {
