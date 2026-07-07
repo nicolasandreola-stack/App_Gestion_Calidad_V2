@@ -4,7 +4,7 @@ import { Task, RoutineItem, RoutineState, Category, Complexity, GlobalCloudData,
 import { KPIDetailsModal, CompletedTasksModal } from './Modals';
 import KPIBoard from './KPIBoard';
 import AdminGantt from './AdminGantt';
-import { fetchMergePush } from '../syncClient';
+import { fetchMergePush, authedFetch } from '../syncClient';
 
 interface AdminDashboardProps {
     onLogout: () => void;
@@ -320,7 +320,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, currentUser, 
         if (!silent) setIsSyncing(true);
 
         try {
-            const response = await fetch(`/api/sync/get`);
+            const response = await authedFetch(`/api/sync/get`);
 
             if (response.ok) {
                 const result = await response.json();

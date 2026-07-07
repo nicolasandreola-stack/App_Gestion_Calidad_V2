@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Loader2, User, AlertCircle, FileText } from 'lucide-react';
 import { GlobalCloudData, BackupData, Task } from '../types';
+import { authedFetch } from '../syncClient';
 
 interface GlobalSearchModalProps {
   isOpen: boolean;
@@ -35,7 +36,7 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
       const fetchData = async () => {
         setIsLoading(true);
         try {
-          const res = await fetch('/api/sync/get');
+          const res = await authedFetch('/api/sync/get');
           if (!res.ok) throw new Error('Error de red');
           const data: GlobalCloudData = await res.json();
           setGlobalData(data);

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AlertCircle } from 'lucide-react';
+import { setStoredIdToken } from '../syncClient';
 
 interface LoginScreenProps {
   onLogin: (username: string) => void;
@@ -74,16 +75,19 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     }
 
     const email: string = payload.email.toLowerCase();
-    
-    // Si quisieras restringir por dominio, podrías descomentar esto:
-    // if (!email.endsWith('@gemez.com.ar')) {
-    //   setError("Solo se permiten cuentas de @gemez.com.ar");
-    //   return;
-    // }
+
+    if (!email.endsWith('@gemez.com.ar')) {
+      setError("Solo se permiten cuentas de @gemez.com.ar");
+      return;
+    }
 
     // Cortamos la parte antes del @ para mapear con la base de datos de Sheets
     // Ej: nicolas.andreola@gemez.com.ar -> nicolas.andreola
     const username = email.split('@')[0];
+
+    // Guardamos el token: la API lo vuelve a verificar en cada pedido, esto
+    // solo evita que alguien salte el login llamando a la API directamente.
+    setStoredIdToken(response.credential);
 
     // Iniciamos sesión con el usuario ya mapeado
     onLogin(username);

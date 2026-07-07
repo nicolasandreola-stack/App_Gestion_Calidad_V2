@@ -10,7 +10,7 @@ import { Task, RoutineItem, RoutineState, HistoryEntry, BackupData, GlobalCloudD
 import { Trophy, MessageSquare, Send, Loader2, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
-import { fetchMergePush } from '../syncClient';
+import { fetchMergePush, authedFetch } from '../syncClient';
 
 interface DashboardProps {
   user: string;
@@ -163,7 +163,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onOpenSearch, sho
 
   const checkForNewTasks = async () => {
     try {
-        const res = await fetch('/api/sync/get');
+        const res = await authedFetch('/api/sync/get');
         if (res.ok) {
             const result = await res.json() as GlobalCloudData;
             const myData = result.users?.[user];
@@ -313,7 +313,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onOpenSearch, sho
   const handleManualDownload = async () => {
     showToast("⏳ Descargando de Sheets...");
     try {
-      const response = await fetch(`/api/sync/get`);
+      const response = await authedFetch(`/api/sync/get`);
 
       if (response.ok) {
         const result = await response.json();

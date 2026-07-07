@@ -4,6 +4,7 @@ import { google } from "googleapis";
 import { GoogleAuth } from "google-auth-library";
 import dotenv from "dotenv";
 import { fetchFromSheets, pushToSheets, SyncConflictError } from "./sheets.js";
+import { requireAuth } from "./auth.js";
 
 dotenv.config();
 
@@ -18,7 +19,7 @@ const TARGET_FOLDER_ID = '1iniK-YPZ8BYac8YeK_Uu5_EWxcC0UPH6'; // Hardcoded folde
 
 
   // API Route to fetch Drive files using Service Account
-  app.get("/api/drive/files", async (req, res) => {
+  app.get("/api/drive/files", requireAuth(), async (req, res) => {
     try {
       if (!SERVICE_ACCOUNT_KEY) {
         return res.status(500).json({ error: "Falta la configuración de la Cuenta de Servicio (GOOGLE_SERVICE_ACCOUNT_KEY)." });
@@ -102,7 +103,7 @@ const TARGET_FOLDER_ID = '1iniK-YPZ8BYac8YeK_Uu5_EWxcC0UPH6'; // Hardcoded folde
   });
 
   // API routes for Google Sheets sync
-  app.get("/api/sync/get", async (req, res) => {
+  app.get("/api/sync/get", requireAuth(), async (req, res) => {
     try {
       const globalData = await fetchFromSheets();
       res.json(globalData);
@@ -112,7 +113,7 @@ const TARGET_FOLDER_ID = '1iniK-YPZ8BYac8YeK_Uu5_EWxcC0UPH6'; // Hardcoded folde
     }
   });
 
-  app.post("/api/sync/push", async (req, res) => {
+  app.post("/api/sync/push", requireAuth(), async (req, res) => {
     try {
       const globalData = req.body;
       

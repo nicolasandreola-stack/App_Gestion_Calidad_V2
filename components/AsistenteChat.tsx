@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, X, Bot, FileText, Loader2, Lock, AlertTriangle, CheckCircle2, XCircle, ExternalLink, Clock, Copy, Check, Key, Paperclip, File as FileIcon, Trash2, Settings, Save, RefreshCw, Cpu, Minus, Maximize2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import { authedFetch } from '../syncClient';
 
 interface Message {
   role: 'user' | 'model';
@@ -154,7 +155,7 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
       console.log("Solicitando contexto de Drive al servidor...");
       
       // Siempre pedimos la carpeta principal (donde están los pendientes y los desvíos)
-      const mainResponse = await fetch(`/api/drive/files?full=${useFullContext}`);
+      const mainResponse = await authedFetch(`/api/drive/files?full=${useFullContext}`);
       if (!mainResponse.ok) {
         const errData = await mainResponse.json().catch(() => ({}));
         throw new Error(errData.error || `Error ${mainResponse.status}: La respuesta no es un JSON válido.`);
@@ -166,7 +167,7 @@ const AsistenteChat: React.FC<AsistenteChatProps> = ({ onClose }) => {
       if (useHistoricalContext) {
         console.log("Solicitando contexto histórico adicional...");
         const historicalFolderId = '1E_uJaarACpoBETw8YpYSYleh4ANUT1Ru';
-        const histResponse = await fetch(`/api/drive/files?full=${useFullContext}&folderId=${historicalFolderId}`);
+        const histResponse = await authedFetch(`/api/drive/files?full=${useFullContext}&folderId=${historicalFolderId}`);
         
         if (histResponse.ok) {
           const histData = await histResponse.json();

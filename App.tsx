@@ -2,6 +2,7 @@ import React, { useState, useEffect, Suspense, lazy } from 'react';
 import LoginScreen from './components/LoginScreen';
 import AppSidebar, { AppView } from './components/AppSidebar';
 import { Toaster } from 'sonner';
+import { clearSession } from './syncClient';
 
 // Code-split per view: a regular team member never downloads the Admin/Gantt
 // bundle (the biggest chunk in the app), and vice versa for an admin who
@@ -50,7 +51,7 @@ function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
-    localStorage.removeItem("v25_current_session");
+    clearSession();
     setActiveView('tasks');
   };
 
